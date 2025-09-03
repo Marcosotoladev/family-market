@@ -1,0 +1,55 @@
+ls -la > estructura-proyecto.txt
+echo "src/" >> estructura-proyecto.txt
+find src -type f -name "*.js" -o -name "*.jsx" -o -name "*.css" -o -name "*.json" | sort >> estructura-proyecto.txt
+
+total 245
+drwxr-xr-x 1 Marco Dev 197121      0 Sep  3 11:49 ./
+drwxr-xr-x 1 Marco Dev 197121      0 Sep  2 19:37 ../
+-rw-r--r-- 1 Marco Dev 197121    832 Sep  2 20:12 .env.local
+drwxr-xr-x 1 Marco Dev 197121      0 Sep  2 19:40 .git/
+-rw-r--r-- 1 Marco Dev 197121    480 Sep  2 19:36 .gitignore
+drwxr-xr-x 1 Marco Dev 197121      0 Sep  3 20:51 .next/
+-rw-r--r-- 1 Marco Dev 197121      0 Sep  3 20:51 estructura-proyecto.txt
+-rw-r--r-- 1 Marco Dev 197121    503 Sep  3 01:00 firebase.json
+-rw-r--r-- 1 Marco Dev 197121   2863 Sep  3 01:03 firestore.indexes.json
+-rw-r--r-- 1 Marco Dev 197121     77 Sep  2 19:37 jsconfig.json
+-rw-r--r-- 1 Marco Dev 197121     92 Sep  2 19:36 next.config.mjs
+drwxr-xr-x 1 Marco Dev 197121      0 Sep  3 11:40 node_modules/
+-rw-r--r-- 1 Marco Dev 197121    757 Sep  3 11:30 package.json
+-rw-r--r-- 1 Marco Dev 197121 144402 Sep  3 11:40 package-lock.json
+-rw-r--r-- 1 Marco Dev 197121    141 Sep  3 12:02 postcss.config.mjs
+drwxr-xr-x 1 Marco Dev 197121      0 Sep  2 19:37 public/
+-rw-r--r-- 1 Marco Dev 197121   1458 Sep  2 19:36 README.md
+drwxr-xr-x 1 Marco Dev 197121      0 Sep  3 01:17 src/
+src/
+src/app/globals.css
+src/app/layout.js
+src/app/page.js
+src/components/home/FeaturedProducts.js
+src/components/home/HeroCarousel.js
+src/components/home/NewestProducts.js
+src/components/layout/DesktopNavigation.js
+src/components/layout/Header.js
+src/components/layout/MainLayout.js
+src/components/layout/MobileNavigation.js
+src/components/providers/ThemeProvider.jsx
+src/components/ui/ImageUpload.js
+src/components/ui/ProductCard.js
+src/lib/cloudinary/config.js
+src/lib/contexts/AuthContext.js
+src/lib/firebase/admin.js
+src/lib/firebase/config.js
+src/lib/helpers/employmentHelpers.js
+src/lib/helpers/index.js
+src/lib/helpers/productHelpers.js
+src/lib/helpers/serviceHelpers.js
+src/lib/helpers/storeHelpers.js
+src/lib/helpers/userHelpers.js
+src/lib/hooks/useCloudinary.js
+src/types/categories.js
+src/types/employment.js
+src/types/index.js
+src/types/product.js
+src/types/services.js
+src/types/store.js
+src/types/user.js
