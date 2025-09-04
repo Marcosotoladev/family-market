@@ -180,7 +180,7 @@ export default function DesktopNavigation() {
                   <button
                     onClick={() => handleNavClick(item.id)}
                     className={`
-                      flex items-center gap-2 py-4 px-2 text-sm font-medium transition-all duration-200 relative
+                      flex items-center gap-2 py-4 px-2 text-m font-medium transition-all duration-200 relative
                       ${isActive 
                         ? 'text-primary-600' 
                         : 'text-gray-700 dark:text-gray-300 hover:text-primary-600'

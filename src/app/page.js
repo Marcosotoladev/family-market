@@ -3,65 +3,29 @@ import MainLayout from '@/components/layout/MainLayout'
 import HeroCarousel from '@/components/home/HeroCarousel'
 import FeaturedProducts from '@/components/home/FeaturedProducts'
 import NewestProducts from '@/components/home/NewestProducts'
+import CategoriesSection from '@/components/home/CategoriesSection'
 
 export default function HomePage() {
   return (
     <MainLayout>
       {/* Hero Carousel - Eventos de la iglesia */}
-      <section className="pt-8 pb-12 lg:pt-12 lg:pb-16">
+      <section className="pt-2 pb-2 lg:pt-2 lg:pb-2">
         <HeroCarousel />
       </section>
 
       {/* Productos Destacados */}
-      <section className="py-12 lg:py-16">
+      <section className="">
         <FeaturedProducts />
       </section>
 
       {/* Productos Más Nuevos */}
-      <section className="py-12 lg:py-16">
+      <section className="">
         <NewestProducts />
       </section>
 
       {/* Sección de Categorías Populares */}
-      <section className="py-16 lg:py-20 -mx-4 sm:-mx-6 lg:-mx-8">
-        <div className="bg-gray-50 dark:bg-gray-800 px-4 sm:px-6 lg:px-8 py-16 lg:py-20 transition-colors">
-          <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-12 lg:mb-16">
-              <h2 className="text-2xl md:text-4xl font-bold mb-4 text-gray-900 dark:text-gray-100">
-                Explora por Categorías
-              </h2>
-              <p className="text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-                Descubre lo que tu comunidad tiene para ofrecer
-              </p>
-            </div>
-
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 lg:gap-6">
-              {[
-                { name: 'Repostería', icon: '🧁', count: 45, color: 'from-pink-400 to-red-400' },
-                { name: 'Artesanías', icon: '🎨', count: 32, color: 'from-purple-400 to-indigo-400' },
-                { name: 'Servicios', icon: '🛠️', count: 28, color: 'from-blue-400 to-cyan-400' },
-                { name: 'Alimentos', icon: '🍞', count: 38, color: 'from-green-400 to-teal-400' },
-                { name: 'Educación', icon: '📚', count: 15, color: 'from-yellow-400 to-orange-400' },
-                { name: 'Empleos', icon: '💼', count: 22, color: 'from-gray-400 to-gray-600' }
-              ].map((category) => (
-                <div 
-                  key={category.name}
-                  className="group bg-white dark:bg-gray-700 p-4 lg:p-6 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 cursor-pointer text-center hover:-translate-y-1 border border-gray-100 dark:border-gray-600"
-                >
-                  <div className={`w-12 h-12 lg:w-16 lg:h-16 mx-auto mb-3 lg:mb-4 bg-gradient-to-br ${category.color} rounded-full flex items-center justify-center text-xl lg:text-2xl group-hover:scale-110 transition-transform duration-300`}>
-                    {category.icon}
-                  </div>
-                  <h3 className="font-semibold text-gray-800 dark:text-gray-200 mb-1 group-hover:text-primary-600 transition-colors text-sm lg:text-base">
-                    {category.name}
-                  </h3>
-                  <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-400">
-                    {category.count} productos
-                  </p>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
+      <section>
+      <CategoriesSection />
       </section>
 
       {/* Sección de Testimonios */}
@@ -109,8 +73,8 @@ export default function HomePage() {
                 "{testimonial.testimonial}"
               </p>
               <div className="flex items-center gap-3">
-                <img 
-                  src={testimonial.avatar} 
+                <img
+                  src={testimonial.avatar}
                   alt={testimonial.name}
                   className="w-12 h-12 rounded-full object-cover"
                 />
@@ -155,13 +119,13 @@ export default function HomePage() {
         <div className="bg-gray-900 dark:bg-gray-950 px-4 sm:px-6 lg:px-8 py-16 lg:py-20 text-white transition-colors">
           <div className="max-w-4xl mx-auto text-center">
             <blockquote className="text-lg lg:text-xl italic mb-6 text-gray-200 dark:text-gray-300">
-              "Así que, según tengamos oportunidad, hagamos bien a todos, 
+              "Así que, según tengamos oportunidad, hagamos bien a todos,
               y mayormente a los de la familia de la fe."
             </blockquote>
             <cite className="text-primary-400 font-medium">
               Gálatas 6:10
             </cite>
-            
+
             <div className="mt-12 pt-8 border-t border-gray-700 dark:border-gray-800">
               <div className="flex flex-col md:flex-row justify-between items-center gap-6">
                 <div className="flex items-center gap-2">
@@ -169,7 +133,7 @@ export default function HomePage() {
                     Family <span className="text-primary-400">Market</span>
                   </span>
                 </div>
-                
+
                 <div className="flex items-center gap-6 text-sm text-gray-400 dark:text-gray-500">
                   <a href="#" className="hover:text-white dark:hover:text-gray-300 transition-colors">Términos</a>
                   <a href="#" className="hover:text-white dark:hover:text-gray-300 transition-colors">Privacidad</a>
@@ -177,7 +141,7 @@ export default function HomePage() {
                   <a href="#" className="hover:text-white dark:hover:text-gray-300 transition-colors">Contacto</a>
                 </div>
               </div>
-              
+
               <div className="mt-6 text-sm text-gray-500 dark:text-gray-600">
                 © 2024 Family Market - Iglesia Toma Tu Lugar
               </div>

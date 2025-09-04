@@ -1,7 +1,7 @@
 // src/components/home/HeroCarousel.js
 'use client'
 import { useState, useEffect } from 'react'
-import { ChevronLeft, ChevronRight, Calendar, MapPin } from 'lucide-react'
+import { Calendar, MapPin } from 'lucide-react'
 
 export default function HeroCarousel() {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -64,20 +64,8 @@ export default function HeroCarousel() {
     setTimeout(() => setIsAutoPlaying(true), 10000) // Reactivar auto-play después de 10s
   }
 
-  const nextSlide = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length)
-    setIsAutoPlaying(false)
-    setTimeout(() => setIsAutoPlaying(true), 10000)
-  }
-
-  const prevSlide = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
-    setIsAutoPlaying(false)
-    setTimeout(() => setIsAutoPlaying(true), 10000)
-  }
-
   return (
-    <section className="relative w-full h-64 md:h-80 lg:h-96 overflow-hidden bg-gray-900 dark:bg-gray-950 rounded-xl lg:rounded-2xl mx-4 lg:mx-0">
+    <section className="relative w-full h-40 sm:h-44 md:h-52 lg:h-60 xl:h-72 overflow-hidden bg-gray-900 dark:bg-gray-950 rounded-lg sm:rounded-xl lg:rounded-2xl mx-2 sm:mx-4 lg:mx-0">
       {/* Slides */}
       <div className="relative w-full h-full">
         {slides.map((slide, index) => (
@@ -102,30 +90,26 @@ export default function HeroCarousel() {
             
             {/* Contenido */}
             <div className="relative h-full flex items-center">
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
-                <div className="max-w-2xl text-white">
-                  <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold mb-4">
+              <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-6 lg:px-8 w-full">
+                <div className="max-w-xs sm:max-w-md md:max-w-lg lg:max-w-2xl text-white">
+                  <h2 className="text-lg sm:text-xl md:text-2xl lg:text-3xl xl:text-4xl font-bold mb-2 sm:mb-3 md:mb-4 leading-tight">
                     {slide.title}
                   </h2>
-                  <p className="text-lg md:text-xl mb-6 opacity-90">
+                  <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-3 sm:mb-4 md:mb-6 opacity-90 leading-relaxed">
                     {slide.description}
                   </p>
                   
                   {/* Información del evento */}
-                  <div className="flex flex-col sm:flex-row gap-4 mb-6">
-                    <div className="flex items-center gap-2 text-sm md:text-base">
-                      <Calendar className="w-4 h-4" />
-                      <span>{slide.date}</span>
+                  <div className="flex flex-col gap-2 sm:gap-3 md:gap-4">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm md:text-base">
+                      <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate">{slide.date}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-sm md:text-base">
-                      <MapPin className="w-4 h-4" />
-                      <span>{slide.location}</span>
+                    <div className="flex items-center gap-2 text-xs sm:text-sm md:text-base">
+                      <MapPin className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                      <span className="truncate">{slide.location}</span>
                     </div>
                   </div>
-                  
-                  <button className="bg-white text-gray-900 hover:bg-gray-100 font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-105">
-                    Más información
-                  </button>
                 </div>
               </div>
             </div>
@@ -133,34 +117,17 @@ export default function HeroCarousel() {
         ))}
       </div>
 
-      {/* Controles de navegación */}
-      <button
-        onClick={prevSlide}
-        className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
-        aria-label="Slide anterior"
-      >
-        <ChevronLeft className="w-5 h-5" />
-      </button>
-
-      <button
-        onClick={nextSlide}
-        className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-3 rounded-full transition-all duration-200 backdrop-blur-sm"
-        aria-label="Siguiente slide"
-      >
-        <ChevronRight className="w-5 h-5" />
-      </button>
-
       {/* Indicadores */}
-      <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2">
+      <div className="absolute bottom-3 sm:bottom-4 left-1/2 transform -translate-x-1/2 flex gap-1.5 sm:gap-2">
         {slides.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}
             className={`
-              w-3 h-3 rounded-full transition-all duration-300
+              w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-all duration-300 touch-manipulation
               ${index === currentSlide 
                 ? 'bg-white scale-110' 
-                : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+                : 'bg-white bg-opacity-50 hover:bg-opacity-75 active:bg-opacity-90'
               }
             `}
             aria-label={`Ir al slide ${index + 1}`}
@@ -169,8 +136,8 @@ export default function HeroCarousel() {
       </div>
 
       {/* Indicador de auto-play */}
-      <div className="absolute top-4 right-4">
-        <div className={`w-2 h-2 rounded-full ${isAutoPlaying ? 'bg-green-400' : 'bg-gray-400'} animate-pulse`} />
+      <div className="absolute top-3 sm:top-4 right-3 sm:right-4">
+        <div className={`w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full ${isAutoPlaying ? 'bg-green-400' : 'bg-gray-400'} animate-pulse`} />
       </div>
     </section>
   )

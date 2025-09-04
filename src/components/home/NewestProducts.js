@@ -206,7 +206,7 @@ export default function NewestProducts() {
   }
 
   return (
-    <section className="py-8 lg:py-12 bg-white dark:bg-gray-900 transition-colors">
+    <section className=" bg-white dark:bg-gray-900 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header de la sección */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 lg:mb-8 gap-4">

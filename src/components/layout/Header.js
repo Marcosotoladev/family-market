@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import { Search, User, Moon, Sun } from 'lucide-react'
+import Image from 'next/image'
 
 export default function Header() {
   const [mounted, setMounted] = useState(false)
@@ -48,8 +49,16 @@ export default function Header() {
               )}
             </button>
 
-            {/* Logo */}
-            <div className="flex-1 text-center">
+            {/* Logo Mobile */}
+            <div className="flex-1 flex items-center justify-center gap-3">
+              <Image
+                src="/icon.png"
+                alt="Family Market Logo"
+                width={32}
+                height={32}
+                className="w-8 h-8"
+                priority
+              />
               <h1 className="text-2xl font-bold">
                 <span className="text-gray-600 dark:text-gray-400">Family</span>{' '}
                 <span className="text-primary-500">Market</span>
@@ -57,12 +66,12 @@ export default function Header() {
             </div>
 
             {/* Botón Usuario */}
-            <button 
+            <button
               className="p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
               aria-label="Mi cuenta"
             >
               <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-primary-500 rounded-full"></span>
+
             </button>
           </div>
 
@@ -91,7 +100,15 @@ export default function Header() {
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between gap-8">
             {/* Logo Desktop más prominente */}
-            <div className="flex items-center flex-shrink-0">
+            <div className="flex items-center flex-shrink-0 gap-4">
+              <Image
+                src="/icon.png"
+                alt="Family Market Logo"
+                width={40}
+                height={40}
+                className="w-15 h-15"
+                priority
+              />
               <h1 className="text-3xl xl:text-4xl font-bold">
                 <span className="text-gray-600 dark:text-gray-400">Family</span>{' '}
                 <span className="text-primary-500">Market</span>
@@ -138,14 +155,10 @@ export default function Header() {
                 <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Mi cuenta</span>
               </button>
-              
-
             </div>
           </div>
         </div>
       </header>
-      
-      {/* Espaciador eliminado - no es necesario */}
     </>
   )
 }
