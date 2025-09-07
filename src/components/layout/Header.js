@@ -2,7 +2,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
-import { Search, User, Moon, Sun } from 'lucide-react'
+import { Search, User, Moon, Sun, Plus, HelpCircle } from 'lucide-react'
 import Image from 'next/image'
 
 export default function Header() {
@@ -24,6 +24,16 @@ export default function Header() {
     if (searchQuery.trim()) {
       console.log('Buscando:', searchQuery)
     }
+  }
+
+  const handleCreateStore = () => {
+    console.log('Crear tienda clicked')
+    // Aquí irá la lógica para crear tienda
+  }
+
+  const handleNewUser = () => {
+    console.log('¿Eres nuevo? clicked')
+    // Aquí irá la lógica para usuarios nuevos
   }
 
   if (!mounted) {
@@ -71,7 +81,25 @@ export default function Header() {
               aria-label="Mi cuenta"
             >
               <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            </button>
+          </div>
 
+          {/* CTAs móviles integrados */}
+          <div className="flex items-center justify-between mb-4 px-1">
+            <button 
+              onClick={handleNewUser}
+              className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors font-medium"
+            >
+              <HelpCircle className="w-4 h-4" />
+              ¿Eres nuevo?
+            </button>
+            
+            <button 
+              onClick={handleCreateStore}
+              className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
+            >
+              <Plus className="w-4 h-4" />
+              Crear tienda
             </button>
           </div>
 
