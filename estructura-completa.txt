@@ -1,0 +1,65 @@
+find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -not -path "./public/images*" | sort | sed 's/[^/]*\//|   /g; s/|   \([^|]\)/└── \1/' > estructura-completa.txt
+
+.
+└── .env.local
+└── estructura-completa.txt
+└── estructura-proyecto.txt
+└── firebase.json
+└── firestore.indexes.json
+└── jsconfig.json
+└── next.config.mjs
+└── package.json
+└── package-lock.json
+└── postcss.config.mjs
+└── public
+|   └── icon.png
+|   └── icon-192.png
+|   └── icon-512.png
+└── README.md
+└── src
+|   └── app
+|   |   └── favicon.ico
+|   |   └── globals.css
+|   |   └── layout.js
+|   |   └── page.js
+|   └── components
+|   |   └── home
+|   |   |   └── CategoriesSection.js
+|   |   |   └── FeaturedProducts.js
+|   |   |   └── HeroCarousel.js
+|   |   |   └── NewestProducts.js
+|   |   └── layout
+|   |   |   └── DesktopNavigation.js
+|   |   |   └── Header.js
+|   |   |   └── MainLayout.js
+|   |   |   └── MobileNavigation.js
+|   |   └── providers
+|   |   |   └── ThemeProvider.jsx
+|   |   └── ui
+|   |   |   └── ImageUpload.js
+|   |   |   └── ProductCard.js
+|   └── lib
+|   |   └── cloudinary
+|   |   |   └── config.js
+|   |   └── contexts
+|   |   |   └── AuthContext.js
+|   |   └── firebase
+|   |   |   └── admin.js
+|   |   |   └── config.js
+|   |   └── helpers
+|   |   |   └── employmentHelpers.js
+|   |   |   └── index.js
+|   |   |   └── productHelpers.js
+|   |   |   └── serviceHelpers.js
+|   |   |   └── storeHelpers.js
+|   |   |   └── userHelpers.js
+|   |   └── hooks
+|   |   |   └── useCloudinary.js
+|   └── types
+|   |   └── categories.js
+|   |   └── employment.js
+|   |   └── index.js
+|   |   └── product.js
+|   |   └── services.js
+|   |   └── store.js
+|   |   └── user.js
