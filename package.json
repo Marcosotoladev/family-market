@@ -15,7 +15,6 @@
     "@firebase/firestore": "^4.9.1",
     "@firebase/storage": "^0.14.0",
     "@next/font": "^14.2.15",
-    "@next/third-parties": "^14.0.0",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.12",
     "@types/react-dom": "^19.1.9",
