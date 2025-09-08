@@ -1,9 +1,9 @@
-// src/components/home/FeaturedProducts.js
+// src/components/home/FeaturedServices.js
 'use client'
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { Star, Flame, MapPin, Shield } from 'lucide-react'
+import { Star, Wrench, MapPin, Shield, Clock, Users } from 'lucide-react'
 
-export default function FeaturedProducts() {
+export default function FeaturedServices() {
   const [windowWidth, setWindowWidth] = useState(0)
   const [isClient, setIsClient] = useState(false)
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -23,85 +23,101 @@ export default function FeaturedProducts() {
     return () => window.removeEventListener('resize', handleResize)
   }, [])
 
-  // Productos de prueba (8)
-  const featuredProducts = [
+  // Servicios de prueba (8)
+  const featuredServices = [
     {
       id: 1,
-      nombre: 'Torta de Chocolate Premium',
-      precio: 25000,
-      imagen: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop',
-      categoria: 'Repostería',
-      tienda: { nombre: 'Dulces de María', ubicacion: 'Córdoba Centro', rating: 4.9, verificada: true },
+      nombre: 'Plomería y Gasista Matriculado',
+      precioDesde: 8000,
+      imagen: 'https://images.unsplash.com/photo-1581244277943-fe4a9c777189?w=400&h=300&fit=crop',
+      categoria: 'Hogar y Mantenimiento',
+      proveedor: { nombre: 'Servicios López', ubicacion: 'Córdoba Centro', rating: 4.9, verificado: true },
       destacado: true,
+      tiempoRespuesta: '2 hrs',
+      disponibilidad: '24/7'
     },
     {
       id: 2,
-      nombre: 'Set de Organizadores Tejidos',
-      precio: 18500,
-      imagen: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
-      categoria: 'Artesanías',
-      tienda: { nombre: 'Tejidos Ana', ubicacion: 'Nueva Córdoba', rating: 4.7, verificada: true },
+      nombre: 'Clases Particulares de Matemática',
+      precioDesde: 5000,
+      imagen: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=400&h=300&fit=crop',
+      categoria: 'Educación',
+      proveedor: { nombre: 'Prof. Ana García', ubicacion: 'Nueva Córdoba', rating: 4.8, verificado: true },
       destacado: true,
+      tiempoRespuesta: '30 min',
+      disponibilidad: 'Lun-Vie'
     },
     {
       id: 3,
-      nombre: 'Servicio de Diseño Web Profesional',
-      precio: 150000,
-      imagen: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop',
-      categoria: 'Servicios',
-      tienda: { nombre: 'DevCristiano', ubicacion: 'Remoto', rating: 5.0, verificada: true },
+      nombre: 'Limpieza Profunda de Hogar',
+      precioDesde: 15000,
+      imagen: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
+      categoria: 'Limpieza',
+      proveedor: { nombre: 'Limpieza Express', ubicacion: 'Córdoba', rating: 4.7, verificado: true },
       destacado: true,
+      tiempoRespuesta: '1 hr',
+      disponibilidad: 'Todos los días'
     },
     {
       id: 4,
-      nombre: 'Macetas de Cerámica Artesanal',
-      precio: 8500,
-      imagen: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400&h=300&fit=crop',
-      categoria: 'Decoración',
-      tienda: { nombre: 'Cerámica Esperanza', ubicacion: 'Villa Allende', rating: 4.6, verificada: false },
+      nombre: 'Reparación de Electrodomésticos',
+      precioDesde: 6000,
+      imagen: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop',
+      categoria: 'Reparaciones',
+      proveedor: { nombre: 'TecnoFix', ubicacion: 'Villa Allende', rating: 4.6, verificado: false },
       destacado: true,
+      tiempoRespuesta: '4 hrs',
+      disponibilidad: 'Lun-Sab'
     },
     {
       id: 5,
-      nombre: 'Clases de Piano Online',
-      precio: 12000,
-      imagen: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=400&h=300&fit=crop',
-      categoria: 'Educación',
-      tienda: { nombre: 'Música & Fe', ubicacion: 'Córdoba', rating: 4.8, verificada: true },
+      nombre: 'Sesión de Fotografía Profesional',
+      precioDesde: 25000,
+      imagen: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400&h=300&fit=crop',
+      categoria: 'Fotografía',
+      proveedor: { nombre: 'Estudio Luz', ubicacion: 'Córdoba', rating: 4.9, verificado: true },
       destacado: true,
+      tiempoRespuesta: '1 día',
+      disponibilidad: 'Cita previa'
     },
     {
       id: 6,
-      nombre: 'Pan Casero Integral',
-      precio: 3500,
-      imagen: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop',
-      categoria: 'Alimentos',
-      tienda: { nombre: 'Panadería Bendición', ubicacion: 'Barrio Jardín', rating: 4.5, verificada: true },
+      nombre: 'Servicio de Jardinería y Paisajismo',
+      precioDesde: 12000,
+      imagen: 'https://images.unsplash.com/photo-1416879595882-3373a0480b5b?w=400&h=300&fit=crop',
+      categoria: 'Jardinería',
+      proveedor: { nombre: 'Verde Natural', ubicacion: 'Barrio Jardín', rating: 4.5, verificado: true },
       destacado: true,
+      tiempoRespuesta: '2 hrs',
+      disponibilidad: 'Lun-Vie'
     },
     {
       id: 7,
-      nombre: 'Collar Artesanal de Plata',
-      precio: 45000,
-      imagen: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=300&fit=crop',
-      categoria: 'Joyería',
-      tienda: { nombre: 'Joyas Luna', ubicacion: 'Córdoba Centro', rating: 4.9, verificada: true },
+      nombre: 'Masajes Terapéuticos a Domicilio',
+      precioDesde: 8500,
+      imagen: 'https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=300&fit=crop',
+      categoria: 'Bienestar',
+      proveedor: { nombre: 'Terapias Relax', ubicacion: 'Córdoba Centro', rating: 4.8, verificado: true },
       destacado: true,
+      tiempoRespuesta: '3 hrs',
+      disponibilidad: 'Todos los días'
     },
     {
       id: 8,
-      nombre: 'Curso de Fotografía Digital',
-      precio: 28000,
-      imagen: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400&h=300&fit=crop',
-      categoria: 'Educación',
-      tienda: { nombre: 'Foto Académica', ubicacion: 'Nueva Córdoba', rating: 4.7, verificada: true },
+      nombre: 'Servicio de Catering para Eventos',
+      precioDesde: 35000,
+      imagen: 'https://images.unsplash.com/photo-1555244162-803834f70033?w=400&h=300&fit=crop',
+      categoria: 'Eventos',
+      proveedor: { nombre: 'Sabores Unidos', ubicacion: 'Nueva Córdoba', rating: 4.7, verificado: true },
       destacado: true,
+      tiempoRespuesta: '2 días',
+      disponibilidad: 'Fin de semana'
     },
   ]
 
   const isMobile = windowWidth < 1024
   const itemsPerView = isMobile ? 2 : 5
-  const maxIndex = Math.max(0, featuredProducts.length - itemsPerView)
+  const maxIndex = Math.max(0, featuredServices.length - itemsPerView)
 
   // Función para animar suavemente hacia un índice específico
   const animateToIndex = useCallback((targetIndex) => {
@@ -231,7 +247,7 @@ export default function FeaturedProducts() {
   if (!isClient) {
     return (
       <section className="py-8 lg:py-12">
-        <div className="text-center">Cargando productos destacados...</div>
+        <div className="text-center">Cargando servicios destacados...</div>
       </section>
     )
   }
@@ -244,11 +260,11 @@ export default function FeaturedProducts() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-r from-orange-400 to-red-500 rounded-lg">
-            <Flame className="w-6 h-6 text-white" />
+          <div className="p-2 bg-gradient-to-r from-blue-500 to-indigo-600 rounded-lg">
+            <Wrench className="w-6 h-6 text-white" />
           </div>
           <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-            Productos Destacados
+            Servicios Destacados
           </h2>
         </div>
 
@@ -273,9 +289,9 @@ export default function FeaturedProducts() {
                 transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
               }}
             >
-              {featuredProducts.map((product, index) => (
+              {featuredServices.map((service, index) => (
                 <div
-                  key={product.id}
+                  key={service.id}
                   className={`flex-shrink-0 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 ${isDragging ? 'scale-[0.98]' : 'hover:shadow-md'
                     }`}
                   style={{
@@ -284,37 +300,55 @@ export default function FeaturedProducts() {
                 >
                   <div className="relative aspect-square overflow-hidden">
                     <img
-                      src={product.imagen}
-                      alt={product.nombre}
+                      src={service.imagen}
+                      alt={service.nombre}
                       className="w-full h-full object-cover"
                       draggable={false}
                     />
-                    {product.destacado && (
-                      <div className="absolute top-2 left-2 bg-gradient-to-r from-orange-400 to-red-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-                        <Flame className="w-3 h-3" /> Destacado
+                    {service.destacado && (
+                      <div className="absolute top-2 left-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
+                        <Wrench className="w-3 h-3" /> Destacado
+                      </div>
+                    )}
+                    {service.proveedor.verificado && (
+                      <div className="absolute top-2 right-2 bg-green-500 text-white p-1 rounded-full">
+                        <Shield className="w-3 h-3" />
                       </div>
                     )}
                   </div>
                   <div className="p-3">
-                    <div className="text-xs text-primary-600 font-medium uppercase mb-1">
-                      {product.categoria}
+                    <div className="text-xs text-blue-600 font-medium uppercase mb-1">
+                      {service.categoria}
                     </div>
                     <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2">
-                      {product.nombre}
+                      {service.nombre}
                     </h3>
                     <div className="flex items-center justify-between mt-2">
                       <span className="text-xs text-gray-600 dark:text-gray-400">
-                        {product.tienda.nombre}
+                        {service.proveedor.nombre}
                       </span>
                       <div className="flex items-center gap-1">
                         <Star className="w-3 h-3 text-yellow-400 fill-current" />
                         <span className="text-xs text-gray-600 dark:text-gray-400">
-                          {product.tienda.rating}
+                          {service.proveedor.rating}
                         </span>
                       </div>
                     </div>
+                    
+                    {/* Información adicional de servicio */}
+                    <div className="flex items-center justify-between mt-2 text-xs text-gray-500 dark:text-gray-400">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-3 h-3" />
+                        <span>{service.tiempoRespuesta}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Users className="w-3 h-3" />
+                        <span>{service.disponibilidad}</span>
+                      </div>
+                    </div>
+
                     <div className="mt-2 font-bold text-gray-900 dark:text-white">
-                      {formatPrice(product.precio)}
+                      Desde {formatPrice(service.precioDesde)}
                     </div>
                   </div>
                 </div>
@@ -329,8 +363,8 @@ export default function FeaturedProducts() {
                   key={i}
                   onClick={() => animateToIndex(i)}
                   className={`w-2 h-2 rounded-full transition-all duration-200 ${Math.round(currentIndex) === i
-                      ? 'bg-primary-500 scale-125'
-                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-primary-300'
+                      ? 'bg-blue-500 scale-125'
+                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-blue-300'
                     }`}
                   disabled={isDragging || isTransitioning}
                 />
@@ -342,6 +376,3 @@ export default function FeaturedProducts() {
     </section>
   )
 }
-
-
-

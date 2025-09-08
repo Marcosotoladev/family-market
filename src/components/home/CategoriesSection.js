@@ -1,3 +1,4 @@
+//src/components/home/CategoriesSection.js
 
 'use client'
 import React, { useState } from 'react';
@@ -182,7 +183,7 @@ const CategoriesSection = ({
   ];
 
   return (
-    <section className="py-16 lg:py-20 -mx-4 sm:-mx-6 lg:-mx-8">
+    <section className="pb-2 lg:pb-4 -mx-4 sm:-mx-6 lg:-mx-8">
       <div className="bg-gray-50 dark:bg-gray-800 px-4 sm:px-6 lg:px-8 py-16 lg:py-20 transition-colors duration-300">
         <div className="max-w-7xl mx-auto">
           {/* Header */}
@@ -208,14 +209,14 @@ const CategoriesSection = ({
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex items-center justify-center flex-1 px-3 sm:px-4 py-3 sm:py-3 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm transition-all duration-200 ${
+                        className={`flex flex-col sm:flex-row items-center justify-center flex-1 px-2 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm transition-all duration-200 ${
                           isActive
                             ? `bg-gradient-to-r ${mainCategoryColors[tab.id]} text-white shadow-lg`
                             : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
                         }`}
                       >
-                        <TabIcon className="w-6 h-6 sm:w-5 sm:h-5 sm:mr-2" />
-                        <span className="hidden sm:inline">{tab.name}</span>
+                        <TabIcon className="w-5 h-5 sm:w-5 sm:h-5 sm:mr-2" />
+                        <span className="text-xs sm:text-sm mt-1 sm:mt-0">{tab.name}</span>
                       </button>
                     );
                   })}
@@ -225,7 +226,7 @@ const CategoriesSection = ({
           )}
 
           {/* Categories Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-4 lg:gap-6">
+          <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             {categories.map((category) => {
               const IconComponent = category.icon;
               
@@ -233,22 +234,22 @@ const CategoriesSection = ({
                 <div 
                   key={category.id}
                   onClick={() => handleCategoryClick(category)}
-                  className="group bg-white dark:bg-gray-900 p-6 lg:p-8 rounded-2xl shadow-lg dark:shadow-gray-900/20 hover:shadow-2xl dark:hover:shadow-gray-900/40 transition-all duration-300 cursor-pointer text-center hover:-translate-y-2 border border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-600 relative overflow-hidden"
+                  className="group bg-white dark:bg-gray-900 p-3 sm:p-6 lg:p-8 rounded-2xl shadow-lg dark:shadow-gray-900/20 hover:shadow-2xl dark:hover:shadow-gray-900/40 transition-all duration-300 cursor-pointer text-center hover:-translate-y-2 border border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-600 relative overflow-hidden"
                 >
                   {/* Background gradient effect */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 group-hover:opacity-10 dark:group-hover:opacity-15 transition-opacity duration-300`}></div>
                   
                   <div className="relative z-10">
                     {/* Icon container */}
-                    <div className={`w-16 h-16 lg:w-20 lg:h-20 mx-auto mb-4 lg:mb-6 bg-gradient-to-br ${category.color} rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg`}>
+                    <div className={`w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto mb-3 sm:mb-4 lg:mb-6 bg-gradient-to-br ${category.color} rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg`}>
                       <IconComponent 
-                        className="w-8 h-8 lg:w-10 lg:h-10 text-white" 
+                        className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white" 
                         strokeWidth={1.5}
                       />
                     </div>
                     
                     {/* Category name */}
-                    <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors text-base lg:text-lg">
+                    <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors text-sm sm:text-base lg:text-lg leading-tight">
                       {category.name}
                     </h3>
                     

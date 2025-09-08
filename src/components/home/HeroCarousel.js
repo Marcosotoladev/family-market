@@ -9,30 +9,44 @@ export default function HeroCarousel() {
 
   // Mock data - más adelante vendrá de Cloudinary
   const slides = [
+
+        {
+      id: 2,
+      title: '',
+      description: '',
+      date: '',
+      location: '',
+      image: 'https://tomatulugar.com/wp-content/uploads/2024/10/conf-25-events.jpg',
+      color: ''
+    },
+        {
+      id: 5,
+      title: '',
+      description: '',
+      date: '',
+      location: '',
+      image: 'https://tomatulugar.com/wp-content/uploads/2025/08/VivirElEvangelio.jpg',
+      color: ''
+    },
+    
+
     {
       id: 1,
-      title: 'Retiro Espiritual de Jóvenes',
-      description: 'Únete a nosotros en un fin de semana de crecimiento espiritual',
-      date: '15-17 Nov 2024',
-      location: 'Villa Carlos Paz',
+      title: 'Casa de Oración TTL',
+      description: 'Únete a nosotros en un evento ecepcional',
+      date: 'Miércoles y Viernes 20hs',
+      location: 'TTL Iglesia',
       image: 'https://images.unsplash.com/photo-1511632765486-a01980e01a18?w=800&h=400&fit=crop',
       color: 'from-blue-600 to-purple-600'
     },
-    {
-      id: 2,
-      title: 'Feria de Emprendedores TTL',
-      description: 'Muestra tu negocio y conecta con la comunidad',
-      date: '25 Nov 2024',
-      location: 'Salón Principal TTL',
-      image: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=800&h=400&fit=crop',
-      color: 'from-orange-500 to-red-500'
-    },
+
+
     {
       id: 3,
-      title: 'Noche de Adoración',
-      description: 'Una noche especial de alabanza y adoración',
-      date: '2 Dic 2024',
-      location: 'Iglesia TTL',
+      title: 'Experiencia TTL',
+      description: 'Una experiencia especial de alabanza y adoración y semilla',
+      date: '1º y 3º Sábados 16hs y 19hs',
+      location: 'TTL Iglesia',
       image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop',
       color: 'from-purple-600 to-pink-600'
     },
@@ -40,8 +54,8 @@ export default function HeroCarousel() {
       id: 4,
       title: 'Campaña Solidaria',
       description: 'Juntamos alimentos para familias necesitadas',
-      date: '10-20 Dic 2024',
-      location: 'Toda la ciudad',
+      date: 'A Amar Que Hace Falta',
+      location: 'TTL Iglesia',
       image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&h=400&fit=crop',
       color: 'from-green-500 to-teal-500'
     }
@@ -86,7 +100,7 @@ export default function HeroCarousel() {
             />
             
             {/* Overlay gradiente */}
-            <div className={`absolute inset-0 bg-gradient-to-r ${slide.color} opacity-80`} />
+            <div className={`absolute inset-0 bg-gradient-to-r ${slide.color} opacity-40`} />
             
             {/* Contenido */}
             <div className="relative h-full flex items-center">
