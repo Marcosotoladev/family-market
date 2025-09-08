@@ -40,9 +40,6 @@
 
 /* ========== ESTILOS BASE ========== */
 
-
-
-
 /* ========== SCROLLBAR PERSONALIZADO ========== */
 ::-webkit-scrollbar {
   width: 6px;
@@ -69,4 +66,141 @@
 
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
+}
+
+/* ========== CONFIGURACIÓN PWA Y ROTACIÓN ========== */
+
+/* Configuración básica para PWA y rotación */
+@media screen and (orientation: landscape) {
+  body {
+    /* Ajustes específicos para modo landscape */
+    overflow-x: hidden;
+  }
+  
+  /* Optimizar navegación en landscape */
+  .mobile-nav {
+    flex-direction: row;
+    justify-content: space-around;
+    height: auto;
+    padding: 0.5rem 0;
+  }
+}
+
+@media screen and (orientation: portrait) {
+  body {
+    /* Ajustes específicos para modo portrait */
+    overflow-x: hidden;
+  }
+}
+
+/* Configuración para pantalla completa en PWA */
+@media (display-mode: standalone) {
+  body {
+    /* Cuando se ejecuta como PWA standalone */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+  
+  /* Ocultar elementos que no necesitas en PWA */
+  .browser-only {
+    display: none;
+  }
+}
+
+/* Soporte para notch de iPhone */
+@supports (padding: max(0px)) {
+  body {
+    padding-top: max(env(safe-area-inset-top), 0px);
+    padding-bottom: max(env(safe-area-inset-bottom), 0px);
+    padding-left: max(env(safe-area-inset-left), 0px);
+    padding-right: max(env(safe-area-inset-right), 0px);
+  }
+}
+
+/* ========== OPTIMIZACIONES PARA MÓVILES ========== */
+
+/* Optimización para touch */
+button, [role="button"], input, textarea {
+  touch-action: manipulation;
+}
+
+/* Prevenir zoom accidental */
+input[type="text"], 
+input[type="email"], 
+input[type="password"], 
+input[type="search"],
+input[type="tel"],
+input[type="url"],
+textarea {
+  font-size: 16px; /* Previene zoom en iOS */
+}
+
+/* ========== ESTILOS PARA NOTIFICACIONES ========== */
+
+/* Toast de notificaciones */
+.notification-toast {
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* Prompt de notificaciones - ARRIBA del navbar */
+.notification-prompt {
+  position: fixed;
+  top: max(1rem, env(safe-area-inset-top));
+  left: 1rem;
+  right: 1rem;
+  z-index: 9999; /* Más alto que el navbar */
+  max-width: 24rem;
+  margin: 0 auto;
+}
+
+/* ========== VARIABLES PARA PWA ========== */
+
+/* Modo oscuro y claro para PWA */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --pwa-bg: #000000;
+    --pwa-text: #ffffff;
+    --pwa-border: #333333;
+  }
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --pwa-bg: #ffffff;
+    --pwa-text: #000000;
+    --pwa-border: #e5e7eb;
+  }
+}
+
+/* Splash screen personalizada */
+.pwa-splash {
+  background: var(--pwa-bg);
+  color: var(--pwa-text);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  width: 100vw;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 9999;
+}
+
+/* Instalación PWA prompt */
+.install-prompt {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  right: 16px;
+  background: var(--pwa-bg);
+  border: 1px solid var(--pwa-border);
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
 }

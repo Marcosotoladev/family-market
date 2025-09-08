@@ -1,9 +1,9 @@
 find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -not -path "./public/images*" | sort | sed 's/[^/]*\//|   /g; s/|   \([^|]\)/└── \1/' > estructura-completa.txt
 
+
 .
 └── .env.local
 └── estructura-completa.txt
-└── estructura-proyecto.txt
 └── firebase.json
 └── firestore.indexes.json
 └── jsconfig.json
@@ -25,11 +25,15 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   └── components
 |   |   └── home
 |   |   |   └── CategoriesSection.js
+|   |   |   └── FeaturedJobs.js
 |   |   |   └── FeaturedProducts.js
+|   |   |   └── FeaturedServices.js
 |   |   |   └── HeroCarousel.js
-|   |   |   └── NewestProducts.js
+|   |   |   └── Testimonials.js
+|   |   |   └── WhatsNew.js
 |   |   └── layout
 |   |   |   └── DesktopNavigation.js
+|   |   |   └── Footer.js
 |   |   |   └── Header.js
 |   |   |   └── MainLayout.js
 |   |   |   └── MobileNavigation.js
