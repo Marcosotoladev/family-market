@@ -2,7 +2,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
-import { Search, User, Moon, Sun, Plus, HelpCircle } from 'lucide-react'
+import { Search, User, Moon, Sun, Plus, HelpCircle, Link } from 'lucide-react'
 import Image from 'next/image'
 
 export default function Header() {
@@ -76,31 +76,34 @@ export default function Header() {
             </div>
 
             {/* Botón Usuario */}
-            <button
+            <Link
+              href="/dashboard"
               className="p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
               aria-label="Mi cuenta"
             >
               <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </button>
+            </Link>
           </div>
 
           {/* CTAs móviles integrados */}
           <div className="flex items-center justify-between mb-4 px-1">
-            <button 
+            <Link
+              href="/register"
               onClick={handleNewUser}
               className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors font-medium"
             >
               <HelpCircle className="w-4 h-4" />
               ¿Eres nuevo?
-            </button>
+            </Link>
             
-            <button 
+            <Link
+              href="/register"
               onClick={handleCreateStore}
               className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
             >
               <Plus className="w-4 h-4" />
               Crear tienda
-            </button>
+            </Link>
           </div>
 
           {/* Barra de búsqueda móvil más prominente */}
@@ -179,10 +182,10 @@ export default function Header() {
               </button>
 
               {/* Usuario mejorado */}
-              <button className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
                 <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Mi cuenta</span>
-              </button>
+              </Link>
             </div>
           </div>
         </div>
