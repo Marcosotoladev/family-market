@@ -15,14 +15,32 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   └── icon.png
 |   └── icon-192.png
 |   └── icon-512.png
+|   └── manifest.json
+|   └── sw.js
 └── README.md
 └── src
 |   └── app
+|   |   └── api
+|   |   |   └── firebase-messaging-sw
+|   |   |   |   └── route.js
+|   |   └── dashboard
+|   |   |   └── page.js
 |   |   └── favicon.ico
 |   |   └── globals.css
 |   |   └── layout.js
+|   |   └── login
+|   |   |   └── page.js
 |   |   └── page.js
+|   |   └── register
+|   |   |   └── page.js
+|   |   └── terms
+|   |   |   └── page.js
 |   └── components
+|   |   └── auth
+|   |   |   └── CompleteProfileModal.js
+|   |   |   └── Login.js
+|   |   |   └── Register.js
+|   |   └── AuthWrapper.js
 |   |   └── home
 |   |   |   └── CategoriesSection.js
 |   |   |   └── FeaturedJobs.js
@@ -32,16 +50,21 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── Testimonials.js
 |   |   |   └── WhatsNew.js
 |   |   └── layout
+|   |   |   └── AppLayout.js
 |   |   |   └── DesktopNavigation.js
 |   |   |   └── Footer.js
 |   |   |   └── Header.js
-|   |   |   └── MainLayout.js
 |   |   |   └── MobileNavigation.js
 |   |   └── providers
 |   |   |   └── ThemeProvider.jsx
 |   |   └── ui
 |   |   |   └── ImageUpload.js
+|   |   |   └── NotificationManager.js
 |   |   |   └── ProductCard.js
+|   |   └── user
+|   |   |   └── AccountStatus.js
+|   └── context
+|   |   └── AuthContext.js
 |   └── lib
 |   |   └── cloudinary
 |   |   |   └── config.js
@@ -59,6 +82,9 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── userHelpers.js
 |   |   └── hooks
 |   |   |   └── useCloudinary.js
+|   |   |   └── useNotifications.js
+|   |   └── services
+|   |   |   └── notificationService.js
 |   └── types
 |   |   └── categories.js
 |   |   └── employment.js

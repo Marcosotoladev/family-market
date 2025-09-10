@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { ChevronDown, ChevronRight, Package, Briefcase, Store, Heart, Grid3X3 } from 'lucide-react'
 import { CATEGORIAS_PRODUCTOS, CATEGORIAS_SERVICIOS, CATEGORIAS_EMPLEO } from '@/types'
+import Link from 'next/link'
 
 export default function DesktopNavigation() {
   const [activeDropdown, setActiveDropdown] = useState(null)
@@ -298,12 +299,16 @@ export default function DesktopNavigation() {
 
           {/* CTA Desktop */}
           <div className="flex items-center gap-4">
-            <button className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors font-medium">
+            <Link 
+            href='/register'
+            className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors font-medium">
               ¿Eres nuevo?
-            </button>
-            <button className="border-2 border-primary-500 text-primary-500 hover:text-white bg-transparent hover:bg-primary-500 font-medium px-6 py-2 rounded-lg transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
+            </Link>
+            <Link 
+            href='/register'
+            className="border-2 border-primary-500 text-primary-500 hover:text-white bg-transparent hover:bg-primary-500 font-medium px-6 py-2 rounded-lg transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800">
               Crear tienda
-            </button>
+            </Link>
           </div>
         </div>
       </div>

@@ -29,36 +29,40 @@ export function useNotifications() {
         setPermission(currentPermission);
       }
 
-      // Inicializar Firebase Messaging
-      const initialized = await notificationService.initialize();
-      
-      if (!initialized) {
-        console.warn('No se pudo inicializar Firebase Messaging');
-        setIsLoading(false);
-        return;
-      }
-
-      // Si ya tenemos permisos, obtener token
+      // Inicializar Firebase Messaging solo si hay permisos
       if (Notification.permission === 'granted') {
-        const currentToken = await notificationService.getToken();
-        setToken(currentToken);
-      }
+        const initialized = await notificationService.initialize();
+        
+        if (!initialized) {
+          console.warn('No se pudo inicializar Firebase Messaging');
+          setIsLoading(false);
+          return;
+        }
 
-      // Escuchar mensajes en primer plano
-      try {
-        notificationService.onMessageListener().then((payload) => {
-          console.log('Mensaje recibido:', payload);
-          // Mostrar notificación local si la app está en primer plano
-          notificationService.showLocalNotification(
-            payload.notification?.title || 'Nueva notificación',
-            payload.notification?.body || '',
-            {
-              data: payload.data
-            }
-          );
-        });
-      } catch (error) {
-        console.warn('Error configurando listener de mensajes:', error);
+        // Obtener token existente
+        try {
+          const currentToken = await notificationService.getToken();
+          setToken(currentToken);
+        } catch (error) {
+          console.warn('Error obteniendo token existente:', error);
+        }
+
+        // Escuchar mensajes en primer plano
+        try {
+          notificationService.onMessageListener().then((payload) => {
+            console.log('Mensaje recibido:', payload);
+            // Mostrar notificación local si la app está en primer plano
+            notificationService.showLocalNotification(
+              payload.notification?.title || 'Nueva notificación',
+              payload.notification?.body || '',
+              {
+                data: payload.data
+              }
+            );
+          });
+        } catch (error) {
+          console.warn('Error configurando listener de mensajes:', error);
+        }
       }
 
       setIsLoading(false);

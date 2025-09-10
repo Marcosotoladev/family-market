@@ -70,19 +70,10 @@ class NotificationService {
         return null;
       }
 
-      // Obtener registration del service worker de Firebase
-      let registration;
-      try {
-        registration = await navigator.serviceWorker.register('/api/firebase-messaging-sw');
-        console.log('Service Worker de Firebase registrado');
-      } catch (swError) {
-        console.warn('Error registrando SW de Firebase, usando default:', swError);
-        registration = await navigator.serviceWorker.ready;
-      }
-      
+      // Firebase registra automáticamente su service worker en /firebase-messaging-sw.js
+      // No necesitamos registrarlo manualmente
       const token = await getToken(this.messaging, {
-        vapidKey: this.vapidKey,
-        serviceWorkerRegistration: registration
+        vapidKey: this.vapidKey
       });
       
       if (token) {
@@ -136,14 +127,10 @@ class NotificationService {
   // Guardar token en base de datos
   async saveTokenToDatabase(token) {
     try {
-      console.log('Token a guardar en BD:', token);
+      console.log('Token guardado localmente:', token);
       
-      // TODO: Implementar guardado en Firestore
-      // Ejemplo:
-      // import { doc, setDoc } from 'firebase/firestore';
-      // import { db } from '../firebase/config';
-      // const userRef = doc(db, 'users', 'current-user-id');
-      // await setDoc(userRef, { fcmToken: token }, { merge: true });
+      // El token se guarda en Firestore desde el AuthContext o página de usuario
+      // Este método se mantiene para compatibilidad pero no hace nada
       
     } catch (error) {
       console.error('Error al guardar token:', error);

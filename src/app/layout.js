@@ -1,7 +1,12 @@
-// src/app/layout.js - Solo actualizar el script del Service Worker
+// src/app/layout.js
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '../components/providers/ThemeProvider'
+import { AuthProvider } from '../contexts/AuthContext'  // ← Solo agregar esto
+import Header from '../components/layout/Header'
+import DesktopNavigation from '../components/layout/DesktopNavigation'
+import MobileNavigation from '../components/layout/MobileNavigation'
+import Footer from '@/components/layout/Footer'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -52,7 +57,29 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${inter.className} overflow-x-hidden`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
+          <AuthProvider>  {/* ← Solo wrappear con esto */}
+            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+                {/* Header */}
+                <Header />
+                
+                {/* Navegación Desktop - Con su propio container */}
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <DesktopNavigation />
+                </div>
+              
+              {/* Contenido principal */}
+              <main className="pb-20 lg:pb-8">
+                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  {children}
+                </div>
+              </main>
+              
+              {/* Navegación Mobile condicional */}
+                <MobileNavigation />
+
+                <Footer />
+            </div>
+          </AuthProvider>  {/* ← Cerrar aquí */}
         </ThemeProvider>
         
         {/* Script actualizado para registrar ambos Service Workers */}

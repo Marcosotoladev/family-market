@@ -204,3 +204,23 @@ textarea {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
   z-index: 1000;
 }
+
+/* En globals.css si quieres aplicarlo globalmente */
+input[type="text"], 
+input[type="email"], 
+input[type="password"], 
+textarea, 
+select {
+  @apply text-gray-900 placeholder-gray-500;
+}
+
+/* Para modo oscuro */
+@media (prefers-color-scheme: dark) {
+  input[type="text"], 
+  input[type="email"], 
+  input[type="password"], 
+  textarea, 
+  select {
+    @apply dark:text-gray-100 dark:placeholder-gray-400;
+  }
+}

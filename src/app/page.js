@@ -1,5 +1,4 @@
 // src/app/page.js
-import MainLayout from '@/components/layout/MainLayout'
 import HeroCarousel from '@/components/home/HeroCarousel'
 import WhatsNew from '@/components/home/WhatsNew'
 import FeaturedProducts from '@/components/home/FeaturedProducts'
@@ -13,7 +12,7 @@ import NotificationManager from '@/components/ui/NotificationManager'
 
 export default function HomePage() {
   return (
-    <MainLayout>
+    <>
       {/* Hero Carousel - Eventos de la iglesia */}
       <section className="pt-2 pb-4 lg:pt-2 lg:pb-4">
         <HeroCarousel />
@@ -53,6 +52,6 @@ export default function HomePage() {
       <Footer />
 
       <NotificationManager />
-    </MainLayout>
+      </>
   )
 }
