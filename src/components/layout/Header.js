@@ -4,11 +4,14 @@ import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import { Search, User, Moon, Sun, Plus, HelpCircle, Link } from 'lucide-react'
 import Image from 'next/image'
+import { useRouter } from 'next/navigation'
 
 export default function Header() {
   const [mounted, setMounted] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const { theme, setTheme } = useTheme()
+
+  const router = useRouter()
 
   // Evitar hydration mismatch
   useEffect(() => {
@@ -27,13 +30,15 @@ export default function Header() {
   }
 
   const handleCreateStore = () => {
-    console.log('Crear tienda clicked')
-    // Aquí irá la lógica para crear tienda
+    router.push('/register')
   }
 
   const handleNewUser = () => {
-    console.log('¿Eres nuevo? clicked')
-    // Aquí irá la lógica para usuarios nuevos
+    router.push('/register')
+  }
+
+  const handleDashboard = () => {
+    router.push('/dashboard')
   }
 
   if (!mounted) {
@@ -75,35 +80,33 @@ export default function Header() {
               </h1>
             </div>
 
-            {/* Botón Usuario */}
-            <Link
-              href="/dashboard"
+            {/* Botón Usuario - CORREGIDO */}
+            <button
+              onClick={handleDashboard}
               className="p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
               aria-label="Mi cuenta"
             >
               <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </Link>
+            </button>
           </div>
 
           {/* CTAs móviles integrados */}
           <div className="flex items-center justify-between mb-4 px-1">
-            <Link
-              href="/register"
+            <button
               onClick={handleNewUser}
               className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors font-medium"
             >
               <HelpCircle className="w-4 h-4" />
               ¿Eres nuevo?
-            </Link>
-            
-            <Link
-              href="/register"
+            </button>
+
+            <button
               onClick={handleCreateStore}
               className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
             >
               <Plus className="w-4 h-4" />
               Crear tienda
-            </Link>
+            </button>
           </div>
 
           {/* Barra de búsqueda móvil más prominente */}
@@ -181,11 +184,14 @@ export default function Header() {
                 )}
               </button>
 
-              {/* Usuario mejorado */}
-              <Link href="/dashboard" className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+              {/* Usuario mejorado - CORREGIDO */}
+              <button 
+                onClick={handleDashboard}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+              >
                 <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
                 <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Mi cuenta</span>
-              </Link>
+              </button>
             </div>
           </div>
         </div>
