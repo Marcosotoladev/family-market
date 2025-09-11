@@ -271,7 +271,7 @@ export default function Dashboard() {
               {/* Enlace a la tienda */}
               {storeUrl && (
                 <a
-                  href={`https://familymarket.com${storeUrl}`}
+                  href={`https://familymarket.vercel.app/tienda/${storeUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center px-3 py-2 bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900/20 dark:text-primary-400 rounded-lg text-xs font-medium transition-colors"
@@ -319,7 +319,7 @@ export default function Dashboard() {
               <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 lg:text-right">
                 <p className="text-xs sm:text-sm text-gray-500 dark:text-gray-400 mb-1">URL de tu tienda:</p>
                 <p className="text-xs sm:text-sm font-mono text-primary-600 dark:text-primary-400 break-all">
-                  familymarket.com{storeUrl}
+                  familymarket.vercel.app/tienda/{storeUrl}
                 </p>
               </div>
             )}

@@ -323,14 +323,14 @@ export default function Register({ onSwitchToLogin }) {
             {errors.businessName && <p className="mt-1 text-sm text-red-600 dark:text-red-400">{errors.businessName}</p>}
             {formData.businessName && (
               <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Tu tienda será: familymarket.com/tienda/{generateStoreSlug(formData.businessName, formData.firstName, formData.lastName)}
+                Tu tienda será: familymarket.vercel.app/tienda/{generateStoreSlug(formData.businessName, formData.firstName, formData.lastName)}
               </p>
             )}
           </div>
 
           {/* Checkboxes */}
           <div className="space-y-4">
-            <div className="flex items-start">
+{/*             <div className="flex items-start">
               <input
                 type="checkbox"
                 name="acceptNotifications"
@@ -343,7 +343,7 @@ export default function Register({ onSwitchToLogin }) {
                 <br />
                 <span className="text-gray-500 dark:text-gray-400">Ofertas exclusivas, nuevos productos y promociones especiales</span>
               </label>
-            </div>
+            </div> */}
 
             <div className="flex items-start">
               <input

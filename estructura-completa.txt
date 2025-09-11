@@ -26,6 +26,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   └── route.js
 |   |   └── dashboard
 |   |   |   └── page.js
+|   |   |   └── perfil
+|   |   |   |   └── page.js
 |   |   └── favicon.ico
 |   |   └── globals.css
 |   |   └── layout.js
@@ -52,6 +54,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── Testimonials.js
 |   |   |   └── WhatsNew.js
 |   |   └── layout
+|   |   |   └── DashboardTopNavigation.js
 |   |   |   └── DesktopNavigation.js
 |   |   |   └── Footer.js
 |   |   |   └── Header.js

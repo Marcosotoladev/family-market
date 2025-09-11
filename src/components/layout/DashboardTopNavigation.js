@@ -54,7 +54,7 @@ export default function DashboardTopNavigation() {
       id: 'perfil',
       label: 'Perfil',
       icon: User,
-      href: '/dashboard/perfil',
+      href: '/dashboard/profile',
       color: 'gray'
     }
   ]
