@@ -224,3 +224,6 @@ select {
     @apply dark:text-gray-100 dark:placeholder-gray-400;
   }
 }
+
+/* ========== IMPORTACIÓN DE TEMAS DE TIENDA ========== */
+@import '../styles/store-themes.css';

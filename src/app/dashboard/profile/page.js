@@ -10,6 +10,7 @@ import PersonalInfoSection from '@/components/profile/PersonalInfoSection';
 import BusinessInfoSection from '@/components/profile/BusinessInfoSection';
 import ImageUploadSection from '@/components/profile/ImageUploadSection';
 import AccountSettingsSection from '@/components/profile/AccountSettingsSection';
+import StoreConfigSection from '@/components/profile/StoreConfigSection';
 import { AlertCircle, CheckCircle, User } from 'lucide-react';
 
 export default function DashboardPerfil() {
@@ -98,10 +99,46 @@ export default function DashboardPerfil() {
             showMessage={showMessage}
           />
         );
+      case 'tienda':
+        return <StoreConfigSection showMessage={showMessage} />;
       case 'cuenta':
         return <AccountSettingsSection showMessage={showMessage} />;
       default:
         return <PersonalInfoSection showMessage={showMessage} />;
+    }
+  };
+
+  const getSectionTitle = () => {
+    switch (activeSection) {
+      case 'personal':
+        return 'Información Personal';
+      case 'negocio':
+        return 'Información del Negocio';
+      case 'imagenes':
+        return 'Fotos y Logos';
+      case 'tienda':
+        return 'Configuración de Tienda';
+      case 'cuenta':
+        return 'Configuración de Cuenta';
+      default:
+        return 'Mi Perfil';
+    }
+  };
+
+  const getSectionDescription = () => {
+    switch (activeSection) {
+      case 'personal':
+        return 'Gestiona tu información personal y de contacto';
+      case 'negocio':
+        return 'Información de tu empresa o negocio';
+      case 'imagenes':
+        return 'Administra tu imagen de perfil y logo de la tienda';
+      case 'tienda':
+        return 'Personaliza cómo se ve y qué muestra tu tienda online';
+      case 'cuenta':
+        return 'Configuración de privacidad y cuenta';
+      default:
+        return 'Gestiona tu información personal y configuración de cuenta';
     }
   };
 
@@ -126,10 +163,10 @@ export default function DashboardPerfil() {
             </div>
             <div>
               <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                Mi Perfil
+                {getSectionTitle()}
               </h1>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Gestiona tu información personal y configuración de cuenta
+                {getSectionDescription()}
               </p>
             </div>
           </div>

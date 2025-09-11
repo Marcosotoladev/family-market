@@ -1,0 +1,235 @@
+/* src/styles/store-themes.css */
+
+/* Variables CSS para temas dinámicos */
+:root {
+  --store-primary: #2563eb;
+  --store-secondary: #64748b;
+  --store-border-radius: 0.5rem;
+  --store-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Clases utilitarias para colores dinámicos */
+.store-primary-bg {
+  background-color: var(--store-primary) !important;
+}
+
+.store-primary-text {
+  color: var(--store-primary) !important;
+}
+
+.store-primary-border {
+  border-color: var(--store-primary) !important;
+}
+
+.store-secondary-bg {
+  background-color: var(--store-secondary) !important;
+}
+
+.store-secondary-text {
+  color: var(--store-secondary) !important;
+}
+
+.store-secondary-border {
+  border-color: var(--store-secondary) !important;
+}
+
+/* Contenedores con bordes y sombras dinámicas */
+.store-container {
+  border-radius: var(--store-border-radius);
+  box-shadow: var(--store-shadow);
+}
+
+/* Botones con colores dinámicos */
+.store-btn-primary {
+  background-color: var(--store-primary);
+  border-color: var(--store-primary);
+  color: white;
+}
+
+.store-btn-primary:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.store-btn-secondary {
+  background-color: var(--store-secondary);
+  border-color: var(--store-secondary);
+  color: white;
+}
+
+.store-btn-outline {
+  background-color: transparent;
+  border: 2px solid var(--store-primary);
+  color: var(--store-primary);
+}
+
+.store-btn-outline:hover {
+  background-color: var(--store-primary);
+  color: white;
+}
+
+/* Temas específicos */
+
+/* Tema Moderno */
+.store-theme-modern {
+  --store-border-radius: 0.5rem;
+  --store-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.store-theme-modern .store-container {
+  transition: all 0.3s ease;
+}
+
+.store-theme-modern .store-container:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 15px -3px rgba(0, 0, 0, 0.1);
+}
+
+/* Tema Clásico */
+.store-theme-classic {
+  --store-border-radius: 0.25rem;
+  --store-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.store-theme-classic .store-container {
+  border: 1px solid #e5e7eb;
+}
+
+/* Tema Minimalista */
+.store-theme-minimal {
+  --store-border-radius: 0;
+  --store-shadow: none;
+}
+
+.store-theme-minimal .store-container {
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.store-theme-minimal h1,
+.store-theme-minimal h2,
+.store-theme-minimal h3 {
+  font-weight: 300;
+  letter-spacing: 0.05em;
+}
+
+/* Tema Colorido */
+.store-theme-colorful {
+  --store-border-radius: 1rem;
+  --store-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.2);
+}
+
+.store-theme-colorful .store-container {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.store-theme-colorful {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  min-height: 100vh;
+}
+
+.store-theme-colorful .text-gray-900 {
+  color: white !important;
+}
+
+.store-theme-colorful .text-gray-600 {
+  color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.store-theme-colorful .bg-white {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+}
+
+/* Animaciones específicas por tema */
+.store-theme-modern .fade-in {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.store-theme-colorful .fade-in {
+  animation: fadeInScale 0.8s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Responsive ajustes */
+@media (max-width: 768px) {
+  .store-theme-colorful .store-container {
+    border-radius: 0.5rem;
+    margin: 0.5rem;
+  }
+  
+  .store-theme-minimal .store-container {
+    border-radius: 0;
+    margin: 0;
+  }
+}
+
+/* Colores de hover para enlaces sociales */
+.social-facebook:hover {
+  color: #1877f2 !important;
+}
+
+.social-instagram:hover {
+  color: #e4405f !important;
+}
+
+.social-twitter:hover {
+  color: #1da1f2 !important;
+}
+
+.social-linkedin:hover {
+  color: #0077b5 !important;
+}
+
+.social-website:hover {
+  color: var(--store-primary) !important;
+}
+
+/* Efectos adicionales para tienda */
+.store-card {
+  transition: all 0.3s ease;
+}
+
+.store-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--store-shadow);
+}
+
+.store-hero-overlay {
+  background: linear-gradient(135deg, var(--store-primary), var(--store-secondary));
+  opacity: 0.9;
+}
+
+/* Estados de configuración */
+.config-section-disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.config-section-enabled {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}

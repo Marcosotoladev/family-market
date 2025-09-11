@@ -1,185 +1,101 @@
-// src/components/store/StoreHero.js
-'use client';
+// src/components/store/StoreHero.js - Ejemplo de cómo actualizar para usar colores dinámicos
+import { MapPin, Clock, Star, Phone, MessageCircle } from 'lucide-react';
 
-import { MapPin, Phone, Mail, Star, CheckCircle } from 'lucide-react';
-
-export default function StoreHero({ storeData }) {
-  const handleContactClick = (type) => {
-    switch (type) {
-      case 'whatsapp':
-        if (storeData.phone) {
-          const phone = storeData.phone.replace(/\D/g, '');
-          const message = encodeURIComponent(`Hola! Vi tu tienda ${storeData.businessName} y me interesa conocer más.`);
-          window.open(`https://wa.me/${phone}?text=${message}`, '_blank');
-        }
-        break;
-      case 'email':
-        if (storeData.email) {
-          const subject = encodeURIComponent(`Consulta desde tu tienda - ${storeData.businessName}`);
-          window.open(`mailto:${storeData.email}?subject=${subject}`, '_blank');
-        }
-        break;
-      case 'phone':
-        if (storeData.phone) {
-          window.open(`tel:${storeData.phone}`, '_blank');
-        }
-        break;
-    }
-  };
+const StoreHero = ({ storeData }) => {
+  const { businessName, city, address, profileImage, storeLogo } = storeData;
 
   return (
-    <section id="inicio" className="bg-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-16">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12">
+    <section className="relative py-20 bg-gray-50">
+      {/* Overlay con color dinámico */}
+      <div 
+        className="absolute inset-0 opacity-10"
+        style={{
+          background: `linear-gradient(135deg, var(--store-primary, #2563eb), var(--store-secondary, #64748b))`
+        }}
+      ></div>
+      
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
           
-          {/* Contenido principal - 2/3 del espacio */}
-          <div className="lg:col-span-2">
-            <div className="max-w-2xl">
-              {/* Badge de verificación */}
-              <div className="inline-flex items-center px-3 py-1 bg-green-50 border border-green-200 rounded-full text-sm text-green-700 mb-4">
-                <CheckCircle className="w-4 h-4 mr-1" />
-                Tienda verificada
+          {/* Información del negocio */}
+          <div className="text-center lg:text-left">
+            <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 mb-6">
+              {businessName}
+            </h1>
+            
+            <div className="space-y-4 mb-8">
+              <div className="flex items-center justify-center lg:justify-start space-x-2">
+                <MapPin className="w-5 h-5" style={{ color: 'var(--store-primary, #2563eb)' }} />
+                <span className="text-gray-600">{city}, {address}</span>
               </div>
-
-              {/* Título y descripción */}
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                {storeData.businessName}
-              </h1>
               
-              <p className="text-lg text-gray-600 mb-6">
-                Una empresa familiar comprometida con la calidad y el servicio personalizado. 
-                Descubre productos y servicios diseñados especialmente para tu familia.
-              </p>
-
-              {/* Información de contacto */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
-                {storeData.city && (
-                  <div className="flex items-center text-gray-600">
-                    <MapPin className="w-4 h-4 mr-2 text-gray-400" />
-                    <span className="text-sm">{storeData.city}</span>
-                  </div>
-                )}
-                
-                {storeData.phone && (
-                  <div className="flex items-center text-gray-600">
-                    <Phone className="w-4 h-4 mr-2 text-gray-400" />
-                    <span className="text-sm">{storeData.phone}</span>
-                  </div>
-                )}
-                
-                <div className="flex items-center text-gray-600">
-                  <Mail className="w-4 h-4 mr-2 text-gray-400" />
-                  <span className="text-sm">{storeData.email}</span>
-                </div>
-
-                <div className="flex items-center text-gray-600">
-                  <Star className="w-4 h-4 mr-2 text-yellow-400" />
-                  <span className="text-sm">Familia {storeData.familyName}</span>
-                </div>
+              <div className="flex items-center justify-center lg:justify-start space-x-2">
+                <Clock className="w-5 h-5" style={{ color: 'var(--store-primary, #2563eb)' }} />
+                <span className="text-gray-600">Abierto ahora</span>
               </div>
-
-              {/* Botones de acción */}
-              <div className="flex flex-col sm:flex-row gap-3">
-                {storeData.storeConfig?.showProducts && (
-                  <button
-                    onClick={() => {
-                      const element = document.getElementById('productos');
-                      element?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="px-6 py-3 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors font-medium text-center"
-                  >
-                    Ver productos
-                  </button>
-                )}
-                
-                {storeData.storeConfig?.showServices && (
-                  <button
-                    onClick={() => {
-                      const element = document.getElementById('servicios');
-                      element?.scrollIntoView({ behavior: 'smooth' });
-                    }}
-                    className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium text-center"
-                  >
-                    Ver servicios
-                  </button>
-                )}
-
-                <button
-                  onClick={() => handleContactClick('whatsapp')}
-                  className="px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium text-center"
-                >
-                  Contactar ahora
-                </button>
+              
+              <div className="flex items-center justify-center lg:justify-start space-x-2">
+                <Star className="w-5 h-5" style={{ color: 'var(--store-primary, #2563eb)' }} />
+                <span className="text-gray-600">4.8 (125 reseñas)</span>
               </div>
             </div>
+            
+            {/* Botones de acción con colores dinámicos */}
+            <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+              <button 
+                className="px-8 py-3 rounded-lg font-semibold text-white transition-all duration-200 hover:opacity-90 hover:transform hover:scale-105"
+                style={{ 
+                  backgroundColor: 'var(--store-primary, #2563eb)',
+                  boxShadow: 'var(--store-shadow, 0 4px 6px -1px rgba(0, 0, 0, 0.1))'
+                }}
+              >
+                <Phone className="w-5 h-5 inline mr-2" />
+                Llamar Ahora
+              </button>
+              
+              <button 
+                className="px-8 py-3 rounded-lg font-semibold transition-all duration-200 hover:opacity-90"
+                style={{ 
+                  backgroundColor: 'var(--store-secondary, #64748b)',
+                  color: 'white',
+                  boxShadow: 'var(--store-shadow, 0 4px 6px -1px rgba(0, 0, 0, 0.1))'
+                }}
+              >
+                <MessageCircle className="w-5 h-5 inline mr-2" />
+                WhatsApp
+              </button>
+            </div>
           </div>
-
-          {/* Sidebar con info adicional - 1/3 del espacio */}
-          <div className="lg:col-span-1">
-            <div className="bg-gray-50 rounded-lg p-6">
-              {/* Imagen del propietario */}
-              <div className="text-center mb-6">
-                <div className="w-24 h-24 bg-gray-200 rounded-full mx-auto mb-4 overflow-hidden">
-                  {storeData.profileImage ? (
-                    <img
-                      src={storeData.profileImage}
-                      alt={`${storeData.firstName} ${storeData.lastName}`}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400 text-2xl">
-                      {storeData.firstName?.[0]}{storeData.lastName?.[0]}
-                    </div>
-                  )}
-                </div>
-                <h3 className="font-semibold text-gray-900">
-                  {storeData.firstName} {storeData.lastName}
-                </h3>
-                <p className="text-sm text-gray-600">Propietario</p>
-              </div>
-
-              {/* Estadísticas */}
-              <div className="space-y-4">
-                <div className="text-center py-3 border-b border-gray-200">
-                  <div className="text-2xl font-bold text-gray-900">
-                    {new Date().getFullYear() - (storeData.createdAt ? new Date(storeData.createdAt.toDate()).getFullYear() : new Date().getFullYear())}+
-                  </div>
-                  <div className="text-xs text-gray-500">Años de experiencia</div>
-                </div>
-                
-                <div className="text-center py-3 border-b border-gray-200">
-                  <div className="text-2xl font-bold text-green-600">100%</div>
-                  <div className="text-xs text-gray-500">Empresa familiar</div>
-                </div>
-                
-                <div className="text-center py-3">
-                  <div className="text-2xl font-bold text-blue-600">Local</div>
-                  <div className="text-xs text-gray-500">Compromiso comunitario</div>
-                </div>
-              </div>
-
-              {/* Acciones rápidas */}
-              <div className="mt-6 space-y-2">
-                {storeData.phone && (
-                  <button
-                    onClick={() => handleContactClick('whatsapp')}
-                    className="w-full px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition-colors"
-                  >
-                    WhatsApp
-                  </button>
-                )}
-                
-                <button
-                  onClick={() => handleContactClick('email')}
-                  className="w-full px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 transition-colors"
+          
+          {/* Imagen/Logo */}
+          <div className="flex justify-center">
+            <div 
+              className="w-80 h-80 rounded-full overflow-hidden shadow-xl"
+              style={{ 
+                boxShadow: 'var(--store-shadow, 0 4px 6px -1px rgba(0, 0, 0, 0.1))',
+                borderRadius: 'var(--store-border-radius, 0.5rem)'
+              }}
+            >
+              {storeLogo || profileImage ? (
+                <img
+                  src={storeLogo || profileImage}
+                  alt={businessName}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                <div 
+                  className="w-full h-full flex items-center justify-center text-white text-6xl font-bold"
+                  style={{ backgroundColor: 'var(--store-primary, #2563eb)' }}
                 >
-                  Enviar email
-                </button>
-              </div>
+                  {businessName?.charAt(0) || 'T'}
+                </div>
+              )}
             </div>
           </div>
         </div>
       </div>
     </section>
   );
-}
+};
+
+export default StoreHero;
