@@ -2,14 +2,17 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
-import { Search, User, Moon, Sun, Plus, HelpCircle, Link } from 'lucide-react'
+import { Search, User, Moon, Sun, Plus, HelpCircle, LogOut } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Header() {
   const [mounted, setMounted] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const { theme, setTheme } = useTheme()
+  const { isAuthenticated, userData, loading, signOut } = useAuth()
 
   const router = useRouter()
 
@@ -17,6 +20,15 @@ export default function Header() {
   useEffect(() => {
     setMounted(true)
   }, [])
+
+  // Cerrar menú cuando se hace clic fuera
+  useEffect(() => {
+    const handleClickOutside = () => setShowUserMenu(false)
+    if (showUserMenu) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [showUserMenu])
 
   const toggleDarkMode = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -37,8 +49,41 @@ export default function Header() {
     router.push('/register')
   }
 
+  // Función inteligente para el botón de usuario
+  const handleUserAction = () => {
+    if (loading) return
+
+    if (isAuthenticated) {
+      setShowUserMenu(!showUserMenu)
+    } else {
+      router.push('/login')
+    }
+  }
+
+  // Función para manejar logout
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      setShowUserMenu(false)
+      router.push('/')
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
+  }
+
+  // Función para ir al dashboard
   const handleDashboard = () => {
+    setShowUserMenu(false)
     router.push('/dashboard')
+  }
+
+  // Función para obtener el texto del botón de usuario
+  const getUserButtonText = () => {
+    if (loading) return 'Cargando...'
+    if (isAuthenticated) {
+      return userData?.firstName ? `Hola, ${userData.firstName}` : 'Mi cuenta'
+    }
+    return 'Mi cuenta'
   }
 
   if (!mounted) {
@@ -80,34 +125,81 @@ export default function Header() {
               </h1>
             </div>
 
-            {/* Botón Usuario - CORREGIDO */}
-            <button
-              onClick={handleDashboard}
-              className="p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative"
-              aria-label="Mi cuenta"
-            >
-              <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-            </button>
+            {/* Botón Usuario con menú dropdown */}
+            <div className="relative">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  handleUserAction()
+                }}
+                disabled={loading}
+                className={`p-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative ${
+                  isAuthenticated ? 'bg-primary-50 dark:bg-primary-900/20' : ''
+                } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                aria-label={getUserButtonText()}
+              >
+                <User className={`w-5 h-5 ${
+                  isAuthenticated 
+                    ? 'text-primary-600 dark:text-primary-400' 
+                    : 'text-gray-600 dark:text-gray-400'
+                }`} />
+                {isAuthenticated && (
+                  <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>
+                )}
+              </button>
+
+              {/* Dropdown menú para usuarios autenticados */}
+              {isAuthenticated && showUserMenu && (
+                <div className="absolute right-0 top-full mt-2 w-48 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                  <div className="px-4 py-2 border-b border-gray-200 dark:border-gray-700">
+                    <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {userData?.firstName ? `${userData.firstName} ${userData.lastName}` : 'Usuario'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                      {userData?.email}
+                    </p>
+                  </div>
+                  
+                  <button
+                    onClick={handleDashboard}
+                    className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
+                  >
+                    <User className="w-4 h-4" />
+                    Mi cuenta
+                  </button>
+                  
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-2"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    Cerrar sesión
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
-          {/* CTAs móviles integrados */}
-          <div className="flex items-center justify-between mb-4 px-1">
-            <button
-              onClick={handleNewUser}
-              className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors font-medium"
-            >
-              <HelpCircle className="w-4 h-4" />
-              ¿Eres nuevo?
-            </button>
+          {/* CTAs móviles integrados - Solo para usuarios no autenticados */}
+          {!isAuthenticated && !loading && (
+            <div className="flex items-center justify-between mb-4 px-1">
+              <button
+                onClick={handleNewUser}
+                className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors font-medium"
+              >
+                <HelpCircle className="w-4 h-4" />
+                ¿Eres nuevo?
+              </button>
 
-            <button
-              onClick={handleCreateStore}
-              className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
-            >
-              <Plus className="w-4 h-4" />
-              Crear tienda
-            </button>
-          </div>
+              <button
+                onClick={handleCreateStore}
+                className="flex items-center gap-2 bg-primary-500 hover:bg-primary-600 text-white font-medium px-4 py-2 rounded-lg transition-all duration-200 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 text-sm"
+              >
+                <Plus className="w-4 h-4" />
+                Crear tienda
+              </button>
+            </div>
+          )}
 
           {/* Barra de búsqueda móvil más prominente */}
           <form onSubmit={handleSearch} className="relative">
@@ -184,14 +276,70 @@ export default function Header() {
                 )}
               </button>
 
-              {/* Usuario mejorado - CORREGIDO */}
-              <button 
-                onClick={handleDashboard}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-              >
-                <User className="w-5 h-5 text-gray-600 dark:text-gray-400" />
-                <span className="text-sm font-medium text-gray-600 dark:text-gray-400">Mi cuenta</span>
-              </button>
+              {/* Botón Usuario con menú dropdown Desktop */}
+              <div className="relative">
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleUserAction()
+                  }}
+                  disabled={loading}
+                  className={`flex items-center gap-3 px-4 py-3 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors relative ${
+                    isAuthenticated ? 'bg-primary-50 dark:bg-primary-900/20' : ''
+                  } ${loading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                >
+                  <User className={`w-5 h-5 ${
+                    isAuthenticated 
+                      ? 'text-primary-600 dark:text-primary-400' 
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`} />
+                  <span className={`text-sm font-medium ${
+                    isAuthenticated 
+                      ? 'text-primary-600 dark:text-primary-400' 
+                      : 'text-gray-600 dark:text-gray-400'
+                  }`}>
+                    {getUserButtonText()}
+                  </span>
+                  {isAuthenticated && (
+                    <div className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white dark:border-gray-900"></div>
+                  )}
+                </button>
+
+                {/* Dropdown menú para usuarios autenticados Desktop */}
+                {isAuthenticated && showUserMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white dark:bg-gray-800 rounded-lg shadow-lg border border-gray-200 dark:border-gray-700 py-2 z-50">
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
+                      <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {userData?.firstName ? `${userData.firstName} ${userData.lastName}` : 'Usuario'}
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {userData?.email}
+                      </p>
+                      {userData?.businessName && (
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate mt-1">
+                          {userData.businessName}
+                        </p>
+                      )}
+                    </div>
+                    
+                    <button
+                      onClick={handleDashboard}
+                      className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-3"
+                    >
+                      <User className="w-4 h-4" />
+                      Mi cuenta
+                    </button>
+                    
+                    <button
+                      onClick={handleLogout}
+                      className="w-full text-left px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 flex items-center gap-3"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      Cerrar sesión
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -12,6 +12,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 └── package-lock.json
 └── postcss.config.mjs
 └── public
+|   └── firebase-messaging-sw.js
 |   └── icon.png
 |   └── icon-192.png
 |   └── icon-512.png
@@ -35,12 +36,13 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── page.js
 |   |   └── terms
 |   |   |   └── page.js
+|   |   └── user
+|   |   |   └── page.js
 |   └── components
 |   |   └── auth
 |   |   |   └── CompleteProfileModal.js
 |   |   |   └── Login.js
 |   |   |   └── Register.js
-|   |   └── AuthWrapper.js
 |   |   └── home
 |   |   |   └── CategoriesSection.js
 |   |   |   └── FeaturedJobs.js
@@ -50,7 +52,6 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── Testimonials.js
 |   |   |   └── WhatsNew.js
 |   |   └── layout
-|   |   |   └── AppLayout.js
 |   |   |   └── DesktopNavigation.js
 |   |   |   └── Footer.js
 |   |   |   └── Header.js
@@ -63,13 +64,11 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── ProductCard.js
 |   |   └── user
 |   |   |   └── AccountStatus.js
-|   └── context
+|   └── contexts
 |   |   └── AuthContext.js
 |   └── lib
 |   |   └── cloudinary
 |   |   |   └── config.js
-|   |   └── contexts
-|   |   |   └── AuthContext.js
 |   |   └── firebase
 |   |   |   └── admin.js
 |   |   |   └── config.js

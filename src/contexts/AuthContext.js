@@ -76,6 +76,32 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  // ✨ NUEVA FUNCIÓN: Refrescar datos del usuario desde Firestore
+  const refreshUserData = async () => {
+    if (!user?.uid) {
+      console.warn('⚠️ No hay usuario autenticado para refrescar datos');
+      return null;
+    }
+
+    try {
+      console.log('🔄 Refrescando datos del usuario desde Firestore...');
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+      
+      if (userDoc.exists()) {
+        const freshData = userDoc.data();
+        setUserData(freshData);
+        console.log('✅ Datos de usuario actualizados desde Firestore');
+        return freshData;
+      } else {
+        console.warn('⚠️ Documento de usuario no encontrado');
+        return null;
+      }
+    } catch (error) {
+      console.error('❌ Error refrescando datos del usuario:', error);
+      return null;
+    }
+  };
+
   // Login con email y contraseña
   const loginWithEmail = async (email, password) => {
     try {
@@ -278,7 +304,8 @@ export const AuthProvider = ({ children }) => {
     signInWithGoogle,
     completeProfile,
     resetPassword,
-    signOut
+    signOut,
+    refreshUserData // ✨ NUEVA FUNCIÓN EXPORTADA
   };
 
   return (

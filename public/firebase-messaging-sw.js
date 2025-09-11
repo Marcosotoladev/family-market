@@ -2,7 +2,7 @@
 importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js');
 
-// Configuración de Firebase con tus datos
+// Configuración de Firebase con tus datos reales
 const firebaseConfig = {
   apiKey: "AIzaSyDptJ7MH9xcrWCal4X38OU9FDbokm0vIP8",
   authDomain: "familymarket-b9da2.firebaseapp.com",
@@ -21,7 +21,7 @@ const messaging = firebase.messaging();
 
 // Manejar mensajes en segundo plano
 messaging.onBackgroundMessage(function(payload) {
-  console.log('Mensaje recibido en segundo plano: ', payload);
+  console.log('📱 Mensaje recibido en segundo plano: ', payload);
   
   const notificationTitle = payload.notification?.title || 'Family Market';
   const notificationOptions = {
@@ -30,6 +30,8 @@ messaging.onBackgroundMessage(function(payload) {
     badge: '/icon-192.png',
     tag: 'family-market-notification',
     data: payload.data || {},
+    vibrate: [200, 100, 200],
+    requireInteraction: false,
     actions: [
       {
         action: 'open',
@@ -42,17 +44,21 @@ messaging.onBackgroundMessage(function(payload) {
     ]
   };
 
-  self.registration.showNotification(notificationTitle, notificationOptions);
+  return self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
 // Manejar clics en notificaciones
 self.addEventListener('notificationclick', function(event) {
-  console.log('Clic en notificación: ', event.notification);
+  console.log('👆 Clic en notificación: ', event.notification);
   
   event.notification.close();
   
+  if (event.action === 'close') {
+    return;
+  }
+  
   // Determinar la URL según los datos de la notificación
-  let urlToOpen = '/';
+  let urlToOpen = '/dashboard';
   if (event.notification.data && event.notification.data.url) {
     urlToOpen = event.notification.data.url;
   }
@@ -63,10 +69,14 @@ self.addEventListener('notificationclick', function(event) {
       type: 'window',
       includeUncontrolled: true
     }).then(function(clientList) {
-      // Si hay una ventana abierta, enfocarla
+      // Si hay una ventana abierta, enfocarla y navegar
       for (let i = 0; i < clientList.length; i++) {
         const client = clientList[i];
         if (client.url.includes(self.location.origin) && 'focus' in client) {
+          client.postMessage({
+            type: 'NOTIFICATION_CLICK',
+            url: urlToOpen
+          });
           return client.focus();
         }
       }
@@ -76,19 +86,4 @@ self.addEventListener('notificationclick', function(event) {
       }
     })
   );
-});
-
-// Manejar acciones de notificación
-self.addEventListener('notificationclick', function(event) {
-  if (event.action === 'close') {
-    event.notification.close();
-    return;
-  }
-  
-  if (event.action === 'open') {
-    event.notification.close();
-    event.waitUntil(
-      clients.openWindow('/')
-    );
-  }
 });
