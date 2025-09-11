@@ -1,8 +1,11 @@
 // src/app/layout.js
+'use client';
+
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '../components/providers/ThemeProvider'
-import { AuthProvider } from '../contexts/AuthContext'  // ← Solo agregar esto
+import { AuthProvider } from '../contexts/AuthContext'
+import { usePathname } from 'next/navigation'
 import Header from '../components/layout/Header'
 import DesktopNavigation from '../components/layout/DesktopNavigation'
 import MobileNavigation from '../components/layout/MobileNavigation'
@@ -10,29 +13,12 @@ import Footer from '@/components/layout/Footer'
 
 const inter = Inter({ subsets: ['latin'] })
 
-export const metadata = {
-  title: 'Family Market',
-  description: 'Tu mercado familiar en línea',
-  manifest: '/manifest.json',
-  applicationName: 'Family Market',
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: 'default',
-    title: 'Family Market'
-  }
-}
-
-export const viewport = {
-  width: 'device-width',
-  initialScale: 1,
-  viewportFit: 'cover',
-  themeColor: [
-    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
-    { media: '(prefers-color-scheme: dark)', color: '#000000' }
-  ]
-}
-
 export default function RootLayout({ children }) {
+  const pathname = usePathname()
+  
+  // Verificar si estamos en una ruta de tienda
+  const isStorePage = pathname?.startsWith('/tienda/')
+
   return (
     <html lang="es" suppressHydrationWarning>
       <head>
@@ -55,10 +41,15 @@ export default function RootLayout({ children }) {
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico" />
       </head>
-      <body className={`${inter.className} overflow-x-hidden`}>
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <AuthProvider>  {/* ← Solo wrappear con esto */}
-            <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
+      <body className={`${inter.className} ${isStorePage ? 'antialiased' : 'overflow-x-hidden'}`}>
+        <ThemeProvider attribute="class" defaultTheme={isStorePage ? "light" : "system"} enableSystem={!isStorePage}>
+          <AuthProvider>
+            {isStorePage ? (
+              // Para páginas de tienda: solo el contenido sin layout de Family Market
+              children
+            ) : (
+              // Para páginas de Family Market: layout completo
+              <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
                 {/* Header */}
                 <Header />
                 
@@ -67,19 +58,20 @@ export default function RootLayout({ children }) {
                   <DesktopNavigation />
                 </div>
               
-              {/* Contenido principal */}
-              <main className="pb-20 lg:pb-8">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  {children}
-                </div>
-              </main>
-              
-              {/* Navegación Mobile condicional */}
+                {/* Contenido principal */}
+                <main className="pb-20 lg:pb-8">
+                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    {children}
+                  </div>
+                </main>
+                
+                {/* Navegación Mobile condicional */}
                 <MobileNavigation />
 
                 <Footer />
-            </div>
-          </AuthProvider>  {/* ← Cerrar aquí */}
+              </div>
+            )}
+          </AuthProvider>
         </ThemeProvider>
         
         {/* Script actualizado para registrar ambos Service Workers */}
