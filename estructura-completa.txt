@@ -26,7 +26,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   └── route.js
 |   |   └── dashboard
 |   |   |   └── page.js
-|   |   |   └── perfil
+|   |   |   └── profile
 |   |   |   |   └── page.js
 |   |   └── favicon.ico
 |   |   └── globals.css
@@ -38,6 +38,10 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── page.js
 |   |   └── terms
 |   |   |   └── page.js
+|   |   └── tienda
+|   |   |   └── [slug]
+|   |   |   |   └── layout.js
+|   |   |   |   └── page.js
 |   |   └── user
 |   |   |   └── page.js
 |   └── components
@@ -45,6 +49,11 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── CompleteProfileModal.js
 |   |   |   └── Login.js
 |   |   |   └── Register.js
+|   |   └── dashboard
+|   |   |   └── ActionCardsGrid.js
+|   |   |   └── DashboardHeader.js
+|   |   |   └── QuickStatsSection.js
+|   |   |   └── UserInfoCard.js
 |   |   └── home
 |   |   |   └── CategoriesSection.js
 |   |   |   └── FeaturedJobs.js
@@ -59,8 +68,20 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── Footer.js
 |   |   |   └── Header.js
 |   |   |   └── MobileNavigation.js
+|   |   └── profile
+|   |   |   └── AccountSettingsSection.js
+|   |   |   └── BusinessInfoSection.js
+|   |   |   └── ImageUploadSection.js
+|   |   |   └── PersonalInfoSection.js
+|   |   |   └── ProfileSidebar.js
 |   |   └── providers
 |   |   |   └── ThemeProvider.jsx
+|   |   └── store
+|   |   |   └── ContactSection.js
+|   |   |   └── ProductsGrid.js
+|   |   |   └── ServicesSection.js
+|   |   |   └── StoreHeader.js
+|   |   |   └── StoreHero.js
 |   |   └── ui
 |   |   |   └── ImageUpload.js
 |   |   |   └── NotificationManager.js
