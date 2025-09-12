@@ -40,8 +40,9 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── page.js
 |   |   └── tienda
 |   |   |   └── [slug]
-|   |   |   |   └── layout.js
 |   |   |   |   └── page.js
+|   |   |   └── layout.js
+|   |   |   └── page.js
 |   |   └── user
 |   |   |   └── page.js
 |   └── components
@@ -73,13 +74,18 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── BusinessInfoSection.js
 |   |   |   └── ImageUploadSection.js
 |   |   |   └── PersonalInfoSection.js
+|   |   |   └── ProfileContent.js
 |   |   |   └── ProfileSidebar.js
+|   |   |   └── StoreConfigSection.js
 |   |   └── providers
 |   |   |   └── ThemeProvider.jsx
 |   |   └── store
+|   |   |   └── ConfigSection.js
 |   |   |   └── ContactSection.js
 |   |   |   └── ProductsGrid.js
 |   |   |   └── ServicesSection.js
+|   |   |   └── SocialLinksComponent.js
+|   |   |   └── StoreFooter.js
 |   |   |   └── StoreHeader.js
 |   |   |   └── StoreHero.js
 |   |   └── ui
@@ -108,6 +114,9 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── useNotifications.js
 |   |   └── services
 |   |   |   └── notificationService.js
+|   |   └── storeConfigUtils.js
+|   └── styles
+|   |   └── store-themes.css
 |   └── types
 |   |   └── categories.js
 |   |   └── employment.js

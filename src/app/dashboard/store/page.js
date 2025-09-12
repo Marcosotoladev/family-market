@@ -1,28 +1,28 @@
-// src/app/dashboard/profile/page.js
+// src/app/dashboard/store/page.js
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardTopNavigation from '@/components/layout/DashboardTopNavigation';
-import ProfileSidebar from '@/components/profile/ProfileSidebar';
-import PersonalInfoSection from '@/components/profile/PersonalInfoSection';
-import ProfileImageSection from '@/components/profile/ProfileImageSection';
-import AccountSettingsSection from '@/components/profile/AccountSettingsSection';
-import { AlertCircle, CheckCircle, User } from 'lucide-react';
+import StoreSidebar from '@/components/store/StoreSidebar';
+import BusinessInfoSection from '@/components/store/BusinessInfoSection';
+import StoreLogoSection from '@/components/store/StoreLogoSection';
+import StoreConfigSection from '@/components/store/StoreConfigSection';
+import { AlertCircle, CheckCircle, Store } from 'lucide-react';
 
-export default function ProfilePage() {
+export default function StorePage() {
   const { isAuthenticated, userData, user, loading } = useAuth();
   const router = useRouter();
   
-  const [activeSection, setActiveSection] = useState('personal');
+  const [activeSection, setActiveSection] = useState('business');
   const [messages, setMessages] = useState({
     success: '',
     error: ''
   });
 
-  // Estado para imagen de perfil
-  const [profileImageState, setProfileImageState] = useState({
+  // Estados para logo de tienda
+  const [logoState, setLogoState] = useState({
     url: '',
     uploading: false,
     preview: null
@@ -36,9 +36,9 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (userData) {
-      setProfileImageState(prev => ({
+      setLogoState(prev => ({
         ...prev,
-        url: userData.profileImage || ''
+        url: userData.storeLogo || ''
       }));
     }
   }, [userData]);
@@ -58,8 +58,8 @@ export default function ProfilePage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Cargando perfil...</p>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-600 dark:text-gray-400">Cargando tienda...</p>
         </div>
       </div>
     );
@@ -71,46 +71,46 @@ export default function ProfilePage() {
 
   const renderActiveSection = () => {
     switch (activeSection) {
-      case 'personal':
-        return <PersonalInfoSection showMessage={showMessage} />;
-      case 'image':
+      case 'business':
+        return <BusinessInfoSection showMessage={showMessage} />;
+      case 'logo':
         return (
-          <ProfileImageSection 
-            profileImageState={profileImageState}
-            setProfileImageState={setProfileImageState}
+          <StoreLogoSection 
+            logoState={logoState}
+            setLogoState={setLogoState}
             showMessage={showMessage}
           />
         );
-      case 'account':
-        return <AccountSettingsSection showMessage={showMessage} />;
+      case 'config':
+        return <StoreConfigSection showMessage={showMessage} />;
       default:
-        return <PersonalInfoSection showMessage={showMessage} />;
+        return <BusinessInfoSection showMessage={showMessage} />;
     }
   };
 
   const getSectionTitle = () => {
     switch (activeSection) {
-      case 'personal':
-        return 'Información Personal';
-      case 'image':
-        return 'Foto de Perfil';
-      case 'account':
-        return 'Configuración de Cuenta';
+      case 'business':
+        return 'Información del Negocio';
+      case 'logo':
+        return 'Logo de la Tienda';
+      case 'config':
+        return 'Configuración de Tienda';
       default:
-        return 'Mi Perfil';
+        return 'Mi Tienda';
     }
   };
 
   const getSectionDescription = () => {
     switch (activeSection) {
-      case 'personal':
-        return 'Gestiona tu información personal y de contacto';
-      case 'image':
-        return 'Administra tu imagen de perfil';
-      case 'account':
-        return 'Configuración de privacidad y cuenta';
+      case 'business':
+        return 'Información de tu empresa o negocio';
+      case 'logo':
+        return 'Logo que aparecerá en tu tienda online';
+      case 'config':
+        return 'Personaliza cómo se ve y qué muestra tu tienda online';
       default:
-        return 'Gestiona tu información personal y configuración de cuenta';
+        return 'Gestiona tu tienda online';
     }
   };
 
@@ -119,18 +119,18 @@ export default function ProfilePage() {
       <DashboardTopNavigation />
 
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+      {/* <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center overflow-hidden">
-              {profileImageState.url ? (
+            <div className="w-12 h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-lg flex items-center justify-center overflow-hidden">
+              {logoState.url ? (
                 <img
-                  src={profileImageState.url}
-                  alt="Perfil"
-                  className="w-full h-full object-cover"
+                  src={logoState.url}
+                  alt="Logo de la tienda"
+                  className="w-full h-full object-contain"
                 />
               ) : (
-                <User className="w-6 h-6 text-white" />
+                <Store className="w-6 h-6 text-white" />
               )}
             </div>
             <div>
@@ -143,17 +143,17 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <ProfileSidebar 
+            <StoreSidebar 
               activeSection={activeSection}
               setActiveSection={setActiveSection}
-              profileImageState={profileImageState}
+              logoState={logoState}
             />
           </div>
 

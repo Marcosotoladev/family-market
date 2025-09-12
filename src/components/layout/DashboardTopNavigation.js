@@ -3,7 +3,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { ShoppingBag, Wrench, Briefcase, BarChart3, User, ChevronDown } from 'lucide-react'
+import { ShoppingBag, Wrench, Briefcase, BarChart3, User, ChevronDown, Store } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function DashboardTopNavigation() {
@@ -51,6 +51,13 @@ export default function DashboardTopNavigation() {
       color: 'purple'
     },
     {
+      id: 'tienda',
+      label: 'Tienda',
+      icon: Store,
+      href: '/dashboard/store',
+      color: 'orange'
+    },
+    {
       id: 'perfil',
       label: 'Perfil',
       icon: User,
@@ -96,6 +103,11 @@ export default function DashboardTopNavigation() {
         inactive: 'text-gray-600 dark:text-gray-400 border-transparent hover:text-purple-600 dark:hover:text-purple-400',
         bg: 'bg-purple-50 dark:bg-purple-900/20'
       },
+      orange: {
+        active: 'text-orange-600 dark:text-orange-400 border-orange-500',
+        inactive: 'text-gray-600 dark:text-gray-400 border-transparent hover:text-orange-600 dark:hover:text-orange-400',
+        bg: 'bg-orange-50 dark:bg-orange-900/20'
+      },
       gray: {
         active: 'text-gray-700 dark:text-gray-300 border-gray-500',
         inactive: 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300',
@@ -112,7 +124,7 @@ export default function DashboardTopNavigation() {
     <>
       {/* DESKTOP: Tabs horizontales */}
       <div className="hidden sm:block bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-2 lg:px-8">
           <div className="flex space-x-8 overflow-x-auto scrollbar-hide">
             {dashboardTabs.map((tab) => {
               const Icon = tab.icon
@@ -138,7 +150,7 @@ export default function DashboardTopNavigation() {
 
       {/* MOBILE: Dropdown selector */}
       <div className="sm:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div className="px-4 py-3">
+        <div className="px-4 py-1">
           <div className="relative">
             {/* Botón dropdown */}
             <button

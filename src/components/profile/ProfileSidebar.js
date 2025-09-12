@@ -1,42 +1,28 @@
 // src/components/profile/ProfileSidebar.js
 import { 
   User, 
-  Building2, 
-  ImageIcon, 
-  Settings, 
-  Store,
-  CheckCircle 
+  Camera, 
+  Settings,
+  CheckCircle,
+  Shield
 } from 'lucide-react';
 
-const ProfileSidebar = ({ activeSection, setActiveSection, imageStates }) => {
+const ProfileSidebar = ({ activeSection, setActiveSection, profileImageState }) => {
   const menuItems = [
     {
       id: 'personal',
       label: 'Información Personal',
       icon: User,
-      description: 'Datos personales y de contacto'
+      description: 'Datos personales y contacto'
     },
     {
-      id: 'negocio',
-      label: 'Información del Negocio',
-      icon: Building2,
-      description: 'Datos de tu empresa'
+      id: 'image',
+      label: 'Foto de Perfil',
+      icon: Camera,
+      description: 'Tu imagen de perfil'
     },
     {
-      id: 'imagenes',
-      label: 'Fotos y Logos',
-      icon: ImageIcon,
-      description: 'Imagen de perfil y logo'
-    },
-    {
-      id: 'tienda',
-      label: 'Configuración de Tienda',
-      icon: Store,
-      description: 'Personaliza tu tienda online',
-      isNew: true
-    },
-    {
-      id: 'cuenta',
+      id: 'account',
       label: 'Configuración de Cuenta',
       icon: Settings,
       description: 'Privacidad y configuración'
@@ -48,10 +34,10 @@ const ProfileSidebar = ({ activeSection, setActiveSection, imageStates }) => {
       {/* Header con imagen de perfil */}
       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-4">
-          <div className="w-16 h-16 bg-gradient-to-r from-primary-500 to-primary-600 rounded-full flex items-center justify-center overflow-hidden">
-            {imageStates?.profileImage?.url ? (
+          <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center overflow-hidden">
+            {profileImageState?.url ? (
               <img
-                src={imageStates.profileImage.url}
+                src={profileImageState.url}
                 alt="Perfil"
                 className="w-full h-full object-cover"
               />
@@ -64,7 +50,7 @@ const ProfileSidebar = ({ activeSection, setActiveSection, imageStates }) => {
               Mi Perfil
             </h3>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              Configuración completa
+              Información personal
             </p>
           </div>
         </div>
@@ -83,34 +69,29 @@ const ProfileSidebar = ({ activeSection, setActiveSection, imageStates }) => {
                 onClick={() => setActiveSection(item.id)}
                 className={`w-full flex items-center justify-between p-4 rounded-lg text-left transition-all duration-200 group relative ${
                   isActive
-                    ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-700'
+                    ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
                 }`}
               >
                 <div className="flex items-center space-x-3">
                   <div className={`p-2 rounded-lg transition-colors ${
                     isActive
-                      ? 'bg-primary-100 dark:bg-primary-800/30'
+                      ? 'bg-blue-100 dark:bg-blue-800/30'
                       : 'bg-gray-100 dark:bg-gray-700 group-hover:bg-gray-200 dark:group-hover:bg-gray-600'
                   }`}>
                     <Icon className={`w-5 h-5 ${
                       isActive
-                        ? 'text-primary-600 dark:text-primary-400'
+                        ? 'text-blue-600 dark:text-blue-400'
                         : 'text-gray-600 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300'
                     }`} />
                   </div>
                   <div className="flex-1">
-                    <div className="font-medium flex items-center">
+                    <div className="font-medium">
                       {item.label}
-                      {item.isNew && (
-                        <span className="ml-2 px-2 py-0.5 text-xs bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-400 rounded-full">
-                          Nuevo
-                        </span>
-                      )}
                     </div>
                     <div className={`text-xs ${
                       isActive
-                        ? 'text-primary-600 dark:text-primary-400'
+                        ? 'text-blue-600 dark:text-blue-400'
                         : 'text-gray-500 dark:text-gray-400'
                     }`}>
                       {item.description}
@@ -119,7 +100,7 @@ const ProfileSidebar = ({ activeSection, setActiveSection, imageStates }) => {
                 </div>
                 
                 {isActive && (
-                  <CheckCircle className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                  <CheckCircle className="w-4 h-4 text-blue-600 dark:text-blue-400" />
                 )}
               </button>
             );
@@ -127,17 +108,17 @@ const ProfileSidebar = ({ activeSection, setActiveSection, imageStates }) => {
         </div>
       </nav>
       
-      {/* Info adicional */}
+      {/* Info adicional - Privacidad */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
-        <div className="bg-gradient-to-r from-primary-50 to-blue-50 dark:from-primary-900/20 dark:to-blue-900/20 rounded-lg p-4">
+        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4">
           <div className="flex items-center space-x-2 mb-2">
-            <Store className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-            <span className="text-sm font-medium text-primary-900 dark:text-primary-100">
-              Tu Tienda Online
+            <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+            <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+              Tu Privacidad
             </span>
           </div>
-          <p className="text-xs text-primary-700 dark:text-primary-300">
-            Personaliza completamente tu tienda con la nueva configuración avanzada
+          <p className="text-xs text-blue-700 dark:text-blue-300">
+            Tu información personal está protegida y solo se muestra según tus preferencias de privacidad
           </p>
         </div>
       </div>
