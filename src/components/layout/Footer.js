@@ -84,14 +84,14 @@ export default function Footer() {
   ]
 
   return (
-    <footer className="relative py-16 lg:py-20 -mx-4 sm:-mx-6 lg:-mx-8">
-      <div className="bg-gray-900 dark:bg-gray-950 px-4 sm:px-6 lg:px-8 py-16 lg:py-20 text-white transition-colors">
+    <footer className="relative py-4 lg:py-4 -mx-4 sm:-mx-6 lg:-mx-8">
+      <div className="bg-gray-900 dark:bg-gray-950 px-4 sm:px-6 lg:px-8 py-4 lg:py-4 text-white transition-colors">
         <div className="max-w-7xl mx-auto">
           {/* Sección principal del footer */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-12">
             {/* Columna de marca y descripción */}
             <div className="lg:col-span-2">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-2">
                 <Image
                   src="/icon.png"
                   alt="Family Market Logo"
@@ -104,13 +104,13 @@ export default function Footer() {
                 </h3>
               </div>
               
-              <p className="text-gray-300 dark:text-gray-400 mb-6 leading-relaxed">
+              <p className="text-gray-300 dark:text-gray-400 mb-2 leading-relaxed">
                 Una plataforma que conecta a nuestra comunidad cristiana, facilitando el comercio local 
                 y fortaleciendo los lazos entre hermanos en la fe.
               </p>
 
               {/* Información de contacto */}
-              <div className="space-y-3 mb-6">
+              <div className="space-y-3 mb-2">
                 {contactInfo.map((contact, index) => {
                   const IconComponent = contact.icon
                   return (
@@ -127,7 +127,7 @@ export default function Footer() {
               </div>
 
               {/* Redes sociales */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-400 dark:text-gray-500">Síguenos:</span>
                 <div className="flex gap-3">
                   {socialLinks.map((social, index) => {
@@ -150,7 +150,7 @@ export default function Footer() {
             {/* Columnas de enlaces */}
             {Object.entries(footerLinks).map(([key, section]) => (
               <div key={key}>
-                <h4 className="font-semibold text-white mb-4">{section.title}</h4>
+                <h4 className="font-semibold text-white mb-2">{section.title}</h4>
                 <ul className="space-y-3">
                   {section.links.map((link, index) => (
                     <li key={index}>
@@ -169,7 +169,7 @@ export default function Footer() {
           </div>
 
           {/* Versículo bíblico destacado */}
-          <div className="mt-16 pt-8 border-t border-gray-700 dark:border-gray-800">
+          <div className="mt-4 pt-2 border-t border-gray-700 dark:border-gray-800">
             <div className="max-w-4xl mx-auto text-center">
               <div className="relative">
                 <div className="absolute -top-2 -left-2 w-8 h-8 text-primary-400/20 text-6xl leading-none">"</div>
@@ -186,7 +186,7 @@ export default function Footer() {
           </div>
 
           {/* Footer inferior */}
-          <div className="mt-12 pt-8 border-t border-gray-700 dark:border-gray-800">
+          <div className="mt-2 pt-2 border-t border-gray-700 dark:border-gray-800">
             <div className="flex flex-col md:flex-row justify-between items-center gap-6">
               <div className="flex items-center gap-2 text-sm text-gray-400 dark:text-gray-500">
                 <Heart className="w-4 h-4 text-red-400" />

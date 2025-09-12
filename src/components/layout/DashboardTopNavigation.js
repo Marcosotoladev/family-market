@@ -186,7 +186,7 @@ export default function DashboardTopNavigation() {
                       key={tab.id}
                       onClick={() => handleTabClick(tab)}
                       className={`
-                        w-full flex items-center space-x-3 p-4 text-left transition-colors duration-200
+                        w-full flex items-center space-x-3 p-2 text-left transition-colors duration-200
                         ${isActive 
                           ? `${getColorClasses(tab.color, true).split(' ')[0]} bg-${tab.color}-50 dark:bg-${tab.color}-900/20` 
                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'

@@ -6,7 +6,6 @@ import FeaturedServices from '@/components/home/FeaturedServices'
 import FeaturedJobs from '@/components/home/FeaturedJobs'
 import CategoriesSection from '@/components/home/CategoriesSection'
 import Testimonials from '@/components/home/Testimonials'
-import Footer from '@/components/layout/Footer'
 
 import NotificationManager from '@/components/ui/NotificationManager'
 
@@ -49,7 +48,6 @@ export default function HomePage() {
       </section>
 
       {/* Footer */}
-      <Footer />
 
       <NotificationManager />
       </>

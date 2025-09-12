@@ -32,7 +32,7 @@ const ProfileSidebar = ({ activeSection, setActiveSection, profileImageState }) 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700">
       {/* Header con imagen de perfil */}
-      <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+{/*       <div className="p-6 border-b border-gray-200 dark:border-gray-700">
         <div className="flex items-center space-x-4">
           <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center overflow-hidden">
             {profileImageState?.url ? (
@@ -54,10 +54,10 @@ const ProfileSidebar = ({ activeSection, setActiveSection, profileImageState }) 
             </p>
           </div>
         </div>
-      </div>
+      </div> */}
 
       {/* Menu Items */}
-      <nav className="p-4">
+      <nav className="p-2">
         <div className="space-y-2">
           {menuItems.map((item) => {
             const Icon = item.icon;
@@ -67,7 +67,7 @@ const ProfileSidebar = ({ activeSection, setActiveSection, profileImageState }) 
               <button
                 key={item.id}
                 onClick={() => setActiveSection(item.id)}
-                className={`w-full flex items-center justify-between p-4 rounded-lg text-left transition-all duration-200 group relative ${
+                className={`w-full flex items-center justify-between p-2 rounded-lg text-left transition-all duration-200 group relative ${
                   isActive
                     ? 'bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-700'
                     : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
@@ -109,7 +109,7 @@ const ProfileSidebar = ({ activeSection, setActiveSection, profileImageState }) 
       </nav>
       
       {/* Info adicional - Privacidad */}
-      <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+{/*       <div className="p-4 border-t border-gray-200 dark:border-gray-700">
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 rounded-lg p-4">
           <div className="flex items-center space-x-2 mb-2">
             <Shield className="w-4 h-4 text-blue-600 dark:text-blue-400" />
@@ -121,7 +121,7 @@ const ProfileSidebar = ({ activeSection, setActiveSection, profileImageState }) 
             Tu información personal está protegida y solo se muestra según tus preferencias de privacidad
           </p>
         </div>
-      </div>
+      </div> */}
     </div>
   );
 };

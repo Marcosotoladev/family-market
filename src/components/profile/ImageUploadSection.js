@@ -149,6 +149,7 @@ export default function ImageUploadSection({ imageStates, setImageStates, showMe
 
     return (
       <div className="space-y-4">
+        {/* Título y descripción */}
         <div>
           <h4 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
             {title}
@@ -158,10 +159,12 @@ export default function ImageUploadSection({ imageStates, setImageStates, showMe
           </p>
         </div>
 
-        <div className="flex items-start space-x-6">
-          {/* Preview de imagen */}
+        {/* NUEVO LAYOUT MÓVIL: Todo centrado y en columna */}
+        <div className="flex flex-col items-center space-y-4 md:flex-row md:items-start md:space-y-0 md:space-x-6">
+          
+          {/* Imagen - siempre centrada */}
           <div className={`
-            relative flex-shrink-0 
+            relative flex-shrink-0
             ${isCircular ? 'w-24 h-24 rounded-full' : 'w-32 h-20 rounded-lg'}
             ${hasImage ? '' : 'border-2 border-dashed border-gray-300 dark:border-gray-600'}
             overflow-hidden bg-gray-100 dark:bg-gray-700 flex items-center justify-center
@@ -191,9 +194,11 @@ export default function ImageUploadSection({ imageStates, setImageStates, showMe
             )}
           </div>
 
-          {/* Controles */}
-          <div className="flex-1 space-y-3">
-            <div className="flex space-x-3">
+          {/* Controles - centrados en móvil, alineados en desktop */}
+          <div className="w-full md:flex-1 space-y-3">
+            
+            {/* Botones */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
               <button
                 onClick={() => {
                   if (type === 'profileImage') {
@@ -203,7 +208,7 @@ export default function ImageUploadSection({ imageStates, setImageStates, showMe
                   }
                 }}
                 disabled={imageData.uploading}
-                className="flex items-center px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center justify-center px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 {hasImage ? 'Cambiar' : 'Subir'} {title.toLowerCase()}
@@ -212,7 +217,7 @@ export default function ImageUploadSection({ imageStates, setImageStates, showMe
               {hasImage && !imageData.uploading && (
                 <button
                   onClick={() => handleRemoveImage(type)}
-                  className="flex items-center px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-300 dark:border-red-600 rounded-lg transition-colors"
+                  className="flex items-center justify-center px-4 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-300 dark:border-red-600 rounded-lg transition-colors"
                 >
                   <X className="w-4 h-4 mr-2" />
                   Eliminar
@@ -220,9 +225,24 @@ export default function ImageUploadSection({ imageStates, setImageStates, showMe
               )}
             </div>
 
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Todos los formatos de imagen son compatibles. La imagen se optimizará automáticamente.
-            </p>
+            {/* Recomendaciones */}
+            <div className="text-xs text-gray-500 dark:text-gray-400 text-center md:text-left">
+              <p className="mb-1">Formatos compatibles: JPG, PNG</p>
+              {isCircular ? (
+                <>
+                  <p>• Usa una foto cara donde se vea bien tu rostro</p>
+                  <p>• Una foto fácil muy oscura o con mucho filtro</p>
+                  <p>• Una sonrisa natural genera más confianza</p>
+                  <p>• Mantén la foto actualizada</p>
+                </>
+              ) : (
+                <>
+                  <p>• Logo en alta resolución (mínimo 300x200px)</p>
+                  <p>• Fondo transparente o uniforme</p>
+                  <p>• Evita logos muy complejos o con texto pequeño</p>
+                </>
+              )}
+            </div>
           </div>
         </div>
 
@@ -239,7 +259,7 @@ export default function ImageUploadSection({ imageStates, setImageStates, showMe
   };
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
       <div className="flex items-center space-x-3 mb-6">
         <Camera className="w-6 h-6 text-primary-600 dark:text-primary-400" />
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">

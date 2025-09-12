@@ -129,7 +129,7 @@ export default function ProfileImageSection({ profileImageState, setProfileImage
   const hasImage = profileImageState.url || profileImageState.preview;
 
   return (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 sm:p-6">
       <div className="flex items-center space-x-3 mb-6">
         <Camera className="w-6 h-6 text-blue-600 dark:text-blue-400" />
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
@@ -151,8 +151,10 @@ export default function ProfileImageSection({ profileImageState, setProfileImage
           </ul>
         </div>
 
-        <div className="flex items-start space-x-6">
-          {/* Preview de imagen */}
+        {/* NUEVO LAYOUT RESPONSIVE */}
+        <div className="flex flex-col items-center space-y-6 md:flex-row md:items-start md:space-y-0 md:space-x-6">
+          
+          {/* Preview de imagen - centrada en móvil */}
           <div className={`
             relative flex-shrink-0 w-32 h-32 rounded-full
             ${hasImage ? 'border-2 border-gray-200 dark:border-gray-600' : 'border-2 border-dashed border-gray-300 dark:border-gray-600'}
@@ -183,13 +185,15 @@ export default function ProfileImageSection({ profileImageState, setProfileImage
             )}
           </div>
 
-          {/* Controles */}
-          <div className="flex-1 space-y-4">
-            <div className="flex flex-wrap gap-3">
+          {/* Controles - centrados en móvil, alineados en desktop */}
+          <div className="w-full md:flex-1 space-y-4">
+            
+            {/* Botones - centrados en móvil */}
+            <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
               <button
                 onClick={() => profileImageRef.current?.click()}
                 disabled={profileImageState.uploading}
-                className="flex items-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center justify-center px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 {hasImage ? 'Cambiar Foto' : 'Subir Foto'}
@@ -198,7 +202,7 @@ export default function ProfileImageSection({ profileImageState, setProfileImage
               {hasImage && !profileImageState.uploading && (
                 <button
                   onClick={handleRemoveImage}
-                  className="flex items-center px-6 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-300 dark:border-red-600 rounded-lg transition-colors"
+                  className="flex items-center justify-center px-6 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-300 dark:border-red-600 rounded-lg transition-colors"
                 >
                   <X className="w-4 h-4 mr-2" />
                   Eliminar
@@ -206,11 +210,12 @@ export default function ProfileImageSection({ profileImageState, setProfileImage
               )}
             </div>
 
-            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
+            {/* Recomendaciones - centradas en móvil */}
+            <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2 text-center md:text-left">
               <p>
                 <strong>Recomendaciones:</strong>
               </p>
-              <ul className="list-disc list-inside space-y-1 text-xs">
+              <ul className="text-xs space-y-1 md:list-disc md:list-inside">
                 <li>Usa una foto clara donde se vea bien tu rostro</li>
                 <li>Evita fotos muy oscuras o con mucho filtro</li>
                 <li>Una sonrisa natural genera más confianza</li>
@@ -232,10 +237,10 @@ export default function ProfileImageSection({ profileImageState, setProfileImage
         {/* Vista previa en diferentes contextos */}
         {hasImage && (
           <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+            <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3 text-center md:text-left">
               Vista previa en diferentes tamaños
             </h4>
-            <div className="flex items-center space-x-6">
+            <div className="flex items-center justify-center md:justify-start space-x-6">
               <div className="text-center">
                 <img
                   src={profileImageState.preview || profileImageState.url}

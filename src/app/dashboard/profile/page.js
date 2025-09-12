@@ -14,7 +14,7 @@ import { AlertCircle, CheckCircle, User } from 'lucide-react';
 export default function ProfilePage() {
   const { isAuthenticated, userData, user, loading } = useAuth();
   const router = useRouter();
-  
+
   const [activeSection, setActiveSection] = useState('personal');
   const [messages, setMessages] = useState({
     success: '',
@@ -44,11 +44,11 @@ export default function ProfilePage() {
   }, [userData]);
 
   const showMessage = (type, message) => {
-    setMessages({ 
+    setMessages({
       success: type === 'success' ? message : '',
       error: type === 'error' ? message : ''
     });
-    
+
     setTimeout(() => {
       setMessages({ success: '', error: '' });
     }, 3000);
@@ -75,7 +75,7 @@ export default function ProfilePage() {
         return <PersonalInfoSection showMessage={showMessage} />;
       case 'image':
         return (
-          <ProfileImageSection 
+          <ProfileImageSection
             profileImageState={profileImageState}
             setProfileImageState={setProfileImageState}
             showMessage={showMessage}
@@ -119,7 +119,7 @@ export default function ProfilePage() {
       <DashboardTopNavigation />
 
       {/* Header */}
-      <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+{/*       <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-blue-600 rounded-full flex items-center justify-center overflow-hidden">
@@ -143,14 +143,14 @@ export default function ProfilePage() {
             </div>
           </div>
         </div>
-      </div>
+      </div> */}
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <ProfileSidebar 
+            <ProfileSidebar
               activeSection={activeSection}
               setActiveSection={setActiveSection}
               profileImageState={profileImageState}
