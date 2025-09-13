@@ -112,7 +112,7 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
   }, []);
 
   // Manejar clic en el gradiente
-  const handleGradientClick = (event) => {
+  const handleGradientClick = useCallback((event) => {
     if (!gradientRef.current) return;
     
     const rect = gradientRef.current.getBoundingClientRect();
@@ -124,7 +124,7 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
     
     setSaturation(Math.max(0, Math.min(100, newSaturation)));
     setLightness(Math.max(0, Math.min(100, newLightness)));
-  };
+  }, []);
 
   // Colores predefinidos populares
   const presetColors = [
