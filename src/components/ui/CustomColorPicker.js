@@ -1,5 +1,5 @@
 // src/components/ui/CustomColorPicker.js
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { ChevronDown } from 'lucide-react';
 
 const CustomColorPicker = ({ value, onChange, className = "" }) => {
@@ -7,13 +7,13 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
   const [hue, setHue] = useState(0);
   const [saturation, setSaturation] = useState(100);
   const [lightness, setLightness] = useState(50);
-  const [rgbValues, setRgbValues] = useState({ r: 0, g: 0, b: 0 });
+  const [isUpdating, setIsUpdating] = useState(false);
   
   const pickerRef = useRef(null);
   const gradientRef = useRef(null);
 
   // Convertir hex a HSL
-  const hexToHsl = (hex) => {
+  const hexToHsl = useCallback((hex) => {
     const r = parseInt(hex.slice(1, 3), 16) / 255;
     const g = parseInt(hex.slice(3, 5), 16) / 255;
     const b = parseInt(hex.slice(5, 7), 16) / 255;
@@ -36,10 +36,10 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
     }
 
     return [h * 360, s * 100, l * 100];
-  };
+  }, []);
 
   // Convertir HSL a hex
-  const hslToHex = (h, s, l) => {
+  const hslToHex = useCallback((h, s, l) => {
     h = h / 360;
     s = s / 100;
     l = l / 100;
@@ -71,33 +71,49 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
     };
 
     return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
-  };
+  }, []);
 
   // Convertir hex a RGB
-  const hexToRgb = (hex) => {
+  const hexToRgb = useCallback((hex) => {
     const r = parseInt(hex.slice(1, 3), 16);
     const g = parseInt(hex.slice(3, 5), 16);
     const b = parseInt(hex.slice(5, 7), 16);
     return { r, g, b };
-  };
+  }, []);
 
-  // Inicializar valores cuando cambia el color
+  // Solo actualizar cuando el valor externo cambia (no desde el componente)
   useEffect(() => {
-    if (value) {
+    if (value && !isUpdating) {
       const [h, s, l] = hexToHsl(value);
       setHue(h);
       setSaturation(s);
       setLightness(l);
-      setRgbValues(hexToRgb(value));
     }
-  }, [value]);
+  }, [value, hexToHsl, isUpdating]);
 
-  // Actualizar color cuando cambian los valores HSL
-  useEffect(() => {
-    const newColor = hslToHex(hue, saturation, lightness);
-    setRgbValues(hexToRgb(newColor));
+  // Función para actualizar el color externamente
+  const updateColor = useCallback((newHue, newSaturation, newLightness) => {
+    setIsUpdating(true);
+    const newColor = hslToHex(newHue, newSaturation, newLightness);
     onChange(newColor);
-  }, [hue, saturation, lightness]);
+    setTimeout(() => setIsUpdating(false), 0);
+  }, [hslToHex, onChange]);
+
+  // Handlers que usan la función de actualización
+  const handleHueChange = useCallback((newHue) => {
+    setHue(newHue);
+    updateColor(newHue, saturation, lightness);
+  }, [saturation, lightness, updateColor]);
+
+  const handleSaturationChange = useCallback((newSaturation) => {
+    setSaturation(newSaturation);
+    updateColor(hue, newSaturation, lightness);
+  }, [hue, lightness, updateColor]);
+
+  const handleLightnessChange = useCallback((newLightness) => {
+    setLightness(newLightness);
+    updateColor(hue, saturation, newLightness);
+  }, [hue, saturation, updateColor]);
 
   // Cerrar picker al hacer clic fuera
   useEffect(() => {
@@ -119,12 +135,16 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
     
-    const newSaturation = (x / rect.width) * 100;
-    const newLightness = 100 - (y / rect.height) * 100;
+    const newSaturation = Math.max(0, Math.min(100, (x / rect.width) * 100));
+    const newLightness = Math.max(0, Math.min(100, 100 - (y / rect.height) * 100));
     
-    setSaturation(Math.max(0, Math.min(100, newSaturation)));
-    setLightness(Math.max(0, Math.min(100, newLightness)));
-  }, []);
+    setSaturation(newSaturation);
+    setLightness(newLightness);
+    updateColor(hue, newSaturation, newLightness);
+  }, [hue, updateColor]);
+
+  // Obtener valores RGB actuales
+  const rgbValues = hexToRgb(value);
 
   // Colores predefinidos populares
   const presetColors = [
@@ -193,7 +213,7 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
                 min="0"
                 max="360"
                 value={hue}
-                onChange={(e) => setHue(Number(e.target.value))}
+                onChange={(e) => handleHueChange(Number(e.target.value))}
                 className="w-full h-6 rounded-lg appearance-none cursor-pointer"
                 style={{
                   background: 'linear-gradient(to right, #ff0000 0%, #ffff00 17%, #00ff00 33%, #00ffff 50%, #0000ff 67%, #ff00ff 83%, #ff0000 100%)'
@@ -212,9 +232,11 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
                 max="255"
                 value={rgbValues.r}
                 onChange={(e) => {
-                  const r = Number(e.target.value);
+                  const r = Math.max(0, Math.min(255, Number(e.target.value)));
                   const newHex = `#${r.toString(16).padStart(2, '0')}${rgbValues.g.toString(16).padStart(2, '0')}${rgbValues.b.toString(16).padStart(2, '0')}`;
+                  setIsUpdating(true);
                   onChange(newHex);
+                  setTimeout(() => setIsUpdating(false), 0);
                 }}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
@@ -227,9 +249,11 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
                 max="255"
                 value={rgbValues.g}
                 onChange={(e) => {
-                  const g = Number(e.target.value);
+                  const g = Math.max(0, Math.min(255, Number(e.target.value)));
                   const newHex = `#${rgbValues.r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${rgbValues.b.toString(16).padStart(2, '0')}`;
+                  setIsUpdating(true);
                   onChange(newHex);
+                  setTimeout(() => setIsUpdating(false), 0);
                 }}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
@@ -242,9 +266,11 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
                 max="255"
                 value={rgbValues.b}
                 onChange={(e) => {
-                  const b = Number(e.target.value);
+                  const b = Math.max(0, Math.min(255, Number(e.target.value)));
                   const newHex = `#${rgbValues.r.toString(16).padStart(2, '0')}${rgbValues.g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                  setIsUpdating(true);
                   onChange(newHex);
+                  setTimeout(() => setIsUpdating(false), 0);
                 }}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
               />
@@ -258,7 +284,9 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
                   let hex = e.target.value;
                   if (!hex.startsWith('#')) hex = '#' + hex;
                   if (/^#[0-9A-F]{6}$/i.test(hex)) {
-                    onChange(hex);
+                    setIsUpdating(true);
+                    onChange(hex.toLowerCase());
+                    setTimeout(() => setIsUpdating(false), 0);
                   }
                 }}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono"
@@ -276,7 +304,11 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
                 <button
                   key={index}
                   type="button"
-                  onClick={() => onChange(color)}
+                  onClick={() => {
+                    setIsUpdating(true);
+                    onChange(color);
+                    setTimeout(() => setIsUpdating(false), 0);
+                  }}
                   className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 hover:scale-110 transition-transform"
                   style={{ backgroundColor: color }}
                   title={color}
