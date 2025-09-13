@@ -2,14 +2,23 @@
 'use client';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { useRef } from 'react';
+import { useRef, useState, useEffect } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
-import { ImageIcon, Upload, X, Store } from 'lucide-react';
+import { ImageIcon, Upload, X, Store, Info } from 'lucide-react';
 
 export default function StoreLogoSection({ logoState, setLogoState, showMessage }) {
   const { user, refreshUserData } = useAuth();
   const logoRef = useRef(null);
+  
+  // Estado para análisis del logo
+  const [logoAnalysis, setLogoAnalysis] = useState({
+    aspectRatio: 1,
+    type: 'unknown', // 'horizontal', 'vertical', 'square', 'unknown'
+    naturalWidth: 0,
+    naturalHeight: 0,
+    isLoaded: false
+  });
 
   // Función para subir imagen a Cloudinary
   const uploadToCloudinary = async (file) => {
@@ -31,6 +40,82 @@ export default function StoreLogoSection({ logoState, setLogoState, showMessage 
     
     const data = await response.json();
     return data.secure_url;
+  };
+
+  // Analizar dimensiones del logo cuando se carga
+  const handleLogoLoad = (e) => {
+    const img = e.target;
+    const { naturalWidth, naturalHeight } = img;
+    const aspectRatio = naturalWidth / naturalHeight;
+    
+    let type = 'square';
+    if (aspectRatio > 1.3) {
+      type = 'horizontal';
+    } else if (aspectRatio < 0.8) {
+      type = 'vertical';
+    }
+    
+    setLogoAnalysis({
+      aspectRatio,
+      type,
+      naturalWidth,
+      naturalHeight,
+      isLoaded: true
+    });
+  };
+
+  // Obtener clases CSS para el contenedor del logo según su tipo
+  const getLogoContainerClasses = () => {
+    if (!logoAnalysis.isLoaded) {
+      return "w-48 h-28"; // Default mientras carga
+    }
+    
+    switch (logoAnalysis.type) {
+      case 'horizontal':
+        return "w-64 h-32"; // 2:1 para logos horizontales
+      case 'vertical':
+        return "w-32 h-48"; // 2:3 para logos verticales
+      case 'square':
+        return "w-40 h-40"; // 1:1 para logos cuadrados
+      default:
+        return "w-48 h-32"; // Proporción balanceada
+    }
+  };
+
+  // Obtener recomendaciones específicas según el tipo de logo
+  const getLogoRecommendations = () => {
+    if (!logoAnalysis.isLoaded) return [];
+    
+    const base = [
+      'Usa una imagen con fondo transparente (PNG) para mejor integración',
+      'Mantén colores consistentes con tu marca'
+    ];
+    
+    switch (logoAnalysis.type) {
+      case 'horizontal':
+        return [
+          ...base,
+          'Ideal para headers horizontales - se verá perfecto',
+          'Asegúrate de que el texto sea legible en tamaños pequeños',
+          `Proporción actual: ${logoAnalysis.aspectRatio.toFixed(2)}:1 (horizontal)`
+        ];
+      case 'vertical':
+        return [
+          ...base,
+          'Considera crear una versión horizontal para mejor adaptación',
+          'Funcionará bien en sidebars y layouts verticales',
+          `Proporción actual: ${logoAnalysis.aspectRatio.toFixed(2)}:1 (vertical)`
+        ];
+      case 'square':
+        return [
+          ...base,
+          'Versátil - se adapta bien a diferentes layouts',
+          'Ideal para avatares y iconos de perfil',
+          `Proporción actual: ${logoAnalysis.aspectRatio.toFixed(2)}:1 (cuadrado)`
+        ];
+      default:
+        return base;
+    }
   };
 
   // Manejar selección de archivo
@@ -58,6 +143,8 @@ export default function StoreLogoSection({ logoState, setLogoState, showMessage 
           ...prev,
           preview: e.target.result
         }));
+        // Reset análisis para nueva imagen
+        setLogoAnalysis(prev => ({ ...prev, isLoaded: false }));
       };
       reader.readAsDataURL(file);
 
@@ -116,6 +203,15 @@ export default function StoreLogoSection({ logoState, setLogoState, showMessage 
         preview: null
       });
 
+      // Reset análisis
+      setLogoAnalysis({
+        aspectRatio: 1,
+        type: 'unknown',
+        naturalWidth: 0,
+        naturalHeight: 0,
+        isLoaded: false
+      });
+
       await refreshUserData();
 
       showMessage('success', 'Logo de tienda eliminado correctamente');
@@ -145,16 +241,35 @@ export default function StoreLogoSection({ logoState, setLogoState, showMessage 
           </h4>
           <ul className="text-sm text-orange-700 dark:text-orange-300 space-y-1">
             <li>• Se mostrará en el encabezado de tu tienda online</li>
-            <li>• Formato recomendado: horizontal (proporción 3:2 o 4:3)</li>
-            <li>• Resolución mínima: 300x200 píxeles</li>
+            <li>• Acepta cualquier proporción: horizontal, vertical o cuadrado</li>
+            <li>• Resolución mínima recomendada: 300x300 píxeles</li>
             <li>• Formatos compatibles: JPG, PNG, SVG</li>
           </ul>
         </div>
 
-        <div className="flex items-start space-x-6">
-          {/* Preview del logo */}
+        {/* Análisis del logo actual */}
+        {hasLogo && logoAnalysis.isLoaded && (
+          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
+            <div className="flex items-center space-x-2 mb-2">
+              <Info className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+              <h4 className="text-sm font-medium text-blue-800 dark:text-blue-200">
+                Análisis de tu logo
+              </h4>
+            </div>
+            <div className="text-sm text-blue-700 dark:text-blue-300 space-y-1">
+              <p>• Tipo: <strong>{logoAnalysis.type === 'horizontal' ? 'Horizontal' : logoAnalysis.type === 'vertical' ? 'Vertical' : 'Cuadrado'}</strong></p>
+              <p>• Dimensiones: {logoAnalysis.naturalWidth} x {logoAnalysis.naturalHeight} píxeles</p>
+              <p>• Proporción: {logoAnalysis.aspectRatio.toFixed(2)}:1</p>
+            </div>
+          </div>
+        )}
+
+        {/* Layout responsive: horizontal en desktop, vertical en móvil */}
+        <div className="flex flex-col lg:flex-row lg:items-start lg:space-x-6 space-y-6 lg:space-y-0">
+          {/* Preview del logo - Adaptativo */}
           <div className={`
-            relative flex-shrink-0 w-48 h-28 rounded-lg
+            relative mx-auto lg:mx-0 flex-shrink-0 rounded-lg
+            ${getLogoContainerClasses()}
             ${hasLogo ? 'border border-gray-200 dark:border-gray-600' : 'border-2 border-dashed border-gray-300 dark:border-gray-600'}
             overflow-hidden bg-white dark:bg-gray-700 flex items-center justify-center
           `}>
@@ -169,6 +284,7 @@ export default function StoreLogoSection({ logoState, setLogoState, showMessage 
                   src={logoState.preview || logoState.url}
                   alt="Logo de la tienda"
                   className="w-full h-full object-contain"
+                  onLoad={handleLogoLoad}
                 />
                 <button
                   onClick={handleRemoveLogo}
@@ -188,13 +304,14 @@ export default function StoreLogoSection({ logoState, setLogoState, showMessage 
             )}
           </div>
 
-          {/* Controles */}
+          {/* Controles - Ahora están debajo en móvil */}
           <div className="flex-1 space-y-4">
-            <div className="flex flex-wrap gap-3">
+            {/* Botones */}
+            <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3">
               <button
                 onClick={() => logoRef.current?.click()}
                 disabled={logoState.uploading}
-                className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                className="flex items-center justify-center sm:justify-start px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
               >
                 <Upload className="w-4 h-4 mr-2" />
                 {hasLogo ? 'Cambiar Logo' : 'Subir Logo'}
@@ -203,7 +320,7 @@ export default function StoreLogoSection({ logoState, setLogoState, showMessage 
               {hasLogo && !logoState.uploading && (
                 <button
                   onClick={handleRemoveLogo}
-                  className="flex items-center px-6 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-300 dark:border-red-600 rounded-lg transition-colors"
+                  className="flex items-center justify-center sm:justify-start px-6 py-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 border border-red-300 dark:border-red-600 rounded-lg transition-colors"
                 >
                   <X className="w-4 h-4 mr-2" />
                   Eliminar
@@ -211,15 +328,15 @@ export default function StoreLogoSection({ logoState, setLogoState, showMessage 
               )}
             </div>
 
+            {/* Recomendaciones específicas */}
             <div className="text-sm text-gray-600 dark:text-gray-400 space-y-2">
               <p>
                 <strong>Recomendaciones:</strong>
               </p>
               <ul className="list-disc list-inside space-y-1 text-xs">
-                <li>Usa una imagen con fondo transparente (PNG) para mejor integración</li>
-                <li>Asegúrate de que el texto sea legible en diferentes tamaños</li>
-                <li>Evita logos muy detallados que se vean mal en tamaños pequeños</li>
-                <li>Mantén colores consistentes con tu marca</li>
+                {getLogoRecommendations().map((rec, index) => (
+                  <li key={index}>{rec}</li>
+                ))}
               </ul>
             </div>
           </div>
@@ -234,21 +351,48 @@ export default function StoreLogoSection({ logoState, setLogoState, showMessage 
           className="hidden"
         />
 
-        {/* Vista previa en contexto */}
-        {hasLogo && (
+        {/* Vista previa en diferentes contextos */}
+        {hasLogo && logoAnalysis.isLoaded && (
           <div className="mt-8 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
             <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-              Vista previa en tienda
+              Vista previa en tienda (diferentes tamaños)
             </h4>
-            <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
-              <div className="flex items-center justify-between">
-                <img
-                  src={logoState.preview || logoState.url}
-                  alt="Logo preview"
-                  className="h-8 object-contain"
-                />
-                <div className="text-xs text-gray-500 dark:text-gray-400">
-                  Así se verá en tu tienda
+            
+            {/* Header preview */}
+            <div className="space-y-4">
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <img
+                      src={logoState.preview || logoState.url}
+                      alt="Logo header"
+                      className={`object-contain ${
+                        logoAnalysis.type === 'horizontal' ? 'h-8' :
+                        logoAnalysis.type === 'vertical' ? 'h-10 w-8' : 'h-8 w-8'
+                      }`}
+                    />
+                    <div>
+                      <div className="text-sm font-medium text-gray-800 dark:text-gray-200">Tu Tienda</div>
+                      <div className="text-xs text-gray-500 dark:text-gray-400">Header principal</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mobile preview */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600 p-3">
+                <div className="flex items-center space-x-2">
+                  <img
+                    src={logoState.preview || logoState.url}
+                    alt="Logo mobile"
+                    className={`object-contain ${
+                      logoAnalysis.type === 'horizontal' ? 'h-6' :
+                      logoAnalysis.type === 'vertical' ? 'h-8 w-6' : 'h-6 w-6'
+                    }`}
+                  />
+                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                    Vista móvil
+                  </div>
                 </div>
               </div>
             </div>

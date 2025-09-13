@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
+import CustomColorPicker from '@/components/ui/CustomColorPicker'; // Importar el nuevo componente
 import { 
   Settings, 
   Store, 
@@ -23,10 +24,12 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-const StoreConfigSection = ({ showMessage }) => {
+const StoreConfigSection = () => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
+  const [messageType, setMessageType] = useState('');
   
   // Estado inicial de configuración
   const [config, setConfig] = useState({
@@ -73,7 +76,7 @@ const StoreConfigSection = ({ showMessage }) => {
         }
       } catch (error) {
         console.error('Error al cargar configuración:', error);
-        showMessage('error', 'Error al cargar la configuración');
+        showMessage('Error al cargar la configuración', 'error');
       }
       setLoading(false);
     };
@@ -82,10 +85,13 @@ const StoreConfigSection = ({ showMessage }) => {
   }, [user]);
 
   // Mostrar mensaje temporal
-  const showMessageLocal = (text, type = 'success') => {
-    if (showMessage) {
-      showMessage(type, text);
-    }
+  const showMessage = (text, type = 'success') => {
+    setMessage(text);
+    setMessageType(type);
+    setTimeout(() => {
+      setMessage('');
+      setMessageType('');
+    }, 3000);
   };
 
   // Actualizar configuración en Firestore
@@ -97,10 +103,10 @@ const StoreConfigSection = ({ showMessage }) => {
       await updateDoc(doc(db, 'users', user.uid), {
         storeConfig: config
       });
-      showMessageLocal('Configuración guardada correctamente', 'success');
+      showMessage('Configuración guardada correctamente', 'success');
     } catch (error) {
       console.error('Error al guardar configuración:', error);
-      showMessageLocal('Error al guardar la configuración', 'error');
+      showMessage('Error al guardar la configuración', 'error');
     }
     setSaving(false);
   };
@@ -179,7 +185,7 @@ const StoreConfigSection = ({ showMessage }) => {
   }
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
@@ -201,7 +207,7 @@ const StoreConfigSection = ({ showMessage }) => {
       {/* Los mensajes ahora se muestran desde el componente padre */}
 
       {/* Secciones de Contenido */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-2">
+      <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
           <Eye className="w-5 h-5 mr-2 text-gray-600 dark:text-gray-400" />
           Secciones de Contenido
@@ -248,48 +254,26 @@ const StoreConfigSection = ({ showMessage }) => {
             </select>
           </div>
 
-          {/* Selectores de Color */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          {/* Selectores de Color Personalizados */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Color Primario
               </label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="color"
-                  value={config.primaryColor}
-                  onChange={(e) => handleColorChange('primaryColor', e.target.value)}
-                  className="w-10 h-10 border border-gray-300 dark:border-gray-600 rounded cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={config.primaryColor}
-                  onChange={(e) => handleColorChange('primaryColor', e.target.value)}
-                  className="flex-1 px-3 py-2 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  placeholder="#2563eb"
-                />
-              </div>
+              <CustomColorPicker
+                value={config.primaryColor}
+                onChange={(color) => handleColorChange('primaryColor', color)}
+              />
             </div>
             
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Color Secundario
               </label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="color"
-                  value={config.secondaryColor}
-                  onChange={(e) => handleColorChange('secondaryColor', e.target.value)}
-                  className="w-10 h-10 border border-gray-300 dark:border-gray-600 rounded cursor-pointer"
-                />
-                <input
-                  type="text"
-                  value={config.secondaryColor}
-                  onChange={(e) => handleColorChange('secondaryColor', e.target.value)}
-                  className="flex-1 px-3 py-2 text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400"
-                  placeholder="#64748b"
-                />
-              </div>
+              <CustomColorPicker
+                value={config.secondaryColor}
+                onChange={(color) => handleColorChange('secondaryColor', color)}
+              />
             </div>
           </div>
         </div>

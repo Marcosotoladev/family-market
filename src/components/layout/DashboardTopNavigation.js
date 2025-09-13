@@ -62,7 +62,7 @@ export default function DashboardTopNavigation() {
       label: 'Perfil',
       icon: User,
       href: '/dashboard/profile',
-      color: 'gray'
+      color: 'slate' // Cambiado de 'gray' a 'slate' para mejor visibilidad
     }
   ]
 
@@ -108,10 +108,10 @@ export default function DashboardTopNavigation() {
         inactive: 'text-gray-600 dark:text-gray-400 border-transparent hover:text-orange-600 dark:hover:text-orange-400',
         bg: 'bg-orange-50 dark:bg-orange-900/20'
       },
-      gray: {
-        active: 'text-gray-700 dark:text-gray-300 border-gray-500',
-        inactive: 'text-gray-600 dark:text-gray-400 border-transparent hover:text-gray-700 dark:hover:text-gray-300',
-        bg: 'bg-gray-50 dark:bg-gray-800'
+      slate: {
+        active: 'text-slate-600 dark:text-slate-300 border-slate-500',
+        inactive: 'text-gray-600 dark:text-gray-400 border-transparent hover:text-slate-600 dark:hover:text-slate-300',
+        bg: 'bg-slate-50 dark:bg-slate-800/50'
       }
     }
     
@@ -135,7 +135,7 @@ export default function DashboardTopNavigation() {
                   key={tab.id}
                   onClick={() => handleTabClick(tab)}
                   className={`
-                    flex items-center space-x-2 py-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200
+                    flex items-center space-x-2 py-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 cursor-pointer
                     ${getColorClasses(tab.color, isActive)}
                   `}
                 >
@@ -150,16 +150,16 @@ export default function DashboardTopNavigation() {
 
       {/* MOBILE: Dropdown selector */}
       <div className="sm:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
-        <div className="px-4 py-1">
+        <div className="px-4 py-3">
           <div className="relative">
             {/* Botón dropdown */}
             <button
               onClick={() => setShowDropdown(!showDropdown)}
               className={`
-                w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all duration-200
+                w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all duration-200 cursor-pointer
                 ${showDropdown 
-                  ? `border-${activeTabData?.color}-500 ${getColorClasses(activeTabData?.color || 'blue', true).split(' ')[0]} bg-${activeTabData?.color}-50 dark:bg-${activeTabData?.color}-900/20` 
-                  : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300'
+                  ? `border-${activeTabData?.color}-500 ${getColorClasses(activeTabData?.color || 'blue', true).split(' ')[0]} bg-${activeTabData?.color === 'slate' ? 'slate' : activeTabData?.color}-50 dark:bg-${activeTabData?.color === 'slate' ? 'slate' : activeTabData?.color}-${activeTabData?.color === 'slate' ? '800/50' : '900/20'}` 
+                  : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
                 }
               `}
             >
@@ -176,7 +176,7 @@ export default function DashboardTopNavigation() {
 
             {/* Dropdown menu */}
             {showDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50">
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50">
                 {dashboardTabs.map((tab) => {
                   const Icon = tab.icon
                   const isActive = activeTab === tab.id
@@ -186,7 +186,7 @@ export default function DashboardTopNavigation() {
                       key={tab.id}
                       onClick={() => handleTabClick(tab)}
                       className={`
-                        w-full flex items-center space-x-3 p-2 text-left transition-colors duration-200
+                        w-full flex items-center space-x-3 p-4 text-left transition-colors duration-200 cursor-pointer
                         ${isActive 
                           ? `${getColorClasses(tab.color, true).split(' ')[0]} bg-${tab.color}-50 dark:bg-${tab.color}-900/20` 
                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'

@@ -1,14 +1,22 @@
 // src/components/layout/DesktopNavigation.js
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { usePathname } from 'next/navigation' // SOLO pathname
+import { usePathname } from 'next/navigation' 
 import { ChevronDown, ChevronRight, Package, Briefcase, Store, Heart, Grid3X3 } from 'lucide-react'
 import { CATEGORIAS_PRODUCTOS, CATEGORIAS_SERVICIOS, CATEGORIAS_EMPLEO } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 
 export default function DesktopNavigation() {
-  const { isAuthenticated, loading } = useAuth() // AGREGADO
+  const pathname = usePathname() // Detectar dashboard ANTES de otros hooks
+  
+  // Ocultar en rutas del dashboard - ANTES de usar otros hooks
+  const isDashboardRoute = pathname?.startsWith('/dashboard')
+  if (isDashboardRoute) {
+    return null
+  }
+
+  const { isAuthenticated, loading } = useAuth()
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [activeCategory, setActiveCategory] = useState(null)
   const [showSubcategories, setShowSubcategories] = useState(false)
@@ -169,6 +177,11 @@ export default function DesktopNavigation() {
       .join(' ')
   }
 
+  // No renderizar nada si estamos en dashboard
+  if (isDashboardRoute) {
+    return null
+  }
+
   return (
     <nav className="hidden lg:block w-full bg-white dark:bg-gray-800 border-b border-gray-100 dark:border-gray-700 transition-colors" ref={dropdownRef}>
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -184,7 +197,7 @@ export default function DesktopNavigation() {
                   <button
                     onClick={() => handleNavClick(item.id)}
                     className={`
-                      flex items-center gap-2 py-4 px-2 text-m font-medium transition-all duration-200 relative
+                      flex items-center gap-2 py-4 px-2 text-m font-medium transition-all duration-200 relative cursor-pointer
                       ${isActive 
                         ? 'text-primary-600' 
                         : 'text-gray-700 dark:text-gray-300 hover:text-primary-600'
@@ -216,7 +229,7 @@ export default function DesktopNavigation() {
                         </h3>
                         <button 
                           onClick={() => handleCategoryClick({ id: 'todos', nombre: `Todos los ${item.label}` }, null, true)}
-                          className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                          className="text-xs text-primary-600 hover:text-primary-700 font-medium cursor-pointer"
                         >
                           Ver todos
                         </button>
@@ -227,7 +240,7 @@ export default function DesktopNavigation() {
                           <div key={category.id}>
                             <button
                               onClick={() => handleCategoryClick(category)}
-                              className="flex items-center justify-between w-full text-left p-3 rounded-lg hover:bg-primary-50 dark:hover:bg-gray-700 transition-all duration-200 group"
+                              className="flex items-center justify-between w-full text-left p-3 rounded-lg hover:bg-primary-50 dark:hover:bg-gray-700 transition-all duration-200 group cursor-pointer"
                             >
                               <div className="flex items-center gap-3">
                                 <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center group-hover:bg-primary-200 dark:group-hover:bg-primary-800/50 transition-colors">
@@ -255,7 +268,7 @@ export default function DesktopNavigation() {
                         {item.categories?.length > 8 && (
                           <button 
                             onClick={() => handleCategoryClick({ id: 'todas', nombre: 'Todas las categorías' }, null, true)}
-                            className="w-full text-center py-3 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium border-t border-gray-100 dark:border-gray-700 mt-4 pt-4"
+                            className="w-full text-center py-3 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium border-t border-gray-100 dark:border-gray-700 mt-4 pt-4 cursor-pointer"
                           >
                             Ver todas las categorías ({item.categories.length})
                           </button>
@@ -273,7 +286,7 @@ export default function DesktopNavigation() {
                         </h4>
                         <button 
                           onClick={() => handleCategoryClick(activeCategory, null, true)}
-                          className="text-xs text-primary-600 hover:text-primary-700 font-medium"
+                          className="text-xs text-primary-600 hover:text-primary-700 font-medium cursor-pointer"
                         >
                           Ver todos
                         </button>
@@ -284,7 +297,7 @@ export default function DesktopNavigation() {
                           <button
                             key={key}
                             onClick={() => handleCategoryClick(activeCategory, value)}
-                            className="flex items-center gap-2 w-full text-left p-2 rounded-md hover:bg-primary-50 dark:hover:bg-gray-700 transition-all duration-200 group"
+                            className="flex items-center gap-2 w-full text-left p-2 rounded-md hover:bg-primary-50 dark:hover:bg-gray-700 transition-all duration-200 group cursor-pointer"
                           >
                             <div className="w-2 h-2 bg-primary-400 rounded-full group-hover:bg-primary-500"></div>
                             <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-primary-700 dark:group-hover:text-primary-400">
