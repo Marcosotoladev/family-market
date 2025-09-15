@@ -49,11 +49,11 @@ const Toast = ({ message, type, isVisible, onClose, duration = 4000 }) => {
   const { bg, icon: Icon, iconColor } = getToastStyles();
 
   return (
-    <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-[9999] w-full max-w-md px-4">
+    <div className="fixed top-4 left-0 right-0 z-[9999] flex justify-center px-4">
       <div
         className={`
           ${bg} text-white rounded-lg shadow-lg p-4 animate-slide-in-top
-          backdrop-blur-sm border border-white/20
+          backdrop-blur-sm border border-white/20 w-full max-w-md
         `}
       >
         <div className="flex items-center justify-between">
@@ -68,29 +68,29 @@ const Toast = ({ message, type, isVisible, onClose, duration = 4000 }) => {
             <X className="w-4 h-4" />
           </button>
         </div>
+        
+        {/* Barra de progreso */}
+        {duration > 0 && (
+          <div className="w-full h-1 bg-white/20 rounded-b-lg overflow-hidden mt-2">
+            <div 
+              className="h-full bg-white/60 animate-progress-bar"
+              style={{ 
+                animation: `progress-bar ${duration}ms linear forwards`
+              }}
+            />
+          </div>
+        )}
       </div>
-      
-      {/* Barra de progreso */}
-      {duration > 0 && (
-        <div className="w-full h-1 bg-white/20 rounded-b-lg overflow-hidden">
-          <div 
-            className="h-full bg-white/60 animate-progress-bar"
-            style={{ 
-              animation: `progress-bar ${duration}ms linear forwards`
-            }}
-          />
-        </div>
-      )}
       
       <style jsx>{`
         @keyframes slide-in-top {
           from {
             opacity: 0;
-            transform: translateY(-100%) translateX(-50%);
+            transform: translateY(-100%);
           }
           to {
             opacity: 1;
-            transform: translateY(0) translateX(-50%);
+            transform: translateY(0);
           }
         }
         

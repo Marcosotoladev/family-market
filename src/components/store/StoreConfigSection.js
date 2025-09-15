@@ -3,7 +3,8 @@ import { useState, useEffect } from 'react';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
-import CustomColorPicker from '@/components/ui/CustomColorPicker'; // Importar el nuevo componente
+import useToast from '@/hooks/useToast'; // Importar el hook de toast
+import CustomColorPicker from '@/components/ui/CustomColorPicker';
 import { 
   Settings, 
   Store, 
@@ -24,12 +25,10 @@ import {
   AlertCircle
 } from 'lucide-react';
 
-const StoreConfigSection = () => {
+const StoreConfigSection = ({ showMessage }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState('');
-  const [messageType, setMessageType] = useState('');
   
   // Estado inicial de configuración
   const [config, setConfig] = useState({
@@ -76,23 +75,13 @@ const StoreConfigSection = () => {
         }
       } catch (error) {
         console.error('Error al cargar configuración:', error);
-        showMessage('Error al cargar la configuración', 'error');
+        showMessage('error', 'Error al cargar la configuración');
       }
       setLoading(false);
     };
 
     loadConfig();
   }, [user]);
-
-  // Mostrar mensaje temporal
-  const showMessage = (text, type = 'success') => {
-    setMessage(text);
-    setMessageType(type);
-    setTimeout(() => {
-      setMessage('');
-      setMessageType('');
-    }, 3000);
-  };
 
   // Actualizar configuración en Firestore
   const handleSave = async () => {
@@ -103,10 +92,10 @@ const StoreConfigSection = () => {
       await updateDoc(doc(db, 'users', user.uid), {
         storeConfig: config
       });
-      showMessage('Configuración guardada correctamente', 'success');
+      showMessage('success', 'Configuración guardada correctamente');
     } catch (error) {
       console.error('Error al guardar configuración:', error);
-      showMessage('Error al guardar la configuración', 'error');
+      showMessage('error', 'Error al guardar la configuración');
     }
     setSaving(false);
   };
@@ -202,9 +191,6 @@ const StoreConfigSection = () => {
           </div>
         </div>
       </div>
-
-      {/* Mensaje de estado */}
-      {/* Los mensajes ahora se muestran desde el componente padre */}
 
       {/* Secciones de Contenido */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
