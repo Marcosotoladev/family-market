@@ -151,7 +151,7 @@ export default function DashboardHeader() {
   const notificationsEnabled = userData?.notifications?.acceptNotifications && notificationPermission === 'granted';
 
   return (
-    <div className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+    <div className="bg-white mb-2 dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-3 sm:space-y-0">
           <div className="flex-1 min-w-0">
@@ -165,21 +165,6 @@ export default function DashboardHeader() {
           
           {/* Quick Actions */}
           <div className="flex flex-row items-center space-x-3">
-            {/* Enlace a la tienda */}
-            {storeUrl && (
-              <a
-                href={`https://familymarket.vercel.app/tienda/${storeUrl}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center px-3 py-2 bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900/20 dark:text-primary-400 rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
-              >
-                <Store className="w-4 h-4 mr-1" />
-                <span>Ver tienda</span>
-                <ExternalLink className="w-3 h-3 ml-1" />
-              </a>
-            )}
-
-
             {/* Botón de Notificaciones */}
             <button
               onClick={toggleNotifications}
@@ -193,27 +178,19 @@ export default function DashboardHeader() {
               {notificationsEnabled ? (
                 <>
                   <Bell className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">
+                  <span>
                     {updatingNotifications ? 'Deshabilitando...' : 'Deshabilitar notificaciones'}
-                  </span>
-                  <span className="sm:hidden">
-                    {updatingNotifications ? 'Deshabilitando...' : 'Deshabilitar'}
                   </span>
                 </>
               ) : (
                 <>
                   <BellOff className="w-4 h-4 mr-1" />
-                  <span className="hidden sm:inline">
+                  <span>
                     {updatingNotifications ? 'Habilitando...' : 'Habilitar notificaciones'}
-                  </span>
-                  <span className="sm:hidden">
-                    {updatingNotifications ? 'Habilitando...' : 'Habilitar'}
                   </span>
                 </>
               )}
             </button>
-
-
           </div>
         </div>
       </div>
