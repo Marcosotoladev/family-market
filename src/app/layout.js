@@ -9,6 +9,7 @@ import { usePathname } from 'next/navigation'
 import Header from '../components/layout/Header'
 import DesktopNavigation from '../components/layout/DesktopNavigation'
 import MobileNavigation from '../components/layout/MobileNavigation'
+import MobileDashboardNavigation from '../components/layout/MobileDashboardNavigation'
 import Footer from '@/components/layout/Footer'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -65,8 +66,9 @@ export default function RootLayout({ children }) {
                   </div>
                 </main>
                 
-                {/* Navegación Mobile condicional */}
+                {/* Navegación Mobile - Ambas versiones */}
                 <MobileNavigation />
+                <MobileDashboardNavigation />
 
                 <Footer />
               </div>

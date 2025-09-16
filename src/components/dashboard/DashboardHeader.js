@@ -165,6 +165,21 @@ export default function DashboardHeader() {
           
           {/* Quick Actions */}
           <div className="flex flex-row items-center space-x-3">
+            {/* Enlace a la tienda */}
+            {storeUrl && (
+              <a
+                href={`https://familymarket.vercel.app/tienda/${storeUrl}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center px-3 py-2 bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900/20 dark:text-primary-400 rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
+              >
+                <Store className="w-4 h-4 mr-1" />
+                <span>Ver tienda</span>
+                <ExternalLink className="w-3 h-3 ml-1" />
+              </a>
+            )}
+
+
             {/* Botón de Notificaciones */}
             <button
               onClick={toggleNotifications}
@@ -198,19 +213,7 @@ export default function DashboardHeader() {
               )}
             </button>
 
-            {/* Enlace a la tienda */}
-            {storeUrl && (
-              <a
-                href={`https://familymarket.vercel.app/tienda/${storeUrl}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center px-3 py-2 bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900/20 dark:text-primary-400 rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
-              >
-                <Store className="w-4 h-4 mr-1" />
-                <span>Ver tienda</span>
-                <ExternalLink className="w-3 h-3 ml-1" />
-              </a>
-            )}
+
           </div>
         </div>
       </div>

@@ -1,30 +1,9 @@
 // src/components/layout/Footer.js
 'use client'
-import { useState, useEffect } from 'react'
-import { Heart, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Youtube, ChevronUp, Package, Briefcase, Wrench } from 'lucide-react'
+import { Heart, Mail, Phone, MapPin, Facebook, Instagram, Twitter, Youtube, Package, Briefcase, Wrench } from 'lucide-react'
 import Image from 'next/image'
 
 export default function Footer() {
-  const [showBackToTop, setShowBackToTop] = useState(false)
-
-  // Detectar scroll para mostrar botón "volver arriba"
-  useEffect(() => {
-    const handleScroll = () => {
-      setShowBackToTop(window.scrollY > 300)
-    }
-
-    window.addEventListener('scroll', handleScroll)
-    
-    // Cleanup function para remover el event listener
-    return () => {
-      window.removeEventListener('scroll', handleScroll)
-    }
-  }, [])
-
-  const scrollToTop = () => {
-    window.scrollTo({ top: 0, behavior: 'smooth' })
-  }
-
   const currentYear = new Date().getFullYear()
 
   const footerLinks = {
@@ -205,17 +184,6 @@ export default function Footer() {
           </div>
         </div>
       </div>
-
-      {/* Botón volver arriba */}
-      {showBackToTop && (
-        <button
-          onClick={scrollToTop}
-          className="fixed bottom-4 right-4 lg:bottom-6 lg:right-6 z-50 p-3 bg-primary-500 hover:bg-primary-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-110"
-          aria-label="Volver arriba"
-        >
-          <ChevronUp className="w-5 h-5" />
-        </button>
-      )}
     </footer>
   )
 }

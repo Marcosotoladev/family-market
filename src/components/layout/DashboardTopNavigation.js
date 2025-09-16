@@ -3,7 +3,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { ShoppingBag, Wrench, Briefcase, BarChart3, User, ChevronDown, Store } from 'lucide-react'
+import { ShoppingBag, Wrench, Briefcase, BarChart3, User, ChevronDown, Store, ExternalLink, House } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function DashboardTopNavigation() {
@@ -22,34 +22,21 @@ export default function DashboardTopNavigation() {
   }
 
   const dashboardTabs = [
+        {
+      id: 'home',
+      label: 'Inicio',
+      icon: House,
+      href: '/',
+      color: 'blue'
+    },
     {
       id: 'overview',
       label: 'Panel',
       icon: BarChart3,
       href: '/dashboard',
-      color: 'blue'
-    },
-    {
-      id: 'productos',
-      label: 'Productos',
-      icon: ShoppingBag,
-      href: '/dashboard/productos',
-      color: 'blue'
-    },
-    {
-      id: 'servicios',
-      label: 'Servicios',
-      icon: Wrench,
-      href: '/dashboard/servicios',
-      color: 'green'
-    },
-    {
-      id: 'empleos',
-      label: 'Empleos',
-      icon: Briefcase,
-      href: '/dashboard/empleos',
       color: 'purple'
     },
+
     {
       id: 'tienda',
       label: 'Tienda',
@@ -62,7 +49,7 @@ export default function DashboardTopNavigation() {
       label: 'Perfil',
       icon: User,
       href: '/dashboard/profile',
-      color: 'slate' // Cambiado de 'gray' a 'slate' para mejor visibilidad
+      color: 'green' // Cambiado de 'gray' a 'slate' para mejor visibilidad
     }
   ]
 
@@ -119,31 +106,50 @@ export default function DashboardTopNavigation() {
   }
 
   const activeTabData = dashboardTabs.find(tab => tab.id === activeTab)
+  const storeUrl = userData?.storeSlug ? userData.storeSlug : null
 
   return (
     <>
       {/* DESKTOP: Tabs horizontales */}
       <div className="hidden sm:block bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-4 sm:px-2 lg:px-8">
-          <div className="flex space-x-8 overflow-x-auto scrollbar-hide">
-            {dashboardTabs.map((tab) => {
-              const Icon = tab.icon
-              const isActive = activeTab === tab.id
-              
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => handleTabClick(tab)}
-                  className={`
-                    flex items-center space-x-2 py-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 cursor-pointer
-                    ${getColorClasses(tab.color, isActive)}
-                  `}
+          <div className="flex items-center justify-between">
+            <div className="flex space-x-8 overflow-x-auto scrollbar-hide">
+              {dashboardTabs.map((tab) => {
+                const Icon = tab.icon
+                const isActive = activeTab === tab.id
+                
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => handleTabClick(tab)}
+                    className={`
+                      flex items-center space-x-2 py-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors duration-200 cursor-pointer
+                      ${getColorClasses(tab.color, isActive)}
+                    `}
+                  >
+                    <Icon className="w-5 h-5" />
+                    <span>{tab.label}</span>
+                  </button>
+                )
+              })}
+            </div>
+            
+            {/* Botón Ver Tienda - Desktop */}
+            {storeUrl && (
+              <div className="flex-shrink-0 ml-6">
+                <a
+                  href={`https://familymarket.vercel.app/tienda/${storeUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center px-3 py-2 bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900/20 dark:text-primary-400 rounded-lg text-xs font-medium transition-colors whitespace-nowrap"
                 >
-                  <Icon className="w-5 h-5" />
-                  <span>{tab.label}</span>
-                </button>
-              )
-            })}
+                  <Store className="w-4 h-4 mr-1" />
+                  <span>Ver tienda</span>
+                  <ExternalLink className="w-3 h-3 ml-1" />
+                </a>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -151,68 +157,85 @@ export default function DashboardTopNavigation() {
       {/* MOBILE: Dropdown selector */}
       <div className="sm:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-40">
         <div className="px-4 py-3">
-          <div className="relative">
-            {/* Botón dropdown */}
-            <button
-              onClick={() => setShowDropdown(!showDropdown)}
-              className={`
-                w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all duration-200 cursor-pointer
-                ${showDropdown 
-                  ? `border-${activeTabData?.color}-500 ${getColorClasses(activeTabData?.color || 'blue', true).split(' ')[0]} bg-${activeTabData?.color === 'slate' ? 'slate' : activeTabData?.color}-50 dark:bg-${activeTabData?.color === 'slate' ? 'slate' : activeTabData?.color}-${activeTabData?.color === 'slate' ? '800/50' : '900/20'}` 
-                  : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
-                }
-              `}
-            >
-              <div className="flex items-center space-x-3">
-                {activeTabData && (
-                  <>
-                    <activeTabData.icon className="w-5 h-5" />
-                    <span className="font-medium">{activeTabData.label}</span>
-                  </>
-                )}
-              </div>
-              <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
-            </button>
+          <div className="flex items-center justify-between space-x-3">
+            <div className="flex-1 relative">
+              {/* Botón dropdown */}
+              <button
+                onClick={() => setShowDropdown(!showDropdown)}
+                className={`
+                  w-full flex items-center justify-between p-3 rounded-lg border-2 transition-all duration-200 cursor-pointer
+                  ${showDropdown 
+                    ? `border-${activeTabData?.color}-500 ${getColorClasses(activeTabData?.color || 'blue', true).split(' ')[0]} bg-${activeTabData?.color === 'slate' ? 'slate' : activeTabData?.color}-50 dark:bg-${activeTabData?.color === 'slate' ? 'slate' : activeTabData?.color}-${activeTabData?.color === 'slate' ? '800/50' : '900/20'}` 
+                    : 'border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:border-gray-300 dark:hover:border-gray-600'
+                  }
+                `}
+              >
+                <div className="flex items-center space-x-3">
+                  {activeTabData && (
+                    <>
+                      <activeTabData.icon className="w-5 h-5" />
+                      <span className="font-medium">{activeTabData.label}</span>
+                    </>
+                  )}
+                </div>
+                <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${showDropdown ? 'rotate-180' : ''}`} />
+              </button>
 
-            {/* Dropdown menu */}
-            {showDropdown && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50">
-                {dashboardTabs.map((tab) => {
-                  const Icon = tab.icon
-                  const isActive = activeTab === tab.id
-                  
-                  return (
-                    <button
-                      key={tab.id}
-                      onClick={() => handleTabClick(tab)}
-                      className={`
-                        w-full flex items-center space-x-3 p-4 text-left transition-colors duration-200 cursor-pointer
-                        ${isActive 
-                          ? `${getColorClasses(tab.color, true).split(' ')[0]} bg-${tab.color}-50 dark:bg-${tab.color}-900/20` 
-                          : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                        }
-                      `}
-                    >
-                      <Icon className="w-5 h-5" />
-                      <span className="font-medium">{tab.label}</span>
-                      {isActive && (
-                        <div className={`ml-auto w-2 h-2 rounded-full bg-${tab.color}-500`} />
-                      )}
-                    </button>
-                  )
-                })}
+              {/* Dropdown menu */}
+              {showDropdown && (
+                <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg overflow-hidden z-50">
+                  {dashboardTabs.map((tab) => {
+                    const Icon = tab.icon
+                    const isActive = activeTab === tab.id
+                    
+                    return (
+                      <button
+                        key={tab.id}
+                        onClick={() => handleTabClick(tab)}
+                        className={`
+                          w-full flex items-center space-x-3 p-4 text-left transition-colors duration-200 cursor-pointer
+                          ${isActive 
+                            ? `${getColorClasses(tab.color, true).split(' ')[0]} bg-${tab.color}-50 dark:bg-${tab.color}-900/20` 
+                            : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
+                          }
+                        `}
+                      >
+                        <Icon className="w-5 h-5" />
+                        <span className="font-medium">{tab.label}</span>
+                        {isActive && (
+                          <div className={`ml-auto w-2 h-2 rounded-full bg-${tab.color}-500`} />
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Botón Ver Tienda - Mobile */}
+            {storeUrl && (
+              <div className="flex-shrink-0">
+                <a
+                  href={`https://familymarket.vercel.app/tienda/${storeUrl}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center px-3 py-2 bg-primary-100 text-primary-700 hover:bg-primary-200 dark:bg-primary-900/20 dark:text-primary-400 rounded-lg text-xs font-medium transition-colors"
+                >
+                  <Store className="w-4 h-4 mr-1" />
+                  <span>Ver</span>
+                </a>
               </div>
             )}
           </div>
-        </div>
 
-        {/* Overlay para cerrar dropdown */}
-        {showDropdown && (
-          <div 
-            className="fixed inset-0 z-30" 
-            onClick={() => setShowDropdown(false)}
-          />
-        )}
+          {/* Overlay para cerrar dropdown */}
+          {showDropdown && (
+            <div 
+              className="fixed inset-0 z-30" 
+              onClick={() => setShowDropdown(false)}
+            />
+          )}
+        </div>
       </div>
 
       {/* Estilos para ocultar scrollbar */}

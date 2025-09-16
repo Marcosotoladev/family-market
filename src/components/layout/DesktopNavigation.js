@@ -2,25 +2,39 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation' 
-import { ChevronDown, ChevronRight, Package, Briefcase, Store, Heart, Grid3X3 } from 'lucide-react'
+import { ChevronDown, ChevronRight, Package, Briefcase, Store, Heart, Grid3X3, House } from 'lucide-react'
 import { CATEGORIAS_PRODUCTOS, CATEGORIAS_SERVICIOS, CATEGORIAS_EMPLEO } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
 
 export default function DesktopNavigation() {
-  const pathname = usePathname() // Detectar dashboard ANTES de otros hooks
-  
-  // Ocultar en rutas del dashboard - ANTES de usar otros hooks
-  const isDashboardRoute = pathname?.startsWith('/dashboard')
-  if (isDashboardRoute) {
-    return null
-  }
-
+  // TODOS LOS HOOKS PRIMERO - SIEMPRE EN EL MISMO ORDEN
+  const pathname = usePathname()
   const { isAuthenticated, loading } = useAuth()
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [activeCategory, setActiveCategory] = useState(null)
   const [showSubcategories, setShowSubcategories] = useState(false)
   const dropdownRef = useRef(null)
+
+  // useEffect también debe estar con los hooks
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setActiveDropdown(null)
+        setActiveCategory(null)
+        setShowSubcategories(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  // DESPUÉS DE LOS HOOKS, LAS CONDICIONES
+  const isDashboardRoute = pathname?.startsWith('/dashboard')
+  if (isDashboardRoute) {
+    return null
+  }
 
   // Transformar las categorías importadas al formato que necesita el componente
   const getProductCategories = () => {
@@ -51,6 +65,7 @@ export default function DesktopNavigation() {
   }
 
   const navItems = [
+
     {
       id: 'products',
       label: 'Productos',
@@ -81,29 +96,8 @@ export default function DesktopNavigation() {
       icon: Store,
       href: '/tiendas',
       hasDropdown: false
-    },
-    {
-      id: 'favorites',
-      label: 'Favoritos',
-      icon: Heart,
-      href: '/favoritos',
-      hasDropdown: false
     }
   ]
-
-  // Cerrar dropdown cuando se hace click fuera
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setActiveDropdown(null)
-        setActiveCategory(null)
-        setShowSubcategories(false)
-      }
-    }
-
-    document.addEventListener('mousedown', handleClickOutside)
-    return () => document.removeEventListener('mousedown', handleClickOutside)
-  }, [])
 
   // Manejar click en items del nav
   const handleNavClick = (itemId) => {
@@ -175,11 +169,6 @@ export default function DesktopNavigation() {
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ')
-  }
-
-  // No renderizar nada si estamos en dashboard
-  if (isDashboardRoute) {
-    return null
   }
 
   return (

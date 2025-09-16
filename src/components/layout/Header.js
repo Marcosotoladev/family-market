@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
 import { Search, User, Moon, Sun, Plus, HelpCircle, LogOut } from 'lucide-react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -109,21 +110,21 @@ export default function Header() {
               )}
             </button>
 
-            {/* Logo Mobile */}
-            <div className="flex-1 flex items-center justify-center gap-3">
+            {/* Logo Mobile con enlace */}
+            <Link href="/about" className="flex-1 flex items-center justify-center gap-3 group">
               <Image
                 src="/icon.png"
                 alt="Family Market Logo"
                 width={32}
                 height={32}
-                className="w-8 h-8"
+                className="w-8 h-8 transition-transform duration-200 group-hover:scale-105"
                 priority
               />
-              <h1 className="text-2xl font-bold">
-                <span className="text-gray-600 dark:text-gray-400">Family</span>{' '}
-                <span className="text-primary-500">Market</span>
+              <h1 className="text-2xl font-bold transition-colors duration-200">
+                <span className="text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200">Family</span>{' '}
+                <span className="text-primary-500 group-hover:text-primary-600">Market</span>
               </h1>
-            </div>
+            </Link>
 
             {/* Botón Usuario con menú dropdown */}
             <div className="relative">
@@ -225,21 +226,21 @@ export default function Header() {
       <header className="hidden lg:block bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-50 transition-colors">
         <div className="max-w-7xl mx-auto px-6 py-6">
           <div className="flex items-center justify-between gap-8">
-            {/* Logo Desktop más prominente */}
-            <div className="flex items-center flex-shrink-0 gap-4">
+            {/* Logo Desktop con enlace */}
+            <Link href="/about" className="flex items-center flex-shrink-0 gap-4 group">
               <Image
                 src="/icon.png"
                 alt="Family Market Logo"
                 width={40}
                 height={40}
-                className="w-15 h-15"
+                className="w-15 h-15 transition-transform duration-200 group-hover:scale-105"
                 priority
               />
-              <h1 className="text-3xl xl:text-4xl font-bold">
-                <span className="text-gray-600 dark:text-gray-400">Family</span>{' '}
-                <span className="text-primary-500">Market</span>
+              <h1 className="text-3xl xl:text-4xl font-bold transition-colors duration-200">
+                <span className="text-gray-600 dark:text-gray-400 group-hover:text-gray-800 dark:group-hover:text-gray-200">Family</span>{' '}
+                <span className="text-primary-500 group-hover:text-primary-600">Market</span>
               </h1>
-            </div>
+            </Link>
 
             {/* Barra de búsqueda desktop mejorada */}
             <div className="flex-1 max-w-2xl mx-8">
