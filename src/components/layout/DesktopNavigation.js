@@ -65,6 +65,14 @@ export default function DesktopNavigation() {
   }
 
   const navItems = [
+        {
+      id: 'home',
+      label: 'Inicio',
+      icon: House,
+      href: '/',
+      hasDropdown: false,
+      categories: getProductCategories()
+    },
 
     {
       id: 'products',

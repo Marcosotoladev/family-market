@@ -1,136 +1,247 @@
-// src/lib/services/notificationService.js - Versión limpia sin logs de debug
+// src/lib/services/notificationService.js - Versión mejorada
 import { getMessaging, getToken, onMessage, isSupported } from 'firebase/messaging';
 import { app } from '../firebase/config';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../firebase/config';
 
 class NotificationService {
   constructor() {
     this.messaging = null;
     this.vapidKey = process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY;
     this.isInitialized = false;
-    this.initPromise = null;
   }
 
+  // Verificar si las notificaciones son compatibles
+  async isSupported() {
+    try {
+      return typeof window !== 'undefined' && await isSupported();
+    } catch (error) {
+      console.warn('Error verificando soporte de notificaciones:', error);
+      return false;
+    }
+  }
+
+  // Inicializar Firebase Messaging
   async initialize() {
-    if (this.initPromise) {
-      return this.initPromise;
-    }
-
-    if (this.isInitialized) {
-      return true;
-    }
-
-    this.initPromise = this._doInitialize();
-    return this.initPromise;
-  }
-
-  async _doInitialize() {
     try {
       if (typeof window === 'undefined') {
+        console.log('Messaging solo funciona en el cliente');
         return false;
       }
 
-      const supported = await isSupported();
+      // Verificar si messaging es compatible
+      const supported = await this.isSupported();
       if (!supported) {
+        console.log('Firebase Messaging no es compatible en este navegador');
         return false;
       }
 
       this.messaging = getMessaging(app);
       this.isInitialized = true;
+      console.log('✅ Firebase Messaging inicializado correctamente');
       return true;
     } catch (error) {
-      console.error('Error al inicializar Firebase Messaging:', error);
-      this.isInitialized = false;
+      console.error('❌ Error al inicializar Firebase Messaging:', error);
       return false;
     }
   }
 
+  // Solicitar permisos de notificación
   async requestPermission() {
     try {
-      const initialized = await this.initialize();
-      if (!initialized) return null;
-
-      if (!this.vapidKey) {
-        throw new Error('VAPID key no configurada en variables de entorno');
+      if (!this.isInitialized) {
+        const initialized = await this.initialize();
+        if (!initialized) return null;
       }
 
+      // Verificar si ya tenemos permisos
+      if (Notification.permission === 'granted') {
+        return await this.getToken();
+      }
+
+      // Solicitar permisos
       const permission = await Notification.requestPermission();
+      console.log('🔔 Permisos de notificación:', permission);
       
       if (permission === 'granted') {
+        console.log('✅ Permisos de notificación concedidos');
         return await this.getToken();
       } else {
+        console.log('❌ Permisos de notificación denegados');
         return null;
       }
     } catch (error) {
-      console.error('Error al solicitar permisos:', error);
-      throw error;
+      console.error('❌ Error al solicitar permisos:', error);
+      return null;
     }
   }
 
+  // Obtener token FCM
   async getToken() {
     try {
-      const initialized = await this.initialize();
-      if (!initialized) return null;
+      if (!this.messaging) {
+        console.warn('⚠️ Messaging no inicializado');
+        return null;
+      }
+
+      if (!this.vapidKey) {
+        console.error('❌ VAPID Key no configurada');
+        return null;
+      }
 
       const token = await getToken(this.messaging, {
         vapidKey: this.vapidKey
       });
-      
-      return token || null;
+
+      if (token) {
+        console.log('🔑 Token FCM obtenido exitosamente');
+        console.log('Token:', token.substring(0, 50) + '...');
+        return token;
+      } else {
+        console.warn('⚠️ No se pudo obtener el token FCM');
+        return null;
+      }
     } catch (error) {
-      console.error('Error al obtener token FCM:', error);
-      throw error;
+      console.error('❌ Error obteniendo token FCM:', error);
+      return null;
     }
   }
 
-  async onMessageListener() {
+  // Actualizar token en Firestore
+  async updateUserToken(userId, token) {
     try {
-      const initialized = await this.initialize();
-      if (!initialized || !this.messaging) {
-        return Promise.resolve();
+      if (!userId || !token) {
+        console.warn('⚠️ userId o token faltante para actualizar');
+        return false;
       }
 
-      return new Promise((resolve) => {
-        onMessage(this.messaging, (payload) => {
-          resolve(payload);
-        });
+      await updateDoc(doc(db, 'users', userId), {
+        notificationToken: token,
+        lastTokenUpdate: new Date(),
+        notificationPermissionGrantedAt: new Date()
       });
+
+      console.log('✅ Token actualizado en Firestore');
+      return true;
     } catch (error) {
-      console.error('Error configurando listener:', error);
-      return Promise.resolve();
+      console.error('❌ Error actualizando token en Firestore:', error);
+      return false;
     }
   }
 
-  async showLocalNotification(title, body, options = {}) {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      try {
-        const notification = new Notification(title, {
-          body,
-          icon: '/icon-192.png',
-          badge: '/icon-192.png',
-          vibrate: [200, 100, 200],
-          tag: 'family-market-local',
-          ...options
-        });
+  // Escuchar mensajes en primer plano (retorna unsubscribe function)
+  onMessageListener(callback) {
+    if (!this.messaging) {
+      console.warn('⚠️ Messaging no inicializado para listener');
+      return null;
+    }
 
-        notification.onclick = () => {
-          window.focus();
-          notification.close();
-        };
-
-        return notification;
-      } catch (error) {
-        console.error('Error mostrando notificación local:', error);
+    return onMessage(this.messaging, (payload) => {
+      console.log('📨 Mensaje recibido en primer plano:', payload);
+      if (callback) {
+        callback(payload);
       }
+    });
+  }
+
+  // Mostrar notificación local
+  async showLocalNotification(title, body, options = {}) {
+    try {
+      if (Notification.permission !== 'granted') {
+        console.warn('⚠️ Permisos de notificación no concedidos');
+        return null;
+      }
+
+      const notificationOptions = {
+        body,
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        tag: 'family-market-notification',
+        requireInteraction: false,
+        vibrate: [200, 100, 200],
+        ...options
+      };
+
+      const notification = new Notification(title, notificationOptions);
+
+      // Configurar eventos
+      notification.onclick = () => {
+        console.log('👆 Clic en notificación local');
+        if (options.data?.url) {
+          window.focus();
+          window.location.href = options.data.url;
+        }
+        notification.close();
+      };
+
+      return notification;
+    } catch (error) {
+      console.error('❌ Error mostrando notificación local:', error);
+      return null;
     }
   }
 
-  isSupported() {
-    return (
-      'Notification' in window && 
-      'serviceWorker' in navigator &&
-      typeof window !== 'undefined'
-    );
+  // Configurar listener para mensajes (para usar en componentes)
+  setupMessageListener(callback) {
+    if (!this.messaging) {
+      console.warn('⚠️ Messaging no inicializado para listener');
+      return null;
+    }
+
+    const unsubscribe = onMessage(this.messaging, (payload) => {
+      console.log('📨 Mensaje recibido:', payload);
+      
+      // Mostrar notificación local si la app está en primer plano
+      this.showLocalNotification(
+        payload.notification?.title || 'Nueva notificación',
+        payload.notification?.body || 'Tienes una nueva notificación',
+        {
+          data: payload.data,
+          icon: payload.notification?.icon,
+          tag: 'foreground-message'
+        }
+      );
+
+      // Ejecutar callback personalizado
+      if (callback) {
+        callback(payload);
+      }
+    });
+
+    return unsubscribe;
+  }
+
+  // Revocar token (para cerrar sesión)
+  async revokeToken(userId) {
+    try {
+      if (userId) {
+        await updateDoc(doc(db, 'users', userId), {
+          notificationToken: null,
+          lastTokenUpdate: new Date()
+        });
+        console.log('🗑️ Token revocado del usuario');
+      }
+      return true;
+    } catch (error) {
+      console.error('❌ Error revocando token:', error);
+      return false;
+    }
+  }
+
+  // Obtener estado de permisos
+  getPermissionState() {
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      return 'unsupported';
+    }
+    return Notification.permission;
+  }
+
+  // Verificar si el usuario puede recibir notificaciones
+  canReceiveNotifications() {
+    return this.getPermissionState() === 'granted' && this.isInitialized;
   }
 }
 
-export default new NotificationService();
+// Exportar instancia singleton
+const notificationService = new NotificationService();
+export default notificationService;

@@ -1,5 +1,5 @@
-find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -not -path "./public/images*" | sort | sed 's/[^/]*\//|   /g; s/|   \([^|]\)/└── \1/' > estructura-completa.txt
 
+find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -not -path "./public/images*" | sort | sed 's/[^/]*\//|   /g; s/|   \([^|]\)/└── \1/' > estructura-completa.txt
 
 .
 └── .env.local
@@ -21,12 +21,16 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 └── README.md
 └── src
 |   └── app
+|   |   └── about
+|   |   |   └── page.js
 |   |   └── api
 |   |   |   └── firebase-messaging-sw
 |   |   |   |   └── route.js
 |   |   └── dashboard
 |   |   |   └── page.js
 |   |   |   └── profile
+|   |   |   |   └── page.js
+|   |   |   └── store
 |   |   |   |   └── page.js
 |   |   └── favicon.ico
 |   |   └── globals.css
@@ -40,9 +44,20 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── page.js
 |   |   └── tienda
 |   |   |   └── [slug]
+|   |   |   |   └── empleos
+|   |   |   |   |   └── page.js
+|   |   |   |   └── galeria
+|   |   |   |   |   └── page.js
+|   |   |   |   └── nosotros
+|   |   |   |   |   └── page.js
 |   |   |   |   └── page.js
+|   |   |   |   └── productos
+|   |   |   |   |   └── page.js
+|   |   |   |   └── servicios
+|   |   |   |   |   └── page.js
+|   |   |   |   └── testimonios
+|   |   |   |   |   └── page.js
 |   |   |   └── layout.js
-|   |   |   └── page.js
 |   |   └── user
 |   |   |   └── page.js
 |   └── components
@@ -52,8 +67,11 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── Register.js
 |   |   └── dashboard
 |   |   |   └── ActionCardsGrid.js
+|   |   |   └── CommentsSection.js
 |   |   |   └── DashboardHeader.js
+|   |   |   └── FavoritesSection.js
 |   |   |   └── QuickStatsSection.js
+|   |   |   └── StoreInfoCard.js
 |   |   |   └── UserInfoCard.js
 |   |   └── home
 |   |   |   └── CategoriesSection.js
@@ -68,34 +86,39 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── DesktopNavigation.js
 |   |   |   └── Footer.js
 |   |   |   └── Header.js
+|   |   |   └── MobileDashboardNavigation.js
 |   |   |   └── MobileNavigation.js
 |   |   └── profile
 |   |   |   └── AccountSettingsSection.js
-|   |   |   └── BusinessInfoSection.js
-|   |   |   └── ImageUploadSection.js
 |   |   |   └── PersonalInfoSection.js
-|   |   |   └── ProfileContent.js
+|   |   |   └── ProfileImageSection.js
 |   |   |   └── ProfileSidebar.js
-|   |   |   └── StoreConfigSection.js
 |   |   └── providers
 |   |   |   └── ThemeProvider.jsx
 |   |   └── store
-|   |   |   └── ConfigSection.js
-|   |   |   └── ContactSection.js
-|   |   |   └── ProductsGrid.js
+|   |   |   └── BusinessInfoSection.js
 |   |   |   └── ServicesSection.js
-|   |   |   └── SocialLinksComponent.js
-|   |   |   └── StoreFooter.js
+|   |   |   └── StoreConfigSection.js
+|   |   |   └── StoreLogoSection.js
+|   |   |   └── StoreSidebar.js
+|   |   └── tienda
 |   |   |   └── StoreHeader.js
-|   |   |   └── StoreHero.js
+|   |   |   └── StoreLayout.js
+|   |   |   └── StoreNavigation.js
+|   |   |   └── StoreProductsSection.js
 |   |   └── ui
+|   |   |   └── CustomColorPicker.js
 |   |   |   └── ImageUpload.js
 |   |   |   └── NotificationManager.js
 |   |   |   └── ProductCard.js
+|   |   |   └── Toast.js
+|   |   |   └── ToastContainer.js
 |   |   └── user
 |   |   |   └── AccountStatus.js
 |   └── contexts
 |   |   └── AuthContext.js
+|   └── hooks
+|   |   └── useToast.js
 |   └── lib
 |   |   └── cloudinary
 |   |   |   └── config.js
