@@ -468,10 +468,17 @@ const MessagingManagementSection = () => {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Audiencia Objetivo
+                <span className="ml-1 text-xs text-gray-500">
+                  ({
+                    messageData.targetAudience === 'all' ? users.length :
+                    messageData.targetAudience === 'approved' ? users.filter(u => u.accountStatus === 'approved').length :
+                    messageData.specificUsers.length
+                  } usuarios)
+                </span>
               </label>
               <select
                 value={messageData.targetAudience}
-                onChange={(e) => setMessageData({...messageData, targetAudience: e.target.value})}
+                onChange={(e) => setMessageData({...messageData, targetAudience: e.target.value, specificUsers: []})}
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="all">Todos los usuarios activos</option>
@@ -479,6 +486,90 @@ const MessagingManagementSection = () => {
                 <option value="specific">Usuarios específicos</option>
               </select>
             </div>
+
+            {/* Selector de usuarios específicos */}
+            {messageData.targetAudience === 'specific' && (
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Seleccionar Usuarios ({messageData.specificUsers.length} seleccionados)
+                </label>
+                <div className="max-h-40 overflow-y-auto border border-gray-300 rounded-md bg-white">
+                  {users.length === 0 ? (
+                    <div className="p-4 text-gray-500 text-sm">
+                      No hay usuarios disponibles para seleccionar
+                    </div>
+                  ) : (
+                    users.map((user) => (
+                      <label key={user.id} className="flex items-center p-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0">
+                        <input
+                          type="checkbox"
+                          checked={messageData.specificUsers.includes(user.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setMessageData({
+                                ...messageData,
+                                specificUsers: [...messageData.specificUsers, user.id]
+                              });
+                            } else {
+                              setMessageData({
+                                ...messageData,
+                                specificUsers: messageData.specificUsers.filter(id => id !== user.id)
+                              });
+                            }
+                          }}
+                          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                        />
+                        <div className="ml-3 flex-1">
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.firstName} {user.lastName}
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {user.email} • {user.businessName || 'Sin negocio'}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {user.accountStatus === 'approved' ? '✓ Aprobado' : '⏳ Pendiente'}
+                          </div>
+                        </div>
+                      </label>
+                    ))
+                  )}
+                </div>
+                
+                {/* Botones de selección rápida */}
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="button"
+                    onClick={() => setMessageData({
+                      ...messageData,
+                      specificUsers: users.map(u => u.id)
+                    })}
+                    className="text-xs text-blue-600 hover:text-blue-800 px-2 py-1 border border-blue-300 rounded hover:bg-blue-50"
+                  >
+                    Seleccionar todos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMessageData({
+                      ...messageData,
+                      specificUsers: []
+                    })}
+                    className="text-xs text-gray-600 hover:text-gray-800 px-2 py-1 border border-gray-300 rounded hover:bg-gray-50"
+                  >
+                    Deseleccionar todos
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMessageData({
+                      ...messageData,
+                      specificUsers: users.filter(u => u.accountStatus === 'approved').map(u => u.id)
+                    })}
+                    className="text-xs text-green-600 hover:text-green-800 px-2 py-1 border border-green-300 rounded hover:bg-green-50"
+                  >
+                    Solo aprobados
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Prioridad */}
             <div>
