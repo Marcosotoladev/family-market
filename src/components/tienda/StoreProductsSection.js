@@ -2,287 +2,461 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Package, Filter, Grid, List, Search } from 'lucide-react';
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  orderBy, 
+  limit,
+  startAfter,
+  doc,
+  updateDoc,
+  increment 
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
+import ProductCard from './productos/ProductCard';
+import { CATEGORIAS_PRODUCTOS } from '@/types/categories';
+import { ESTADOS_PRODUCTO } from '@/types/product';
+import { 
+  Search, 
+  Filter, 
+  Grid3X3, 
+  List, 
+  ChevronDown,
+  Package,
+  Loader2,
+  SlidersHorizontal
+} from 'lucide-react';
 
-const StoreProductsSection = ({ 
-  products = [], 
+export default function StoreProductsSection({ 
+  storeId, 
+  storeData, 
   storeConfig,
-  searchQuery 
-}) => {
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
-  const [filteredProducts, setFilteredProducts] = useState(products);
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  searchQuery = '',
+  showFilters = true,
+  maxProducts = null,
+  variant = 'grid' // 'grid' | 'list'
+}) {
+  const [products, setProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [lastVisible, setLastVisible] = useState(null);
+  const [hasMore, setHasMore] = useState(true);
+  
+  // Filtros
+  const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
+  const [selectedCategory, setSelectedCategory] = useState('');
+  const [priceRange, setPriceRange] = useState({ min: '', max: '' });
+  const [sortBy, setSortBy] = useState('fechaCreacion');
+  const [sortOrder, setSortOrder] = useState('desc');
+  const [viewMode, setViewMode] = useState(variant);
+  const [showFiltersPanel, setShowFiltersPanel] = useState(false);
 
-  // Filtrar productos basado en búsqueda y categoría
-  const filterProducts = () => {
-    let filtered = products;
+  // Configuración de paginación
+  const PRODUCTS_PER_PAGE = maxProducts || 12;
 
-    // Filtrar por categoría
-    if (selectedCategory !== 'all') {
-      filtered = filtered.filter(product => 
-        product.category === selectedCategory
-      );
+  useEffect(() => {
+    if (storeId) {
+      loadProducts(true);
     }
+  }, [storeId, selectedCategory, sortBy, sortOrder]);
 
-    // Filtrar por búsqueda
-    if (searchQuery && searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(product =>
-        product.name?.toLowerCase().includes(query) ||
-        product.description?.toLowerCase().includes(query) ||
-        product.category?.toLowerCase().includes(query)
-      );
+  useEffect(() => {
+    if (searchQuery !== localSearchQuery) {
+      setLocalSearchQuery(searchQuery);
     }
+  }, [searchQuery]);
 
-    setFilteredProducts(filtered);
+  useEffect(() => {
+    // Buscar cuando cambie la query local con debounce
+    const timer = setTimeout(() => {
+      if (localSearchQuery !== searchQuery) {
+        loadProducts(true);
+      }
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [localSearchQuery]);
+
+  const loadProducts = async (reset = false) => {
+    console.log('🔍 loadProducts ejecutándose');
+    console.log('🔍 storeId:', storeId);
+    console.log('🔍 Consultando colección: productos');
+    console.log('🔍 Filtro usuarioId ==', storeId);
+    console.log('🔍 Filtro estado ==', ESTADOS_PRODUCTO.DISPONIBLE);
+    
+    try {
+      if (reset) {
+        setLoading(true);
+        setProducts([]);
+        setLastVisible(null);
+        setHasMore(true);
+      } else {
+        setLoadingMore(true);
+      }
+
+      const productsRef = collection(db, 'productos');
+      let q = query(
+        productsRef,
+        where('usuarioId', '==', storeId),
+        where('estado', '==', ESTADOS_PRODUCTO.DISPONIBLE)
+      );
+
+      // Filtro por categoría
+      if (selectedCategory) {
+        q = query(q, where('categoria', '==', selectedCategory));
+      }
+
+      // Ordenamiento
+      const orderField = sortBy === 'precio' ? 'precio' : 
+                        sortBy === 'ventas' ? 'totalVentas' :
+                        sortBy === 'titulo' ? 'titulo' : 'fechaCreacion';
+      
+      q = query(q, orderBy(orderField, sortOrder));
+
+      // Paginación
+      if (!reset && lastVisible) {
+        q = query(q, startAfter(lastVisible));
+      }
+
+      q = query(q, limit(PRODUCTS_PER_PAGE));
+
+      const querySnapshot = await getDocs(q);
+      console.log('🔍 Documentos encontrados:', querySnapshot.docs.length);
+
+      const newProducts = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      console.log('🔍 Productos obtenidos:', newProducts);
+
+      // Filtros adicionales que no se pueden hacer en Firestore
+      let filteredProducts = newProducts;
+
+      // Filtro por búsqueda de texto
+      if (localSearchQuery) {
+        const searchLower = localSearchQuery.toLowerCase();
+        filteredProducts = filteredProducts.filter(product =>
+          product.titulo.toLowerCase().includes(searchLower) ||
+          product.descripcion.toLowerCase().includes(searchLower) ||
+          product.palabrasClave?.some(keyword => 
+            keyword.toLowerCase().includes(searchLower)
+          ) ||
+          product.etiquetas?.some(tag => 
+            tag.toLowerCase().includes(searchLower)
+          )
+        );
+      }
+
+      // Filtro por rango de precio
+      if (priceRange.min || priceRange.max) {
+        filteredProducts = filteredProducts.filter(product => {
+          if (product.tipoPrecio !== 'fijo') return true;
+          const price = product.precio || 0;
+          const min = parseFloat(priceRange.min) || 0;
+          const max = parseFloat(priceRange.max) || Infinity;
+          return price >= min && price <= max;
+        });
+      }
+
+      console.log('🔍 Productos después de filtros locales:', filteredProducts);
+
+      if (reset) {
+        setProducts(filteredProducts);
+      } else {
+        setProducts(prev => [...prev, ...filteredProducts]);
+      }
+
+      // Actualizar paginación
+      const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
+      setLastVisible(lastDoc);
+      setHasMore(querySnapshot.docs.length === PRODUCTS_PER_PAGE);
+
+    } catch (error) {
+      console.error('🔥 Error cargando productos:', error);
+    } finally {
+      setLoading(false);
+      setLoadingMore(false);
+    }
   };
 
-  // Ejecutar filtros cuando cambien las dependencias
-  useEffect(() => {
-    filterProducts();
-  }, [products, searchQuery, selectedCategory]);
+  const handleProductClick = async (product) => {
+    // Incrementar contador de vistas
+    try {
+      const productRef = doc(db, 'productos', product.id);
+      await updateDoc(productRef, {
+        totalVistas: increment(1)
+      });
+    } catch (error) {
+      console.error('Error actualizando vistas:', error);
+    }
+  };
 
-  // Obtener categorías únicas
-  const categories = ['all', ...new Set(products.map(p => p.category).filter(Boolean))];
+  const handleClearFilters = () => {
+    setSelectedCategory('');
+    setPriceRange({ min: '', max: '' });
+    setLocalSearchQuery('');
+    setSortBy('fechaCreacion');
+    setSortOrder('desc');
+  };
 
-  const ProductCard = ({ product }) => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow">
-      
-      {/* Imagen del producto */}
-      <div className="aspect-square bg-gray-100 dark:bg-gray-700 relative overflow-hidden">
-        {product.image ? (
-          <img
-            src={product.image}
-            alt={product.name}
-            className="w-full h-full object-cover"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center">
-            <Package className="w-12 h-12 text-gray-400" />
+  const categories = Object.values(CATEGORIAS_PRODUCTOS);
+  const hasActiveFilters = selectedCategory || priceRange.min || priceRange.max || localSearchQuery;
+
+  if (loading) {
+    return (
+      <section className="py-8 lg:py-12 bg-gray-50 dark:bg-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <Loader2 className="w-12 h-12 text-orange-600 animate-spin mx-auto mb-4" />
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+              Cargando productos...
+            </h2>
           </div>
-        )}
-        
-        {/* Badge de estado */}
-        {product.status && (
-          <div className="absolute top-2 right-2">
-            <span 
-              className="px-2 py-1 text-xs font-medium text-white rounded-full"
-              style={{ backgroundColor: storeConfig?.primaryColor || '#ea580c' }}
-            >
-              {product.status}
-            </span>
-          </div>
-        )}
-      </div>
-      
-      {/* Información del producto */}
-      <div className="p-4">
-        <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
-          {product.name}
-        </h3>
-        
-        {product.description && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-3 line-clamp-2">
-            {product.description}
-          </p>
-        )}
-        
-        <div className="flex items-center justify-between">
-          {product.price && (
-            <span className="text-lg font-bold text-gray-900 dark:text-white">
-              ${product.price}
-            </span>
-          )}
-          
-          <button
-            className="px-4 py-2 text-sm font-medium text-white rounded-md hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: storeConfig?.primaryColor || '#ea580c' }}
-          >
-            Ver detalles
-          </button>
         </div>
-      </div>
-    </div>
-  );
-
-  const ProductListItem = ({ product }) => (
-    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-shadow">
-      <div className="flex items-center space-x-4">
-        
-        {/* Imagen pequeña */}
-        <div className="w-16 h-16 bg-gray-100 dark:bg-gray-700 rounded-lg overflow-hidden flex-shrink-0">
-          {product.image ? (
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-full object-cover"
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <Package className="w-6 h-6 text-gray-400" />
-            </div>
-          )}
-        </div>
-        
-        {/* Información del producto */}
-        <div className="flex-1 min-w-0">
-          <h3 className="font-semibold text-gray-900 dark:text-white mb-1">
-            {product.name}
-          </h3>
-          
-          {product.description && (
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2 line-clamp-1">
-              {product.description}
-            </p>
-          )}
-          
-          {product.category && (
-            <span className="inline-block px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded">
-              {product.category}
-            </span>
-          )}
-        </div>
-        
-        {/* Precio y acción */}
-        <div className="flex flex-col items-end space-y-2">
-          {product.price && (
-            <span className="text-lg font-bold text-gray-900 dark:text-white">
-              ${product.price}
-            </span>
-          )}
-          
-          <button
-            className="px-4 py-2 text-sm font-medium text-white rounded-md hover:opacity-90 transition-opacity"
-            style={{ backgroundColor: storeConfig?.primaryColor || '#ea580c' }}
-          >
-            Ver detalles
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+      </section>
+    );
+  }
 
   return (
-    <section id="productos" className="py-8 lg:py-12">
+    <section id="productos" className="py-8 lg:py-12 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        
-        {/* Header de la sección */}
+        {/* Header */}
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
             Nuestros Productos
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
-            Descubre nuestra selección de productos de calidad
+          <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
+            Descubre nuestra selección de productos artesanales
           </p>
         </div>
 
-        {/* Filtros y controles */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 space-y-4 sm:space-y-0">
-          
-          {/* Filtros de categoría */}
-          <div className="flex items-center space-x-2 overflow-x-auto pb-2 sm:pb-0">
-            <Filter className="w-5 h-5 text-gray-500 flex-shrink-0" />
-            <div className="flex space-x-2">
-              {categories.map((category) => (
+        {/* Filtros y búsqueda */}
+        {showFilters && (
+          <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-8">
+            {/* Barra superior de filtros */}
+            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
+              {/* Búsqueda */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Buscar productos..."
+                  value={localSearchQuery}
+                  onChange={(e) => setLocalSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              {/* Controles de vista */}
+              <div className="flex items-center space-x-4">
+                <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
+                  <button
+                    onClick={() => setViewMode('grid')}
+                    className={`p-2 ${viewMode === 'grid' 
+                      ? 'bg-orange-600 text-white' 
+                      : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    } transition-colors`}
+                  >
+                    <Grid3X3 className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode('list')}
+                    className={`p-2 ${viewMode === 'list' 
+                      ? 'bg-orange-600 text-white' 
+                      : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
+                    } transition-colors`}
+                  >
+                    <List className="w-4 h-4" />
+                  </button>
+                </div>
+
                 <button
-                  key={category}
-                  onClick={() => setSelectedCategory(category)}
-                  className={`px-4 py-2 text-sm font-medium rounded-lg whitespace-nowrap transition-all ${
-                    selectedCategory === category
-                      ? 'text-white shadow-md'
-                      : 'text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                  style={{
-                    backgroundColor: selectedCategory === category 
-                      ? storeConfig?.primaryColor || '#ea580c'
-                      : undefined
-                  }}
+                  onClick={() => setShowFiltersPanel(!showFiltersPanel)}
+                  className="flex items-center space-x-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
-                  {category === 'all' ? 'Todos' : category}
+                  <SlidersHorizontal className="w-4 h-4" />
+                  <span>Filtros</span>
+                  {hasActiveFilters && (
+                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                  )}
                 </button>
-              ))}
+              </div>
             </div>
-          </div>
 
-          {/* Controles de vista */}
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-600 dark:text-gray-400">
-              {filteredProducts.length} productos
-            </span>
-            <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 ${
-                  viewMode === 'grid'
-                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-              >
-                <Grid className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`p-2 ${
-                  viewMode === 'list'
-                    ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                    : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
-                }`}
-              >
-                <List className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-        </div>
+            {/* Panel de filtros expandible */}
+            {showFiltersPanel && (
+              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {/* Categoría */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Categoría
+                    </label>
+                    <select
+                      value={selectedCategory}
+                      onChange={(e) => setSelectedCategory(e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                    >
+                      <option value="">Todas las categorías</option>
+                      {categories.map(cat => (
+                        <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                      ))}
+                    </select>
+                  </div>
 
-        {/* Resultados de búsqueda */}
-        {searchQuery && (
-          <div className="mb-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
-            <div className="flex items-center space-x-2">
-              <Search className="w-5 h-5 text-blue-600 dark:text-blue-400" />
-              <span className="text-blue-900 dark:text-blue-100">
-                Resultados para: <strong>"{searchQuery}"</strong>
-              </span>
-              <span className="text-blue-700 dark:text-blue-300">
-                ({filteredProducts.length} encontrados)
-              </span>
-            </div>
+                  {/* Precio mínimo */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Precio mínimo
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={priceRange.min}
+                      onChange={(e) => setPriceRange(prev => ({ ...prev, min: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="$0"
+                    />
+                  </div>
+
+                  {/* Precio máximo */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Precio máximo
+                    </label>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.01"
+                      value={priceRange.max}
+                      onChange={(e) => setPriceRange(prev => ({ ...prev, max: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="Sin límite"
+                    />
+                  </div>
+
+                  {/* Ordenar */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Ordenar por
+                    </label>
+                    <div className="flex space-x-2">
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      >
+                        <option value="fechaCreacion">Más recientes</option>
+                        <option value="titulo">Nombre</option>
+                        <option value="precio">Precio</option>
+                        <option value="ventas">Más vendidos</option>
+                      </select>
+                      <button
+                        onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                        className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
+                        title={sortOrder === 'asc' ? 'Ascendente' : 'Descendente'}
+                      >
+                        {sortOrder === 'asc' ? '↑' : '↓'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Botón limpiar filtros */}
+                {hasActiveFilters && (
+                  <div className="mt-4 flex justify-end">
+                    <button
+                      onClick={handleClearFilters}
+                      className="px-4 py-2 text-sm text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
+                    >
+                      Limpiar filtros
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
         )}
 
-        {/* Grid/Lista de productos */}
-        {filteredProducts.length > 0 ? (
-          <div className={
-            viewMode === 'grid'
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-              : "space-y-4"
-          }>
-            {filteredProducts.map((product) => (
-              viewMode === 'grid' ? (
-                <ProductCard key={product.id} product={product} />
-              ) : (
-                <ProductListItem key={product.id} product={product} />
-              )
-            ))}
-          </div>
-        ) : (
+        {/* Resultados */}
+        <div className="mb-6">
+          <p className="text-sm text-gray-600 dark:text-gray-400">
+            {products.length > 0 
+              ? `Mostrando ${products.length} producto${products.length !== 1 ? 's' : ''}${hasActiveFilters ? ' (filtrado)' : ''}`
+              : 'No se encontraron productos'
+            }
+          </p>
+        </div>
+
+        {/* Grid de productos */}
+        {products.length === 0 ? (
           <div className="text-center py-12">
-            <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+            <Package className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
               No se encontraron productos
             </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              {searchQuery 
-                ? `No hay productos que coincidan con "${searchQuery}"`
-                : selectedCategory !== 'all'
-                  ? `No hay productos en la categoría "${selectedCategory}"`
-                  : 'Aún no hay productos disponibles'
+            <p className="text-gray-500 dark:text-gray-400 mb-4">
+              {hasActiveFilters 
+                ? 'Intenta ajustar los filtros de búsqueda' 
+                : 'Esta tienda aún no ha publicado productos'
               }
             </p>
+            {hasActiveFilters && (
+              <button
+                onClick={handleClearFilters}
+                className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              >
+                Limpiar filtros
+              </button>
+            )}
           </div>
+        ) : (
+          <>
+            <div className={
+              viewMode === 'grid' 
+                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+                : 'space-y-4'
+            }>
+              {products.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  storeData={storeData}
+                  variant={viewMode}
+                  onClick={() => handleProductClick(product)}
+                />
+              ))}
+            </div>
+
+            {/* Botón cargar más */}
+            {hasMore && !maxProducts && (
+              <div className="text-center mt-8">
+                <button
+                  onClick={() => loadProducts(false)}
+                  disabled={loadingMore}
+                  className="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Cargando...
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-4 h-4 mr-2" />
+                      Cargar más productos
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         )}
       </div>
     </section>
   );
-};
-
-export default StoreProductsSection;
+}

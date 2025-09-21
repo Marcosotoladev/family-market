@@ -1,5 +1,5 @@
-
 find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -not -path "./public/images*" | sort | sed 's/[^/]*\//|   /g; s/|   \([^|]\)/└── \1/' > estructura-completa.txt
+
 
 .
 └── .env.local
@@ -17,7 +17,6 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   └── icon-192.png
 |   └── icon-512.png
 |   └── manifest.json
-|   └── sw.js
 └── README.md
 └── src
 |   └── app
@@ -26,11 +25,20 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   └── api
 |   |   |   └── firebase-messaging-sw
 |   |   |   |   └── route.js
+|   |   |   └── send-notification
+|   |   |   |   └── route.js
 |   |   └── dashboard
+|   |   |   └── messaging
+|   |   |   |   └── page.js
 |   |   |   └── page.js
 |   |   |   └── profile
 |   |   |   |   └── page.js
 |   |   |   └── store
+|   |   |   |   └── page.js
+|   |   |   └── tienda
+|   |   |   |   └── productos
+|   |   |   |   |   └── page.js
+|   |   |   └── users
 |   |   |   |   └── page.js
 |   |   └── favicon.ico
 |   |   └── globals.css
@@ -70,9 +78,11 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── CommentsSection.js
 |   |   |   └── DashboardHeader.js
 |   |   |   └── FavoritesSection.js
+|   |   |   └── MessagingManagementSection.js
 |   |   |   └── QuickStatsSection.js
 |   |   |   └── StoreInfoCard.js
 |   |   |   └── UserInfoCard.js
+|   |   |   └── UserManagementSection.js
 |   |   └── home
 |   |   |   └── CategoriesSection.js
 |   |   |   └── FeaturedJobs.js
@@ -82,6 +92,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── Testimonials.js
 |   |   |   └── WhatsNew.js
 |   |   └── layout
+|   |   |   └── DashboardSidebar.js
 |   |   |   └── DashboardTopNavigation.js
 |   |   |   └── DesktopNavigation.js
 |   |   |   └── Footer.js
@@ -102,6 +113,11 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── StoreLogoSection.js
 |   |   |   └── StoreSidebar.js
 |   |   └── tienda
+|   |   |   └── productos
+|   |   |   |   └── ProductCard.js
+|   |   |   |   └── ProductForm.js
+|   |   |   |   └── ProductList.js
+|   |   |   |   └── ProductManager.js
 |   |   |   └── StoreHeader.js
 |   |   |   └── StoreLayout.js
 |   |   |   └── StoreNavigation.js
@@ -118,6 +134,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   └── contexts
 |   |   └── AuthContext.js
 |   └── hooks
+|   |   └── useAdminMessaging.js
 |   |   └── useToast.js
 |   └── lib
 |   |   └── cloudinary
@@ -135,7 +152,10 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   └── hooks
 |   |   |   └── useCloudinary.js
 |   |   |   └── useNotifications.js
+|   |   └── products
+|   |   |   └── productUtils.js
 |   |   └── services
+|   |   |   └── adminService.js
 |   |   |   └── notificationService.js
 |   |   └── storeConfigUtils.js
 |   └── styles

@@ -17,12 +17,11 @@ export default function ProductosPage() {
   
   const [storeData, setStoreData] = useState(null);
   const [storeConfig, setStoreConfig] = useState(null);
-  const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Cargar datos de la tienda (mismo código que en la página principal)
+  // Cargar datos de la tienda
   useEffect(() => {
     const fetchStoreData = async () => {
       try {
@@ -49,45 +48,6 @@ export default function ProductosPage() {
         
         setStoreData(userData);
         setStoreConfig(config);
-        
-        // TODO: Cargar productos reales de Firestore
-        const mockProducts = [
-          {
-            id: 1,
-            name: 'Dulce de Leche Artesanal',
-            description: 'Dulce de leche casero elaborado con leche fresca de la región',
-            price: 850,
-            category: 'Dulces',
-            image: 'https://via.placeholder.com/300x300/f97316/white?text=DULCE',
-            status: 'Disponible'
-          },
-          {
-            id: 2,
-            name: 'Empanadas Criollas',
-            description: 'Empanadas caseras con carne, pollo, jamón y queso',
-            price: 200,
-            category: 'Comidas',
-            image: 'https://via.placeholder.com/300x300/059669/white?text=EMPANADAS',
-            status: 'Disponible'
-          },
-          {
-            id: 3,
-            name: 'Mermelada de Durazno',
-            description: 'Mermelada casera elaborada con duraznos de temporada',
-            price: 650,
-            category: 'Dulces',
-            image: 'https://via.placeholder.com/300x300/dc2626/white?text=MERMELADA'
-          },
-          {
-            id: 4,
-            name: 'Pan Casero',
-            description: 'Pan artesanal horneado diariamente',
-            price: 450,
-            category: 'Panadería',
-            image: 'https://via.placeholder.com/300x300/92400e/white?text=PAN'
-          }
-        ];
-        setProducts(mockProducts);
         
       } catch (error) {
         console.error('Error al cargar la tienda:', error);
@@ -128,10 +88,10 @@ export default function ProductosPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-orange-600 animate-spin mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Cargando productos...
           </h2>
         </div>
@@ -141,9 +101,9 @@ export default function ProductosPage() {
 
   if (error || !storeData || !storeConfig) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
             {error || 'Página no encontrada'}
           </h2>
           <Link
@@ -165,37 +125,37 @@ export default function ProductosPage() {
       onSearch={handleSearch}
     >
       {/* Breadcrumbs */}
-      <div className="bg-gray-50 py-4">
+      <div className="bg-gray-50 dark:bg-gray-900 py-4">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex items-center space-x-2 text-sm">
             <Link 
               href={`/tienda/${slug}`}
-              className="text-gray-500 hover:text-gray-700 transition-colors"
+              className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             >
               {storeData.businessName || storeData.familyName}
             </Link>
-            <span className="text-gray-300">/</span>
-            <span className="text-gray-900 font-medium">Productos</span>
+            <span className="text-gray-300 dark:text-gray-600">/</span>
+            <span className="text-gray-900 dark:text-white font-medium">Productos</span>
           </nav>
         </div>
       </div>
 
       {/* Header de página */}
-      <div className="bg-white py-8 border-b">
+      <div className="bg-white dark:bg-gray-800 py-8 border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
                 Nuestros Productos
               </h1>
-              <p className="text-lg text-gray-600 mt-2">
+              <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                 Descubre nuestra selección completa de productos artesanales
               </p>
             </div>
             
             <Link
               href={`/tienda/${slug}`}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Volver
@@ -206,9 +166,12 @@ export default function ProductosPage() {
 
       {/* Sección de productos completa */}
       <StoreProductsSection
-        products={products}
+        storeId={storeData.id}
+        storeData={storeData}
         storeConfig={storeConfig}
         searchQuery={searchQuery}
+        showFilters={true}
+        variant="grid"
       />
     </StoreLayout>
   );
