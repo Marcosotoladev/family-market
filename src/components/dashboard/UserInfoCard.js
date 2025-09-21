@@ -74,9 +74,16 @@ export default function UserInfoCard() {
           </div>
           
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl sm:text-2xl font-bold text-white truncate">
-              {fullName}
-            </h1>
+            <div className="flex items-center space-x-2">
+              <h1 className="text-xl sm:text-2xl font-bold text-white truncate">
+                {fullName}
+              </h1>
+              {userData?.role === 'admin' && (
+                <span className="bg-white/20 backdrop-blur-sm border border-white/30 text-white text-xs font-medium px-2 py-1 rounded-full">
+                  Admin
+                </span>
+              )}
+            </div>
             <p className="text-white/80 text-sm sm:text-base truncate">
               Hogar: {userData?.familyName || 'Sin asignar'}
             </p>
