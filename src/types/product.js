@@ -145,7 +145,9 @@ export const PRODUCTO_SCHEMA = {
   // Información básica
   id: '',                      // ID único del producto
   storeId: '',                 // ID de la tienda propietaria
+  usuarioId: '',               // ID del usuario propietario
   titulo: '',                  // Nombre del producto
+  nombre: '',                  // Alias para compatibilidad
   descripcion: '',             // Descripción detallada
   categoria: '',               // Categoría del producto
   subcategoria: '',            // Subcategoría opcional
@@ -196,11 +198,11 @@ export const PRODUCTO_SCHEMA = {
     fechaFin: null             // Fecha fin promoción
   },
   
-  // Contacto específico para el producto
+  // Contacto (se auto-completa desde storeData)
   contacto: {
-    whatsapp: '',              // Número de WhatsApp
-    telefono: '',              // Teléfono alternativo
-    email: '',                 // Email específico
+    whatsapp: '',              // Auto desde storeData.whatsapp
+    telefono: '',              // Auto desde storeData.phone
+    email: '',                 // Auto desde storeData.email
     mensaje: ''                // Mensaje predefinido para WhatsApp
   },
   
@@ -214,12 +216,43 @@ export const PRODUCTO_SCHEMA = {
     tiempoPreparacion: '',     // Tiempo de preparación
   },
   
+  // Valoraciones y reseñas
+  valoraciones: {
+    promedio: 0,               // Promedio de valoraciones (0-5)
+    total: 0,                  // Total de valoraciones
+    distribucion: {            // Distribución por estrellas
+      5: 0,
+      4: 0,
+      3: 0,
+      2: 0,
+      1: 0
+    }
+  },
+  
+  // Estadísticas de interacción
+  interacciones: {
+    vistas: 0,                 // Total de vistas
+    favoritos: 0,              // Total de usuarios que lo marcaron favorito
+    compartidas: 0,            // Total de veces compartido
+    comentarios: 0             // Total de comentarios
+  },
+  
+  // Información de la tienda (para cards)
+  tiendaInfo: {
+    nombre: '',                // Auto desde storeData.businessName
+    slug: '',                  // Auto desde storeData.storeSlug
+    logo: '',                  // Auto desde storeData.storeLogo
+    verificada: false,         // Si la tienda está verificada
+    ubicacion: ''              // Auto desde storeData.address
+  },
+  
   // Metadatos del producto
   fechaCreacion: null,         // Timestamp de creación
   fechaActualizacion: null,    // Timestamp última actualización
   fechaUltimaVenta: null,      // Timestamp última venta
+  fechaUltimaVista: null,      // Timestamp última vista
   totalVentas: 0,              // Contador de ventas
-  totalVistas: 0,              // Contador de vistas
+  totalVistas: 0,              // Contador de vistas (mantenido por compatibilidad)
   
   // SEO y búsqueda
   slug: '',                    // URL amigable
@@ -227,11 +260,76 @@ export const PRODUCTO_SCHEMA = {
   
   // Control de calidad
   reportes: 0,                 // Número de reportes del producto
-  calificacion: 0,             // Calificación promedio
-  totalReseñas: 0,             // Total de reseñas
   
   // Campos adicionales personalizables
   camposPersonalizados: {}     // Campos extra definidos por la tienda
+}
+
+// Esquema para comentarios de productos
+export const COMENTARIO_PRODUCTO_SCHEMA = {
+  id: '',                      // ID único del comentario
+  productoId: '',              // ID del producto
+  usuarioId: '',               // ID del usuario que comenta
+  usuario: {                   // Información del usuario
+    nombre: '',
+    avatar: '',
+    verificado: false
+  },
+  contenido: '',               // Texto del comentario
+  valoracion: 0,               // Valoración del 1 al 5
+  fechaCreacion: null,         // Timestamp de creación
+  respuestas: [],              // Array de respuestas al comentario
+  likes: 0,                    // Likes del comentario
+  reportado: false,            // Si fue reportado
+  aprobado: true               // Si está aprobado por moderación
+}
+
+// Esquema para favoritos
+export const FAVORITO_SCHEMA = {
+  id: '',                      // ID único
+  usuarioId: '',               // ID del usuario
+  productoId: '',              // ID del producto
+  fechaCreacion: null          // Timestamp cuando se marcó favorito
+}
+
+// Utilidades para valoraciones
+export const calcularPromedioValoraciones = (comentarios) => {
+  if (!comentarios || comentarios.length === 0) return 0;
+  const suma = comentarios.reduce((acc, c) => acc + (c.valoracion || 0), 0);
+  return Math.round((suma / comentarios.length) * 10) / 10; // Redondear a 1 decimal
+}
+
+export const calcularDistribucionValoraciones = (comentarios) => {
+  const distribucion = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+  if (!comentarios || comentarios.length === 0) return distribucion;
+  
+  comentarios.forEach(c => {
+    if (c.valoracion >= 1 && c.valoracion <= 5) {
+      distribucion[c.valoracion]++;
+    }
+  });
+  
+  return distribucion;
+}
+
+// Utilidad para auto-completar datos desde storeData
+export const autoCompletarDatosProducto = (productData, storeData) => {
+  return {
+    ...productData,
+    contacto: {
+      whatsapp: productData.contacto?.whatsapp || storeData?.whatsapp || storeData?.phone || '',
+      telefono: productData.contacto?.telefono || storeData?.phone || '',
+      email: productData.contacto?.email || storeData?.email || '',
+      mensaje: productData.contacto?.mensaje || `Hola! Me interesa tu producto: ${productData.titulo}`
+    },
+    tiendaInfo: {
+      nombre: storeData?.businessName || storeData?.familyName || '',
+      slug: storeData?.storeSlug || '',
+      logo: storeData?.storeLogo || '',
+      verificada: storeData?.verificada || false,
+      ubicacion: storeData?.address || ''
+    }
+  };
 }
 
 // Utilidades para validación
@@ -298,4 +396,22 @@ export const generarSlug = (titulo) => {
     .replace(/\s+/g, '-') // Reemplazar espacios con guiones
     .replace(/-+/g, '-') // Quitar guiones múltiples
     .trim();
+}
+
+// Utilidades para estrellas
+export const renderEstrellas = (valoracion, tamaño = 'sm') => {
+  const estrellas = [];
+  const valoracionRedondeada = Math.round(valoracion * 2) / 2; // Redondear a 0.5
+  
+  for (let i = 1; i <= 5; i++) {
+    if (i <= valoracionRedondeada) {
+      estrellas.push('full');
+    } else if (i - 0.5 <= valoracionRedondeada) {
+      estrellas.push('half');
+    } else {
+      estrellas.push('empty');
+    }
+  }
+  
+  return estrellas;
 }

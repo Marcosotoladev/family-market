@@ -12,12 +12,13 @@ import StoreConfigSection from '@/components/store/StoreConfigSection';
 import ToastContainer from '@/components/ui/ToastContainer';
 import useToast from '@/hooks/useToast';
 import { Store } from 'lucide-react';
+import StoreNavBadges from '@/components/layout/StoreNavBadges';
 
 export default function StorePage() {
   const { isAuthenticated, userData, user, loading } = useAuth();
   const router = useRouter();
   const { toasts, showSuccess, showError, hideToast } = useToast();
-  
+
   const [activeSection, setActiveSection] = useState('business');
 
   // Estados para logo de tienda
@@ -72,7 +73,7 @@ export default function StorePage() {
         return <BusinessInfoSection showMessage={showMessage} />;
       case 'logo':
         return (
-          <StoreLogoSection 
+          <StoreLogoSection
             logoState={logoState}
             setLogoState={setLogoState}
             showMessage={showMessage}
@@ -88,13 +89,13 @@ export default function StorePage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <DashboardTopNavigation />
-
+      <StoreNavBadges />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
-          
+
           {/* Sidebar */}
           <div className="lg:col-span-1">
-            <StoreSidebar 
+            <StoreSidebar
               activeSection={activeSection}
               setActiveSection={setActiveSection}
               logoState={logoState}

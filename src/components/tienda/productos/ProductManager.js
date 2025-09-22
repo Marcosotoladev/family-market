@@ -17,6 +17,7 @@ import {
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
 import { generarSlugProducto } from '@/lib/helpers/productHelpers';
+import { autoCompletarDatosProducto } from '@/types/product';
 import ProductForm from './ProductForm';
 import ProductList from './ProductList';
 import ProductCard from './ProductCard';
@@ -80,31 +81,46 @@ export default function ProductManager({ storeId, storeData }) {
     try {
       setIsSaving(true);
       
+      // Auto-completar datos desde storeData
+      const productDataCompleto = autoCompletarDatosProducto(productData, storeData);
+      
       if (selectedProduct) {
         // Actualizar producto existente
         const productRef = doc(db, 'productos', selectedProduct.id);
         await updateDoc(productRef, {
-          ...productData,
+          ...productDataCompleto,
           fechaActualizacion: serverTimestamp()
         });
         
         // Actualizar en estado local
         setProducts(prev => prev.map(p => 
           p.id === selectedProduct.id 
-            ? { ...p, ...productData, fechaActualizacion: new Date().toISOString() }
+            ? { ...p, ...productDataCompleto, fechaActualizacion: new Date().toISOString() }
             : p
         ));
       } else {
         // Crear nuevo producto
         const newProduct = {
-          ...productData,
+          ...productDataCompleto,
           usuarioId: storeId, // Campo requerido por las reglas de Firestore
           tiendaId: storeId, // Para mantener compatibilidad
           fechaCreacion: serverTimestamp(),
           fechaActualizacion: serverTimestamp(),
           totalVentas: 0,
           totalVistas: 0,
-          slug: generarSlugProducto ? generarSlugProducto(productData.titulo, Date.now().toString()) : productData.titulo.toLowerCase().replace(/\s+/g, '-')
+          // Inicializar nuevas funcionalidades
+          valoraciones: {
+            promedio: 0,
+            total: 0,
+            distribucion: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
+          },
+          interacciones: {
+            vistas: 0,
+            favoritos: 0,
+            compartidas: 0,
+            comentarios: 0
+          },
+          slug: generarSlugProducto ? generarSlugProducto(productDataCompleto.titulo, Date.now().toString()) : productDataCompleto.titulo.toLowerCase().replace(/\s+/g, '-')
         };
         
         const docRef = await addDoc(collection(db, 'productos'), newProduct);
