@@ -110,51 +110,51 @@ export default function ProductList({
 
   return (
     <div className="space-y-6">
-      {/* Header con estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+      {/* Header con estadísticas - Compacto en móvil */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Total Productos</p>
-              <p className="text-2xl font-bold text-gray-900 dark:text-white">{products.length}</p>
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Total</p>
+              <p className="text-lg md:text-2xl font-bold text-gray-900 dark:text-white">{products.length}</p>
             </div>
-            <Package className="w-8 h-8 text-blue-500" />
+            <Package className="w-5 h-5 md:w-8 md:h-8 text-blue-500" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Activos</p>
-              <p className="text-2xl font-bold text-green-600 dark:text-green-400">
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Activos</p>
+              <p className="text-lg md:text-2xl font-bold text-green-600 dark:text-green-400">
                 {products.filter(p => p.estado === ESTADOS_PRODUCTO.DISPONIBLE).length}
               </p>
             </div>
-            <Star className="w-8 h-8 text-green-500" />
+            <Star className="w-5 h-5 md:w-8 md:h-8 text-green-500" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Stock Bajo</p>
-              <p className="text-2xl font-bold text-yellow-600 dark:text-yellow-400">
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Stock Bajo</p>
+              <p className="text-lg md:text-2xl font-bold text-yellow-600 dark:text-yellow-400">
                 {products.filter(p => getStockStatus(p) === 'bajo').length}
               </p>
             </div>
-            <AlertTriangle className="w-8 h-8 text-yellow-500" />
+            <AlertTriangle className="w-5 h-5 md:w-8 md:h-8 text-yellow-500" />
           </div>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
+        <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm text-gray-600 dark:text-gray-400">Agotados</p>
-              <p className="text-2xl font-bold text-red-600 dark:text-red-400">
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Agotados</p>
+              <p className="text-lg md:text-2xl font-bold text-red-600 dark:text-red-400">
                 {products.filter(p => p.estado === ESTADOS_PRODUCTO.AGOTADO || getStockStatus(p) === 'agotado').length}
               </p>
             </div>
-            <TrendingUp className="w-8 h-8 text-red-500" />
+            <TrendingUp className="w-5 h-5 md:w-8 md:h-8 text-red-500" />
           </div>
         </div>
       </div>
@@ -246,10 +246,10 @@ export default function ProductList({
             {/* Nuevo producto */}
             <button
               onClick={onCreateNew}
-              className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              className="inline-flex items-center px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
             >
-              <Plus className="w-4 h-4 mr-2" />
-              Nuevo
+              <Plus className="w-4 h-4 lg:mr-2" />
+              <span className="hidden lg:inline">Nuevo</span>
             </button>
           </div>
         </div>
@@ -277,8 +277,8 @@ export default function ProductList({
           </button>
         </div>
       ) : viewMode === 'grid' ? (
-        // Vista en tarjetas
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        // Vista en tarjetas - GRID CORREGIDO: 2 móvil, 3 móvil grande, 4 desktop
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
           {filteredProducts.map((product) => (
             <ProductCard key={product.id} product={product} onEdit={onEdit} onDelete={onDelete} onToggleStatus={onToggleStatus} onDuplicate={onDuplicate} onView={onView} />
           ))}
@@ -376,47 +376,51 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, o
         </div>
 
         {/* Acciones */}
-        <div className="flex gap-2">
-          <button
-            onClick={() => onView(product)}
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
-            title="Ver"
-          >
-            <Eye className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onEdit(product)}
-            className="flex-1 px-3 py-2 text-sm bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors flex items-center justify-center"
-            title="Editar"
-          >
-            <Edit3 className="w-4 h-4" />
-          </button>
-          <button
-            onClick={() => onToggleStatus(product)}
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
-            title={product.estado === ESTADOS_PRODUCTO.DISPONIBLE ? 'Pausar' : 'Activar'}
-          >
-            {product.estado === ESTADOS_PRODUCTO.DISPONIBLE ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-          </button>
-        </div>
-        
-        <div className="flex gap-2 mt-2">
-          <button
-            onClick={() => onDuplicate(product)}
-            className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
-            title="Duplicar"
-          >
-            <Copy className="w-4 h-4 mr-1" />
-            Duplicar
-          </button>
-          <button
-            onClick={() => onDelete(product.id)}
-            className="flex-1 px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors flex items-center justify-center"
-            title="Eliminar"
-          >
-            <Trash2 className="w-4 h-4 mr-1" />
-            Eliminar
-          </button>
+        <div className="space-y-2">
+          {/* Primera fila de botones */}
+          <div className="flex gap-2">
+            <button
+              onClick={() => onView(product)}
+              className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+              title="Ver"
+            >
+              <Eye className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onEdit(product)}
+              className="flex-1 px-3 py-2 text-sm bg-orange-600 text-white rounded hover:bg-orange-700 transition-colors flex items-center justify-center"
+              title="Editar"
+            >
+              <Edit3 className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => onToggleStatus(product)}
+              className="flex-1 px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center"
+              title={product.estado === ESTADOS_PRODUCTO.DISPONIBLE ? 'Pausar' : 'Activar'}
+            >
+              {product.estado === ESTADOS_PRODUCTO.DISPONIBLE ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+            </button>
+          </div>
+
+          {/* Segunda fila de botones - Layout responsive */}
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={() => onDuplicate(product)}
+              className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-1"
+              title="Duplicar"
+            >
+              <Copy className="w-4 h-4" />
+              <span className="hidden lg:inline text-xs">Duplicar</span>
+            </button>
+            <button
+              onClick={() => onDelete(product.id)}
+              className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors flex items-center justify-center gap-1"
+              title="Eliminar"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span className="hidden lg:inline text-xs">Eliminar</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -10,7 +10,7 @@ import Link from 'next/link'
 
 export default function MobileNavigation() {
   // TODOS LOS HOOKS PRIMERO - SIEMPRE EN EL MISMO ORDEN
-  const { isAuthenticated, userData, logout } = useAuth()
+  const { isAuthenticated, userData, signOut } = useAuth() // ← CORREGIDO: signOut en lugar de logout
   const router = useRouter()
   const pathname = usePathname()
   const [activeTab, setActiveTab] = useState('home')
@@ -33,7 +33,6 @@ export default function MobileNavigation() {
       icon: Home,
       href: '/'
     },
-
     {
       id: 'categories',
       label: 'Categorías',
@@ -147,9 +146,10 @@ export default function MobileNavigation() {
     setShowSubcategories(false)
   }
 
+  // ← CORREGIDO: Usa signOut en lugar de logout
   const handleLogout = async () => {
     try {
-      await logout()
+      await signOut()
       setShowUserModal(false)
       router.push('/')
     } catch (error) {
@@ -173,7 +173,7 @@ export default function MobileNavigation() {
             <button
               key={key}
               onClick={() => handleSubcategoryClick(value)}
-              className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left w-full group"
+              className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left w-full group cursor-pointer"
             >
               <div className="w-3 h-3 bg-primary-500 rounded-full flex-shrink-0 group-hover:bg-primary-600"></div>
               <div className="min-w-0 flex-1">
@@ -195,7 +195,7 @@ export default function MobileNavigation() {
           {/* Opción "Ver todos" para el grupo principal */}
           <button
             onClick={() => handleNavigate(selectedMainCategory.type, null, null)}
-            className="flex items-center gap-3 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-all duration-200 text-left w-full group mb-4"
+            className="flex items-center gap-3 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-all duration-200 text-left w-full group mb-4 cursor-pointer"
           >
             <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
               <selectedMainCategory.icon className="w-6 h-6 text-white" />
@@ -218,7 +218,7 @@ export default function MobileNavigation() {
               <button
                 key={category.id}
                 onClick={() => handleCategoryClick(category)}
-                className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left w-full group"
+                className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left w-full group cursor-pointer"
               >
                 <div className="w-10 h-10 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary-200 dark:group-hover:bg-primary-800/50">
                   <selectedMainCategory.icon className="w-5 h-5 text-primary-600 dark:text-primary-400" />
@@ -253,7 +253,7 @@ export default function MobileNavigation() {
             <button
               key={group.type}
               onClick={() => handleMainCategoryClick(group)}
-              className="w-full flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left group"
+              className="w-full flex items-center gap-4 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left group cursor-pointer"
             >
               <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary-200 dark:group-hover:bg-primary-800/50">
                 <IconComponent className="w-6 h-6 text-primary-600 dark:text-primary-400" />
@@ -303,7 +303,7 @@ export default function MobileNavigation() {
         <Link
           href="/dashboard"
           onClick={() => setShowUserModal(false)}
-          className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left w-full group"
+          className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left w-full group cursor-pointer"
         >
           <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary-200 dark:group-hover:bg-primary-800/50">
             <User className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
@@ -321,7 +321,7 @@ export default function MobileNavigation() {
 
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 text-left w-full group"
+          className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 text-left w-full group cursor-pointer"
         >
           <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-red-200 dark:group-hover:bg-red-800/50">
             <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400" />
@@ -376,7 +376,7 @@ export default function MobileNavigation() {
                 onClick={() => handleTabClick(item.id)}
                 className={`
                   relative flex flex-col items-center justify-center py-2 px-4 rounded-xl min-w-0 flex-1
-                  transition-all duration-200 ease-out
+                  transition-all duration-200 ease-out cursor-pointer
                   ${isActive 
                     ? 'text-primary-600 dark:text-primary-400' 
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
@@ -417,7 +417,7 @@ export default function MobileNavigation() {
                 {(selectedMainCategory || showSubcategories) && !showUserModal && (
                   <button
                     onClick={handleBackToMain}
-                    className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                   >
                     <ChevronLeft className="w-5 h-5 text-gray-500" />
                   </button>
@@ -428,7 +428,7 @@ export default function MobileNavigation() {
               </div>
               <button
                 onClick={handleCloseModal}
-                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5 text-gray-500" />
               </button>

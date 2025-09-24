@@ -4,12 +4,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Home, Store, User } from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function MobileDashboardNavigation() {
   // TODOS LOS HOOKS PRIMERO - SIEMPRE EN EL MISMO ORDEN
   const router = useRouter()
   const pathname = usePathname()
   const [activeTab, setActiveTab] = useState('dashboard')
+  const { logout } = useAuth() // Agregamos logout desde el contexto
 
   // useEffect también debe estar con los hooks
   useEffect(() => {
@@ -25,10 +27,17 @@ export default function MobileDashboardNavigation() {
     }
   }, [pathname])
 
-  // DESPUÉS DE LOS HOOKS, LAS CONDICIONES
+  // DESPUÉS DE LOS HOOKS, DETERMINAR SI MOSTRAR
   const isDashboardRoute = pathname?.startsWith('/dashboard')
-  if (!isDashboardRoute) {
-    return null
+
+  // Función para manejar logout
+  const handleLogout = async () => {
+    try {
+      await logout()
+      router.push('/login')
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
   }
 
   const navItems = [
@@ -82,6 +91,11 @@ export default function MobileDashboardNavigation() {
     return isActive ? colors[color].active : colors[color].inactive
   }
 
+  // RENDERIZADO CONDICIONAL AL FINAL
+  if (!isDashboardRoute) {
+    return null
+  }
+
   return (
     <>
       {/* Navegación móvil fija para dashboard */}
@@ -108,7 +122,7 @@ export default function MobileDashboardNavigation() {
                 onClick={() => handleTabClick(item)}
                 className={`
                   relative flex flex-col items-center justify-center py-2 px-4 rounded-xl min-w-0 flex-1
-                  transition-all duration-200 ease-out
+                  transition-all duration-200 ease-out cursor-pointer
                   ${getColorClasses(item.color, isActive)}
                 `}
                 aria-label={item.label}
