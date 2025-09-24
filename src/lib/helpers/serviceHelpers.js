@@ -1,6 +1,14 @@
 // src/lib/helpers/serviceHelpers.js
 
-import { CATEGORIAS_SERVICIOS } from '../../types/services.js'
+import { CATEGORIAS_SERVICIOS } from '../../types/services.js';
+import { 
+  ESTADOS_SERVICIO,
+  TIPOS_PRECIO_SERVICIO,
+  MODALIDAD_SERVICIO,
+  GESTION_CUPOS,
+  validarServicio,
+  generarSlugServicio
+} from '../../types/services.js';
 
 // Crear servicio con validaciones
 export const crearServicio = ({
@@ -9,26 +17,28 @@ export const crearServicio = ({
   usuarioId,
   titulo,
   descripcion,
+  precio,
+  tipoPrecio = TIPOS_PRECIO_SERVICIO.FIJO,
   categoria,
   subcategoria = null,
-  precio = null,
-  tipoTarifa = 'fijo', // 'fijo', 'por_hora', 'por_dia', 'por_proyecto', 'a_consultar'
-  modalidad = 'presencial', // 'presencial', 'domicilio', 'remoto', 'hibrido'
-  zona_atencion = '',
-  horarios = null,
-  disponible = true,
-  destacado = false,
+  modalidad = MODALIDAD_SERVICIO.PRESENCIAL,
+  duracion = null,
+  duracionPersonalizada = '',
+  gestionCupos = GESTION_CUPOS.ILIMITADO,
+  cuposDisponibles = null,
+  diasDisponibles = [],
+  horarios = [],
+  horarioPersonalizado = '',
   imagenes = [],
-  tags = [],
-  certificaciones = [],
-  experiencia_años = null,
-  contacto = {},
+  estado = ESTADOS_SERVICIO.DISPONIBLE,
+  palabrasClave = [],
+  ubicacion = '',
   fechaCreacion = new Date(),
   fechaActualizacion = new Date()
 }) => {
   // Validaciones básicas
-  if (!id || !tiendaId || !usuarioId || !titulo || !categoria) {
-    throw new Error('ID, tiendaId, usuarioId, titulo y categoria son requeridos')
+  if (!id || !tiendaId || !usuarioId || !titulo || !descripcion) {
+    throw new Error('ID, tiendaId, usuarioId, título y descripción son requeridos');
   }
 
   return {
@@ -36,72 +46,47 @@ export const crearServicio = ({
     tiendaId,
     usuarioId,
     titulo: titulo.trim(),
-    descripcion: descripcion?.trim() || '',
+    descripcion: descripcion.trim(),
+    precio: precio ? parseFloat(precio) : 0,
+    tipoPrecio,
     categoria,
     subcategoria,
-    precio: precio ? {
-      valor: parseFloat(precio.valor) || 0,
-      tipo: tipoTarifa,
-      moneda: precio.moneda || 'ARS'
-    } : null,
-    tipoTarifa,
     modalidad,
-    zona_atencion: zona_atencion.trim(),
-    horarios: horarios || {
-      lunes_viernes: null,
-      sabados: null,
-      domingos: null,
-      disponible_24h: false
-    },
-    disponible,
-    destacado,
+    duracion,
+    duracionPersonalizada,
+    gestionCupos,
+    cuposDisponibles: cuposDisponibles !== null ? parseInt(cuposDisponibles) : null,
+    diasDisponibles: Array.isArray(diasDisponibles) ? diasDisponibles : [],
+    horarios: Array.isArray(horarios) ? horarios : [],
+    horarioPersonalizado,
     imagenes: Array.isArray(imagenes) ? imagenes : [],
-    tags: Array.isArray(tags) ? tags : [],
-    certificaciones: Array.isArray(certificaciones) ? certificaciones : [],
-    experiencia_años: experiencia_años ? parseInt(experiencia_años) : null,
-    contacto: {
-      whatsapp: contacto.whatsapp?.trim() || '',
-      email: contacto.email?.toLowerCase().trim() || '',
-      telefono: contacto.telefono?.trim() || '',
-      ...contacto
-    },
+    estado,
+    palabrasClave: Array.isArray(palabrasClave) ? palabrasClave : [],
+    ubicacion: ubicacion.trim(),
     fechaCreacion,
     fechaActualizacion,
-    // Campos adicionales
+    // Campos adicionales útiles
     slug: generarSlugServicio(titulo, id),
-    palabrasClave: generarPalabrasClaveServicio(titulo, descripcion, categoria, subcategoria, tags)
-  }
-}
+    palabrasClaveGeneradas: generarPalabrasClaveServicio(titulo, descripcion, categoria, subcategoria, palabrasClave)
+  };
+};
 
-// Generar slug para URL amigable
-export const generarSlugServicio = (titulo, id) => {
-  const slug = titulo
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remover acentos
-    .replace(/[^a-z0-9\s]/g, '') // Solo letras, números y espacios
-    .replace(/\s+/g, '-') // Espacios por guiones
-    .substring(0, 50) // Máximo 50 caracteres
-  
-  return `servicio-${slug}-${id.substring(0, 8)}`
-}
-
-// Generar palabras clave para búsqueda
-export const generarPalabrasClaveServicio = (titulo, descripcion = '', categoria = '', subcategoria = '', tags = []) => {
+// Generar palabras clave para búsqueda de servicios
+export const generarPalabrasClaveServicio = (titulo, descripcion = '', categoria = '', subcategoria = '', palabrasClave = []) => {
   // Obtener nombre legible de la categoría
   const categoriaObj = Object.values(CATEGORIAS_SERVICIOS)
-    .find(cat => cat.id === categoria)
+    .find(cat => cat.id === categoria);
   
-  const nombreCategoria = categoriaObj ? categoriaObj.nombre : categoria
+  const nombreCategoria = categoriaObj ? categoriaObj.nombre : categoria;
   
   // Generar nombre legible de subcategoría
   const nombreSubcategoria = subcategoria ? 
-    subcategoria.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : ''
+    subcategoria.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()) : '';
   
-  // Combinar tags si es array
-  const tagsTexto = Array.isArray(tags) ? tags.join(' ') : ''
+  // Combinar palabras clave si es array
+  const palabrasClaveTexto = Array.isArray(palabrasClave) ? palabrasClave.join(' ') : '';
   
-  const texto = `${titulo} ${descripcion} ${nombreCategoria} ${nombreSubcategoria} ${tagsTexto}`.toLowerCase()
+  const texto = `${titulo} ${descripcion} ${nombreCategoria} ${nombreSubcategoria} ${palabrasClaveTexto}`.toLowerCase();
   
   return texto
     .normalize('NFD')
@@ -109,362 +94,357 @@ export const generarPalabrasClaveServicio = (titulo, descripcion = '', categoria
     .replace(/[^a-z0-9\s]/g, ' ') // Solo letras y números
     .split(/\s+/)
     .filter(palabra => palabra.length > 2) // Palabras de más de 2 caracteres
-    .filter((palabra, index, array) => array.indexOf(palabra) === index) // Remover duplicados
-}
+    .filter((palabra, index, array) => array.indexOf(palabra) === index); // Remover duplicados
+};
 
-// Validar categoría y subcategoría
+// Validar categoría y subcategoría de servicio
 export const validarCategoriaServicio = (categoria, subcategoria = null) => {
   const categoriaObj = Object.values(CATEGORIAS_SERVICIOS)
-    .find(cat => cat.id === categoria)
+    .find(cat => cat.id === categoria);
   
   if (!categoriaObj) {
-    return { valido: false, error: 'Categoría no válida' }
+    return { valido: false, error: 'Categoría de servicio no válida' };
   }
   
   if (subcategoria) {
-    const subcategorias = Object.values(categoriaObj.subcategorias)
+    const subcategorias = Object.values(categoriaObj.subcategorias);
     if (!subcategorias.includes(subcategoria)) {
-      return { valido: false, error: 'Subcategoría no válida para la categoría seleccionada' }
+      return { valido: false, error: 'Subcategoría no válida para la categoría de servicio seleccionada' };
     }
   }
   
-  return { valido: true }
-}
+  return { valido: true };
+};
 
-// Validar precio del servicio
-export const validarPrecioServicio = (precio) => {
-  if (!precio || precio.valor === null || precio.valor === undefined) {
-    return { valido: true } // Precio es opcional (puede ser "a consultar")
+// Validar precio de servicio
+export const validarPrecioServicio = (precio, tipoPrecio) => {
+  if (tipoPrecio === TIPOS_PRECIO_SERVICIO.GRATIS) {
+    return { valido: true, precio: 0 };
   }
   
-  const precioNum = parseFloat(precio.valor)
+  if (tipoPrecio === TIPOS_PRECIO_SERVICIO.NEGOCIABLE || tipoPrecio === TIPOS_PRECIO_SERVICIO.CONSULTAR) {
+    return { valido: true };
+  }
+  
+  if (precio === null || precio === undefined || precio === '') {
+    return { valido: false, error: 'Precio es requerido para este tipo de precio' };
+  }
+  
+  const precioNum = parseFloat(precio);
   
   if (isNaN(precioNum)) {
-    return { valido: false, error: 'Precio debe ser un número válido' }
+    return { valido: false, error: 'Precio debe ser un número válido' };
   }
   
   if (precioNum < 0) {
-    return { valido: false, error: 'Precio no puede ser negativo' }
+    return { valido: false, error: 'Precio no puede ser negativo' };
   }
   
   if (precioNum > 999999999) {
-    return { valido: false, error: 'Precio demasiado alto' }
+    return { valido: false, error: 'Precio demasiado alto' };
   }
 
-  const tiposValidos = ['fijo', 'por_hora', 'por_dia', 'por_proyecto', 'a_consultar']
-  if (!tiposValidos.includes(precio.tipo)) {
-    return { valido: false, error: 'Tipo de tarifa no válido' }
-  }
+  return { valido: true, precio: precioNum };
+};
 
-  return { valido: true, precio: precioNum }
-}
-
-// Validar modalidad del servicio
-export const validarModalidad = (modalidad) => {
-  const modalidadesValidas = ['presencial', 'domicilio', 'remoto', 'hibrido']
-  
-  if (!modalidadesValidas.includes(modalidad)) {
-    return { valido: false, error: 'Modalidad debe ser: presencial, domicilio, remoto o hibrido' }
+// Validar cupos
+export const validarCupos = (cupos, gestionCupos) => {
+  if (gestionCupos === GESTION_CUPOS.ILIMITADO) {
+    return { valido: true };
   }
   
-  return { valido: true }
-}
+  if (gestionCupos === GESTION_CUPOS.UNICO) {
+    return { valido: true, cupos: 1 };
+  }
+  
+  if (cupos === null || cupos === undefined || cupos === '') {
+    return { valido: false, error: 'Cupos disponibles son requeridos para gestión limitada' };
+  }
+  
+  const cuposNum = parseInt(cupos);
+  
+  if (isNaN(cuposNum)) {
+    return { valido: false, error: 'Cupos debe ser un número entero' };
+  }
+  
+  if (cuposNum < 0) {
+    return { valido: false, error: 'Cupos no puede ser negativo' };
+  }
+  
+  if (cuposNum > 10000) {
+    return { valido: false, error: 'Cupos demasiado alto' };
+  }
 
-// Validar horarios
-export const validarHorarios = (horarios) => {
-  if (!horarios) return { valido: true }
+  return { valido: true, cupos: cuposNum };
+};
+
+// Validar imágenes de servicio
+export const validarImagenesServicio = (imagenes) => {
+  const errores = [];
   
-  const errores = []
+  if (!Array.isArray(imagenes)) {
+    errores.push('Imágenes debe ser un arreglo');
+    return { valido: false, errores };
+  }
   
-  // Validar formato de horarios si están definidos
-  ['lunes_viernes', 'sabados', 'domingos'].forEach(dia => {
-    if (horarios[dia]) {
-      const horario = horarios[dia]
-      if (!horario.inicio || !horario.fin) {
-        errores.push(`Horario de ${dia.replace('_', ' ')}: debe incluir hora de inicio y fin`)
+  if (imagenes.length > 5) {
+    errores.push('Máximo 5 imágenes por servicio');
+  }
+  
+  // Validar URLs de imágenes
+  imagenes.forEach((imagen, index) => {
+    if (typeof imagen === 'string') {
+      if (!imagen.startsWith('http') && !imagen.startsWith('data:')) {
+        errores.push(`Imagen ${index + 1}: URL no válida`);
+      }
+    } else if (typeof imagen === 'object') {
+      if (!imagen.secure_url && !imagen.url) {
+        errores.push(`Imagen ${index + 1}: URL requerida`);
       }
     }
-  })
-  
+  });
+
   return {
     valido: errores.length === 0,
     errores
-  }
-}
+  };
+};
 
 // Validar datos completos del servicio
-export const validarServicio = (servicio) => {
-  const errores = []
+export const validarServicioCompleto = (servicio) => {
+  const errores = [];
 
-  // Validaciones básicas
-  if (!servicio.titulo) errores.push('Título es requerido')
-  if (servicio.titulo && servicio.titulo.length < 5) {
-    errores.push('Título debe tener al menos 5 caracteres')
-  }
-  if (servicio.titulo && servicio.titulo.length > 100) {
-    errores.push('Título no puede exceder 100 caracteres')
-  }
+  // Validaciones básicas usando la función del tipo
+  const erroresBasicos = validarServicio(servicio);
+  errores.push(...erroresBasicos);
   
-  if (servicio.descripcion && servicio.descripcion.length > 2000) {
-    errores.push('Descripción no puede exceder 2000 caracteres')
-  }
-  
-  if (!servicio.categoria) {
-    errores.push('Categoría es requerida')
-  } else {
-    const validacionCategoria = validarCategoriaServicio(servicio.categoria, servicio.subcategoria)
+  // Validar categoría y subcategoría
+  if (servicio.categoria) {
+    const validacionCategoria = validarCategoriaServicio(servicio.categoria, servicio.subcategoria);
     if (!validacionCategoria.valido) {
-      errores.push(validacionCategoria.error)
+      errores.push(validacionCategoria.error);
     }
   }
   
-  // Validar modalidad
-  if (servicio.modalidad) {
-    const validacionModalidad = validarModalidad(servicio.modalidad)
-    if (!validacionModalidad.valido) {
-      errores.push(validacionModalidad.error)
+  // Validar precio
+  const validacionPrecio = validarPrecioServicio(servicio.precio, servicio.tipoPrecio);
+  if (!validacionPrecio.valido) {
+    errores.push(validacionPrecio.error);
+  }
+  
+  // Validar cupos
+  if (servicio.gestionCupos) {
+    const validacionCupos = validarCupos(servicio.cuposDisponibles, servicio.gestionCupos);
+    if (!validacionCupos.valido) {
+      errores.push(validacionCupos.error);
     }
   }
   
-  // Validar precio si está presente
-  if (servicio.precio) {
-    const validacionPrecio = validarPrecioServicio(servicio.precio)
-    if (!validacionPrecio.valido) {
-      errores.push(validacionPrecio.error)
-    }
-  }
-  
-  // Validar horarios si están presentes
-  if (servicio.horarios) {
-    const validacionHorarios = validarHorarios(servicio.horarios)
-    errores.push(...(validacionHorarios.errores || []))
-  }
-  
-  // Validar experiencia en años
-  if (servicio.experiencia_años !== null && servicio.experiencia_años !== undefined) {
-    const exp = parseInt(servicio.experiencia_años)
-    if (isNaN(exp) || exp < 0 || exp > 50) {
-      errores.push('Años de experiencia debe ser un número entre 0 y 50')
-    }
-  }
-  
-  // Validar contacto (al menos uno requerido)
-  const tieneContacto = servicio.contacto?.whatsapp || 
-                       servicio.contacto?.email || 
-                       servicio.contacto?.telefono
-  
-  if (!tieneContacto) {
-    errores.push('Debe proporcionar al menos un método de contacto')
+  // Validar imágenes si están presentes
+  if (servicio.imagenes && servicio.imagenes.length > 0) {
+    const validacionImagenes = validarImagenesServicio(servicio.imagenes);
+    errores.push(...validacionImagenes.errores);
   }
 
-  // Validar email si está presente
-  if (servicio.contacto?.email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(servicio.contacto.email)) {
-      errores.push('Email no válido')
-    }
-  }
-
-  return {
-    valido: errores.length === 0,
-    errores
-  }
-}
-
-// Formatear precio para mostrar
-export const formatearPrecioServicio = (servicio) => {
-  if (!servicio.precio || !servicio.precio.valor) {
-    return 'Precio a consultar'
-  }
-  
-  const { valor, tipo, moneda = '$' } = servicio.precio
-  const precio = `${moneda} ${parseFloat(valor).toLocaleString('es-AR')}`
-  
-  switch (tipo) {
-    case 'por_hora':
-      return `${precio} por hora`
-    case 'por_dia':
-      return `${precio} por día`
-    case 'por_proyecto':
-      return `${precio} por proyecto`
-    case 'fijo':
-      return precio
-    case 'a_consultar':
-    default:
-      return 'Precio a consultar'
-  }
-}
+  return errores;
+};
 
 // Filtrar servicios por categoría
 export const filtrarPorCategoriaServicio = (servicios, categoria, subcategoria = null) => {
   return servicios.filter(servicio => {
-    const coincideCategoria = servicio.categoria === categoria
-    if (!subcategoria) return coincideCategoria
+    const coincideCategoria = servicio.categoria === categoria;
+    if (!subcategoria) return coincideCategoria;
     
-    return coincideCategoria && servicio.subcategoria === subcategoria
-  })
-}
+    return coincideCategoria && servicio.subcategoria === subcategoria;
+  });
+};
 
-// Filtrar por modalidad
-export const filtrarPorModalidad = (servicios, modalidad) => {
-  return servicios.filter(servicio => servicio.modalidad === modalidad)
-}
-
-// Filtrar por zona de atención
-export const filtrarPorZona = (servicios, zona) => {
-  if (!zona) return servicios
+// Filtrar servicios por modalidad
+export const filtrarPorModalidad = (servicios, modalidades = []) => {
+  if (!Array.isArray(modalidades) || modalidades.length === 0) return servicios;
   
-  const zonaLimpia = zona.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  
-  return servicios.filter(servicio => {
-    if (!servicio.zona_atencion) return false
-    
-    const servicioZona = servicio.zona_atencion.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-    return servicioZona.includes(zonaLimpia)
-  })
-}
+  return servicios.filter(servicio => modalidades.includes(servicio.modalidad));
+};
 
-// Filtrar por rango de precios
+// Filtrar por rango de precios (servicios)
 export const filtrarPorPrecioServicio = (servicios, precioMin = 0, precioMax = Infinity) => {
   return servicios.filter(servicio => {
-    if (!servicio.precio || !servicio.precio.valor) return true // Incluir "a consultar"
+    // Solo filtrar servicios con precio fijo
+    if (servicio.tipoPrecio !== TIPOS_PRECIO_SERVICIO.FIJO && 
+        servicio.tipoPrecio !== TIPOS_PRECIO_SERVICIO.POR_HORA &&
+        servicio.tipoPrecio !== TIPOS_PRECIO_SERVICIO.POR_DIA &&
+        servicio.tipoPrecio !== TIPOS_PRECIO_SERVICIO.POR_SESION &&
+        servicio.tipoPrecio !== TIPOS_PRECIO_SERVICIO.PAQUETE) {
+      return true; // Incluir servicios sin precio fijo
+    }
     
-    const precio = parseFloat(servicio.precio.valor) || 0
-    return precio >= precioMin && precio <= precioMax
-  })
-}
+    const precio = parseFloat(servicio.precio) || 0;
+    return precio >= precioMin && precio <= precioMax;
+  });
+};
 
-// Filtrar por experiencia mínima
-export const filtrarPorExperiencia = (servicios, experienciaMin) => {
+// Filtrar por estado del servicio
+export const filtrarPorEstadoServicio = (servicios, estado) => {
+  return servicios.filter(servicio => servicio.estado === estado);
+};
+
+// Filtrar servicios disponibles
+export const filtrarServiciosDisponibles = (servicios) => {
   return servicios.filter(servicio => {
-    if (!servicio.experiencia_años) return true
-    return servicio.experiencia_años >= experienciaMin
-  })
-}
+    if (servicio.estado !== ESTADOS_SERVICIO.DISPONIBLE) return false;
+    
+    // Verificar cupos
+    if (servicio.gestionCupos === GESTION_CUPOS.LIMITADO) {
+      return servicio.cuposDisponibles > 0;
+    }
+    
+    return true;
+  });
+};
 
-// Filtrar disponibles
-export const filtrarDisponibles = (servicios) => {
-  return servicios.filter(servicio => servicio.disponible === true)
-}
-
-// Filtrar destacados
-export const filtrarDestacados = (servicios) => {
-  return servicios.filter(servicio => servicio.destacado === true)
-}
+// Filtrar por días disponibles
+export const filtrarPorDiasDisponibles = (servicios, dias = []) => {
+  if (!Array.isArray(dias) || dias.length === 0) return servicios;
+  
+  return servicios.filter(servicio => {
+    if (!Array.isArray(servicio.diasDisponibles) || servicio.diasDisponibles.length === 0) {
+      return true; // Incluir servicios sin días especificados
+    }
+    
+    return dias.some(dia => servicio.diasDisponibles.includes(dia));
+  });
+};
 
 // Buscar servicios por texto
 export const buscarServicios = (servicios, termino) => {
-  if (!termino || termino.length < 2) return servicios
+  if (!termino || termino.length < 2) return servicios;
   
   const terminoLimpio = termino
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u0300-\u036f]/g, '');
   
   return servicios.filter(servicio => {
-    const palabrasClave = servicio.palabrasClave || 
-                         generarPalabrasClaveServicio(servicio.titulo, servicio.descripcion, servicio.categoria, servicio.subcategoria, servicio.tags)
+    const palabrasClaveGeneradas = servicio.palabrasClaveGeneradas || 
+                                 generarPalabrasClaveServicio(
+                                   servicio.titulo, 
+                                   servicio.descripcion, 
+                                   servicio.categoria, 
+                                   servicio.subcategoria, 
+                                   servicio.palabrasClave
+                                 );
     
-    return palabrasClave.some(palabra => 
+    return palabrasClaveGeneradas.some(palabra => 
       palabra.includes(terminoLimpio) || terminoLimpio.includes(palabra)
-    )
-  })
-}
+    );
+  });
+};
 
 // Ordenar servicios
 export const ordenarServicios = (servicios, criterio = 'fecha_desc') => {
-  const copia = [...servicios]
+  const copia = [...servicios];
   
   switch (criterio) {
     case 'fecha_desc':
-      return copia.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion))
+      return copia.sort((a, b) => new Date(b.fechaCreacion) - new Date(a.fechaCreacion));
     case 'fecha_asc':
-      return copia.sort((a, b) => new Date(a.fechaCreacion) - new Date(b.fechaCreacion))
+      return copia.sort((a, b) => new Date(a.fechaCreacion) - new Date(b.fechaCreacion));
     case 'precio_desc':
       return copia.sort((a, b) => {
-        const precioA = a.precio?.valor || 0
-        const precioB = b.precio?.valor || 0
-        return precioB - precioA
-      })
+        const precioA = parseFloat(a.precio) || 0;
+        const precioB = parseFloat(b.precio) || 0;
+        return precioB - precioA;
+      });
     case 'precio_asc':
       return copia.sort((a, b) => {
-        const precioA = a.precio?.valor || 0
-        const precioB = b.precio?.valor || 0
-        return precioA - precioB
-      })
-    case 'titulo':
-      return copia.sort((a, b) => a.titulo.localeCompare(b.titulo))
-    case 'experiencia':
-      return copia.sort((a, b) => (b.experiencia_años || 0) - (a.experiencia_años || 0))
-    case 'destacado':
-      return copia.sort((a, b) => {
-        if (a.destacado && !b.destacado) return -1
-        if (!a.destacado && b.destacado) return 1
-        return new Date(b.fechaCreacion) - new Date(a.fechaCreacion)
-      })
+        const precioA = parseFloat(a.precio) || 0;
+        const precioB = parseFloat(b.precio) || 0;
+        return precioA - precioB;
+      });
+    case 'nombre':
+      return copia.sort((a, b) => a.titulo.localeCompare(b.titulo));
+    case 'modalidad':
+      return copia.sort((a, b) => a.modalidad.localeCompare(b.modalidad));
+    case 'categoria':
+      return copia.sort((a, b) => a.categoria.localeCompare(b.categoria));
     default:
-      return copia
+      return copia;
   }
-}
+};
 
-// Obtener nombre legible de categoría
+// Obtener nombre legible de categoría de servicio
 export const obtenerNombreCategoriaServicio = (categoriaId) => {
   const categoria = Object.values(CATEGORIAS_SERVICIOS)
-    .find(cat => cat.id === categoriaId)
+    .find(cat => cat.id === categoriaId);
   
-  return categoria ? categoria.nombre : categoriaId
-}
+  return categoria ? categoria.nombre : categoriaId;
+};
 
-// Obtener nombre legible de subcategoría
+// Obtener nombre legible de subcategoría de servicio
 export const obtenerNombreSubcategoriaServicio = (subcategoriaId) => {
-  if (!subcategoriaId) return ''
+  if (!subcategoriaId) return '';
   
   return subcategoriaId
     .replace(/_/g, ' ')
-    .replace(/\b\w/g, l => l.toUpperCase())
-}
+    .replace(/\b\w/g, l => l.toUpperCase());
+};
 
-// Obtener categoría completa
+// Obtener categoría completa (categoría + subcategoría) de servicio
 export const obtenerCategoriaCompletaServicio = (categoriaId, subcategoriaId = null) => {
-  const nombreCategoria = obtenerNombreCategoriaServicio(categoriaId)
+  const nombreCategoria = obtenerNombreCategoriaServicio(categoriaId);
   
   if (subcategoriaId) {
-    const nombreSubcategoria = obtenerNombreSubcategoriaServicio(subcategoriaId)
-    return `${nombreCategoria} > ${nombreSubcategoria}`
+    const nombreSubcategoria = obtenerNombreSubcategoriaServicio(subcategoriaId);
+    return `${nombreCategoria} > ${nombreSubcategoria}`;
   }
   
-  return nombreCategoria
-}
+  return nombreCategoria;
+};
 
-// Obtener subcategorías de una categoría
+// Obtener todas las subcategorías de una categoría de servicio
 export const obtenerSubcategoriasServicio = (categoriaId) => {
   const categoria = Object.values(CATEGORIAS_SERVICIOS)
-    .find(cat => cat.id === categoriaId)
+    .find(cat => cat.id === categoriaId);
   
-  return categoria ? categoria.subcategorias : {}
-}
+  return categoria ? categoria.subcategorias : {};
+};
 
-// Obtener texto descriptivo de modalidad
-export const obtenerTextoModalidad = (modalidad) => {
-  const textos = {
-    presencial: 'Presencial',
-    domicilio: 'A domicilio',
-    remoto: 'Remoto',
-    hibrido: 'Híbrido'
+// Verificar si hay cupos disponibles
+export const tieneCuposDisponibles = (servicio, cantidadSolicitada = 1) => {
+  if (servicio.gestionCupos === GESTION_CUPOS.ILIMITADO) {
+    return true;
   }
   
-  return textos[modalidad] || modalidad
-}
+  if (servicio.gestionCupos === GESTION_CUPOS.UNICO) {
+    return servicio.estado === ESTADOS_SERVICIO.DISPONIBLE;
+  }
+  
+  return servicio.cuposDisponibles >= cantidadSolicitada;
+};
 
-// Verificar si el servicio atiende en una zona específica
-export const atienceEnZona = (servicio, zona) => {
-  if (!servicio.zona_atencion || !zona) return false
+// Actualizar cupos después de una reserva
+export const actualizarCupos = (servicio, cantidadReservada) => {
+  if (servicio.gestionCupos === GESTION_CUPOS.ILIMITADO) {
+    return servicio; // Sin control de cupos
+  }
   
-  const zonaServicio = servicio.zona_atencion.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  const zonaBuscada = zona.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  if (servicio.gestionCupos === GESTION_CUPOS.UNICO) {
+    return {
+      ...servicio,
+      estado: ESTADOS_SERVICIO.AGOTADO,
+      fechaActualizacion: new Date()
+    };
+  }
   
-  return zonaServicio.includes(zonaBuscada) || zonaBuscada.includes(zonaServicio)
-}
+  const nuevosCupos = Math.max(0, servicio.cuposDisponibles - cantidadReservada);
+  
+  return {
+    ...servicio,
+    cuposDisponibles: nuevosCupos,
+    estado: nuevosCupos > 0 ? servicio.estado : ESTADOS_SERVICIO.AGOTADO,
+    fechaActualizacion: new Date()
+  };
+};
 
 // Obtener servicios relacionados (misma categoría, diferente servicio)
 export const obtenerServiciosRelacionados = (servicios, servicioActual, limite = 5) => {
@@ -472,49 +452,69 @@ export const obtenerServiciosRelacionados = (servicios, servicioActual, limite =
     .filter(s => 
       s.id !== servicioActual.id && 
       s.categoria === servicioActual.categoria &&
-      s.disponible === true
+      s.estado === ESTADOS_SERVICIO.DISPONIBLE
     )
-    .slice(0, limite)
-}
+    .slice(0, limite);
+};
 
-// Función para aplicar múltiples filtros
+// Función para aplicar múltiples filtros a servicios
 export const aplicarFiltrosServicios = (servicios, filtros = {}) => {
-  let resultado = [...servicios]
+  let resultado = [...servicios];
   
   if (filtros.categoria) {
-    resultado = filtrarPorCategoriaServicio(resultado, filtros.categoria, filtros.subcategoria)
+    resultado = filtrarPorCategoriaServicio(resultado, filtros.categoria, filtros.subcategoria);
   }
   
-  if (filtros.modalidad) {
-    resultado = filtrarPorModalidad(resultado, filtros.modalidad)
-  }
-  
-  if (filtros.zona) {
-    resultado = filtrarPorZona(resultado, filtros.zona)
+  if (filtros.modalidades && filtros.modalidades.length > 0) {
+    resultado = filtrarPorModalidad(resultado, filtros.modalidades);
   }
   
   if (filtros.precioMin || filtros.precioMax) {
-    resultado = filtrarPorPrecioServicio(resultado, filtros.precioMin, filtros.precioMax)
+    resultado = filtrarPorPrecioServicio(resultado, filtros.precioMin, filtros.precioMax);
   }
   
-  if (filtros.experienciaMin) {
-    resultado = filtrarPorExperiencia(resultado, filtros.experienciaMin)
+  if (filtros.estado) {
+    resultado = filtrarPorEstadoServicio(resultado, filtros.estado);
   }
   
   if (filtros.soloDisponibles) {
-    resultado = filtrarDisponibles(resultado)
+    resultado = filtrarServiciosDisponibles(resultado);
   }
   
-  if (filtros.soloDestacados) {
-    resultado = filtrarDestacados(resultado)
+  if (filtros.diasDisponibles && filtros.diasDisponibles.length > 0) {
+    resultado = filtrarPorDiasDisponibles(resultado, filtros.diasDisponibles);
   }
   
   if (filtros.busqueda) {
-    resultado = buscarServicios(resultado, filtros.busqueda)
+    resultado = buscarServicios(resultado, filtros.busqueda);
   }
   
   // Siempre ordenar al final
-  resultado = ordenarServicios(resultado, filtros.orden || 'destacado')
+  resultado = ordenarServicios(resultado, filtros.orden || 'fecha_desc');
   
-  return resultado
-}
+  return resultado;
+};
+
+// Verificar si un servicio está disponible para reservar
+export const estaDisponibleParaReserva = (servicio, dia = null) => {
+  if (servicio.estado !== ESTADOS_SERVICIO.DISPONIBLE) return false;
+  
+  if (!tieneCuposDisponibles(servicio)) return false;
+  
+  // Verificar disponibilidad por día si se especifica
+  if (dia && Array.isArray(servicio.diasDisponibles) && servicio.diasDisponibles.length > 0) {
+    return servicio.diasDisponibles.includes(dia);
+  }
+  
+  return true;
+};
+
+// Generar mensaje de WhatsApp para servicio
+export const generarMensajeWhatsAppServicio = (servicio, storeData) => {
+  const mensaje = servicio.contacto?.mensaje || 
+    `Hola! Me interesa tu servicio: ${servicio.titulo}`;
+  
+  const servicioUrl = `${window.location.origin}/tienda/${storeData.storeSlug}/servicio/${servicio.slug || servicio.id}`;
+  
+  return `${mensaje}\n\nVer servicio: ${servicioUrl}`;
+};
