@@ -113,16 +113,6 @@ export const generarPalabrasClave = (nombre, descripcion = '', categoria = '', s
     .filter((palabra, index, array) => array.indexOf(palabra) === index) // Remover duplicados
 }
 
-// Formatear precio para mostrar
-export const formatearPrecio = (precio, moneda = '$') => {
-  if (!precio && precio !== 0) return 'Precio a consultar'
-  
-  return `${moneda} ${parseFloat(precio).toLocaleString('es-AR', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2
-  })}`
-}
-
 // Validar precio
 export const validarPrecio = (precio) => {
   if (precio === null || precio === undefined || precio === '') {
