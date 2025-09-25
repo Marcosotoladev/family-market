@@ -35,6 +35,7 @@ export default function ProductList({
   onDuplicate,
   onView,
   onCreateNew,
+  onFeature, // NUEVO PROP
   isLoading = false 
 }) {
   const [searchTerm, setSearchTerm] = useState('');
@@ -42,7 +43,7 @@ export default function ProductList({
   const [selectedStatus, setSelectedStatus] = useState('');
   const [sortBy, setSortBy] = useState('fechaCreacion');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'table'
+  const [viewMode, setViewMode] = useState('grid');
 
   // Filtrar y ordenar productos
   const filteredProducts = products
@@ -110,7 +111,7 @@ export default function ProductList({
 
   return (
     <div className="space-y-6">
-      {/* Header con estadísticas - Compacto en móvil */}
+      {/* Header con estadísticas */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
@@ -149,12 +150,19 @@ export default function ProductList({
         <div className="bg-white dark:bg-gray-800 p-3 md:p-4 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Agotados</p>
-              <p className="text-lg md:text-2xl font-bold text-red-600 dark:text-red-400">
-                {products.filter(p => p.estado === ESTADOS_PRODUCTO.AGOTADO || getStockStatus(p) === 'agotado').length}
+              <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">Destacados</p>
+              <p className="text-lg md:text-2xl font-bold text-orange-600 dark:text-orange-400">
+                {products.filter(p => {
+                  if (!p.featured || !p.featuredUntil) return false;
+                  const now = new Date();
+                  const featuredUntil = p.featuredUntil.toDate ? 
+                    p.featuredUntil.toDate() : 
+                    new Date(p.featuredUntil);
+                  return now < featuredUntil;
+                }).length}
               </p>
             </div>
-            <TrendingUp className="w-5 h-5 md:w-8 md:h-8 text-red-500" />
+            <Star className="w-5 h-5 md:w-8 md:h-8 text-orange-500 fill-current" />
           </div>
         </div>
       </div>
@@ -277,14 +285,23 @@ export default function ProductList({
           </button>
         </div>
       ) : viewMode === 'grid' ? (
-        // Vista en tarjetas - GRID CORREGIDO: 2 móvil, 3 móvil grande, 4 desktop
+        // Vista en tarjetas
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
           {filteredProducts.map((product) => (
-            <ProductCard key={product.id} product={product} onEdit={onEdit} onDelete={onDelete} onToggleStatus={onToggleStatus} onDuplicate={onDuplicate} onView={onView} />
+            <ProductCard 
+              key={product.id} 
+              product={product} 
+              onEdit={onEdit} 
+              onDelete={onDelete} 
+              onToggleStatus={onToggleStatus} 
+              onDuplicate={onDuplicate} 
+              onView={onView}
+              onFeature={onFeature}
+            />
           ))}
         </div>
       ) : (
-        // Vista de tabla simplificada
+        // Vista de tabla
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -309,7 +326,16 @@ export default function ProductList({
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredProducts.map((product) => (
-                  <ProductTableRow key={product.id} product={product} onEdit={onEdit} onDelete={onDelete} onToggleStatus={onToggleStatus} onDuplicate={onDuplicate} onView={onView} />
+                  <ProductTableRow 
+                    key={product.id} 
+                    product={product} 
+                    onEdit={onEdit} 
+                    onDelete={onDelete} 
+                    onToggleStatus={onToggleStatus} 
+                    onDuplicate={onDuplicate} 
+                    onView={onView}
+                    onFeature={onFeature}
+                  />
                 ))}
               </tbody>
             </table>
@@ -321,9 +347,36 @@ export default function ProductList({
 }
 
 // Componente para tarjeta de producto en vista grid
-function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, onView }) {
+function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, onView, onFeature }) {
   const estadoBadge = obtenerEstadoBadge(product.estado);
   const categoryName = CATEGORIAS_PRODUCTOS[product.categoria]?.nombre || 'Sin categoría';
+
+  // Función para verificar si está destacado
+  const isFeatureActive = () => {
+    if (!product.featured) return false;
+    if (!product.featuredUntil) return false;
+    
+    const now = new Date();
+    const featuredUntil = product.featuredUntil.toDate ? 
+      product.featuredUntil.toDate() : 
+      new Date(product.featuredUntil);
+    
+    return now < featuredUntil;
+  };
+
+  const getRemainingDays = () => {
+    if (!isFeatureActive()) return 0;
+    
+    const now = new Date();
+    const featuredUntil = product.featuredUntil.toDate ? 
+      product.featuredUntil.toDate() : 
+      new Date(product.featuredUntil);
+    
+    const diffTime = featuredUntil - now;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    return Math.max(0, diffDays);
+  };
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-lg transition-shadow">
@@ -352,6 +405,16 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, o
             {estadoBadge.texto}
           </span>
         </div>
+
+        {/* Badge de destacado */}
+        {isFeatureActive() && (
+          <div className="absolute top-2 right-2">
+            <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center space-x-1">
+              <Star className="w-3 h-3 fill-current" />
+              <span>DESTACADO</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Contenido */}
@@ -374,6 +437,16 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, o
             {product.totalVentas || 0} ventas
           </span>
         </div>
+
+        {/* Información de destacado */}
+        {isFeatureActive() && (
+          <div className="mb-4 p-3 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
+            <div className="flex items-center space-x-2 text-yellow-700 dark:text-yellow-300 text-sm">
+              <Star className="w-4 h-4 fill-current" />
+              <span className="font-medium">Destacado por {getRemainingDays()} días más</span>
+            </div>
+          </div>
+        )}
 
         {/* Acciones */}
         <div className="space-y-2">
@@ -402,23 +475,35 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, o
             </button>
           </div>
 
-          {/* Segunda fila de botones - Layout responsive */}
-          <div className="grid grid-cols-2 gap-2">
+          {/* Segunda fila de botones */}
+          <div className="grid grid-cols-3 gap-2">
             <button
               onClick={() => onDuplicate(product)}
               className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center gap-1"
               title="Duplicar"
             >
               <Copy className="w-4 h-4" />
-              <span className="hidden lg:inline text-xs">Duplicar</span>
             </button>
+            
+            {/* Botón de destacar */}
+            <button
+              onClick={() => onFeature && onFeature(product)}
+              className={`px-3 py-2 text-sm rounded transition-colors flex items-center justify-center gap-1 ${
+                isFeatureActive()
+                  ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
+                  : 'border border-yellow-500 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
+              }`}
+              title={isFeatureActive() ? 'Ya destacado' : 'Destacar producto'}
+            >
+              <Star className="w-4 h-4" />
+            </button>
+            
             <button
               onClick={() => onDelete(product.id)}
               className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors flex items-center justify-center gap-1"
               title="Eliminar"
             >
               <Trash2 className="w-4 h-4" />
-              <span className="hidden lg:inline text-xs">Eliminar</span>
             </button>
           </div>
         </div>
@@ -428,15 +513,27 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, o
 }
 
 // Componente para fila de tabla
-function ProductTableRow({ product, onEdit, onDelete, onToggleStatus, onDuplicate, onView }) {
+function ProductTableRow({ product, onEdit, onDelete, onToggleStatus, onDuplicate, onView, onFeature }) {
   const estadoBadge = obtenerEstadoBadge(product.estado);
   const categoryName = CATEGORIAS_PRODUCTOS[product.categoria]?.nombre || 'Sin categoría';
+
+  const isFeatureActive = () => {
+    if (!product.featured) return false;
+    if (!product.featuredUntil) return false;
+    
+    const now = new Date();
+    const featuredUntil = product.featuredUntil.toDate ? 
+      product.featuredUntil.toDate() : 
+      new Date(product.featuredUntil);
+    
+    return now < featuredUntil;
+  };
 
   return (
     <tr className="hover:bg-gray-50 dark:hover:bg-gray-700">
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center">
-          <div className="flex-shrink-0 h-12 w-12">
+          <div className="flex-shrink-0 h-12 w-12 relative">
             {product.imagenes && product.imagenes.length > 0 ? (
               <img
                 src={product.imagenes[0]}
@@ -448,10 +545,20 @@ function ProductTableRow({ product, onEdit, onDelete, onToggleStatus, onDuplicat
                 <Package className="w-6 h-6 text-gray-400" />
               </div>
             )}
+            {isFeatureActive() && (
+              <div className="absolute -top-1 -right-1">
+                <Star className="w-4 h-4 text-yellow-500 fill-current" />
+              </div>
+            )}
           </div>
           <div className="ml-4">
-            <div className="text-sm font-medium text-gray-900 dark:text-white">
+            <div className="text-sm font-medium text-gray-900 dark:text-white flex items-center">
               {product.titulo || product.nombre}
+              {isFeatureActive() && (
+                <span className="ml-2 px-2 py-1 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs rounded-full">
+                  DESTACADO
+                </span>
+              )}
             </div>
             <div className="text-sm text-gray-500 dark:text-gray-400">
               {categoryName}
@@ -502,6 +609,17 @@ function ProductTableRow({ product, onEdit, onDelete, onToggleStatus, onDuplicat
             title={product.estado === ESTADOS_PRODUCTO.DISPONIBLE ? 'Pausar' : 'Activar'}
           >
             {product.estado === ESTADOS_PRODUCTO.DISPONIBLE ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+          </button>
+          <button
+            onClick={() => onFeature && onFeature(product)}
+            className={`${
+              isFeatureActive()
+                ? 'text-yellow-500'
+                : 'text-yellow-600 dark:text-yellow-400'
+            } hover:text-yellow-700 dark:hover:text-yellow-300`}
+            title={isFeatureActive() ? 'Ya destacado' : 'Destacar producto'}
+          >
+            <Star className={`w-4 h-4 ${isFeatureActive() ? 'fill-current' : ''}`} />
           </button>
           <button
             onClick={() => onDuplicate(product)}

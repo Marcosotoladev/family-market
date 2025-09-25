@@ -21,13 +21,15 @@ import { autoCompletarDatosProducto } from '@/types/product';
 import ProductForm from './ProductForm';
 import ProductList from './ProductList';
 import ProductCard from './ProductCard';
-import { Plus, ArrowLeft, Package } from 'lucide-react';
+import FeaturedProductButton from './FeaturedProductButton';
+import { Plus, ArrowLeft, Package, X } from 'lucide-react';
 
 export default function ProductManager({ storeId, storeData }) {
   const { user } = useAuth();
   const [view, setView] = useState('list'); // 'list' | 'form' | 'view'
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [showFeaturedModal, setShowFeaturedModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -77,6 +79,20 @@ export default function ProductManager({ storeId, storeData }) {
     setView('view');
   };
 
+  // Manejar destacar producto
+  const handleFeatureProduct = (product) => {
+    setSelectedProduct(product);
+    setShowFeaturedModal(true);
+  };
+
+  // Callback después de pago exitoso
+  const handleFeatureSuccess = async () => {
+    setShowFeaturedModal(false);
+    setSelectedProduct(null);
+    // Recargar productos para mostrar el estado actualizado
+    await loadProducts();
+  };
+
   const handleSaveProduct = async (productData) => {
     try {
       setIsSaving(true);
@@ -120,6 +136,12 @@ export default function ProductManager({ storeId, storeData }) {
             compartidas: 0,
             comentarios: 0
           },
+          // Inicializar campos de destacado
+          featured: false,
+          featuredUntil: null,
+          featuredPaymentId: null,
+          featuredAmount: null,
+          fechaDestacado: null,
           slug: generarSlugProducto ? generarSlugProducto(productDataCompleto.titulo, Date.now().toString()) : productDataCompleto.titulo.toLowerCase().replace(/\s+/g, '-')
         };
         
@@ -187,7 +209,13 @@ export default function ProductManager({ storeId, storeData }) {
       fechaCreacion: undefined,
       fechaActualizacion: undefined,
       totalVentas: 0,
-      totalVistas: 0
+      totalVistas: 0,
+      // Resetear campos de destacado
+      featured: false,
+      featuredUntil: null,
+      featuredPaymentId: null,
+      featuredAmount: null,
+      fechaDestacado: null
     };
     
     setSelectedProduct(duplicatedProduct);
@@ -220,7 +248,6 @@ export default function ProductManager({ storeId, storeData }) {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {view === 'list' && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <div>
@@ -242,7 +269,6 @@ export default function ProductManager({ storeId, storeData }) {
             </div>
           </div>
 
-          {/* Lista de productos */}
           <ProductList
             products={products}
             onEdit={handleEditProduct}
@@ -251,6 +277,7 @@ export default function ProductManager({ storeId, storeData }) {
             onDuplicate={handleDuplicateProduct}
             onView={handleViewProduct}
             onCreateNew={handleCreateProduct}
+            onFeature={handleFeatureProduct}
             isLoading={isLoading}
           />
         </div>
@@ -270,7 +297,6 @@ export default function ProductManager({ storeId, storeData }) {
 
       {view === 'view' && selectedProduct && (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <button
@@ -294,11 +320,16 @@ export default function ProductManager({ storeId, storeData }) {
                 >
                   Duplicar
                 </button>
+                <button
+                  onClick={() => handleFeatureProduct(selectedProduct)}
+                  className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-colors"
+                >
+                  Destacar
+                </button>
               </div>
             </div>
           </div>
 
-          {/* Vista previa del producto */}
           <div className="bg-white dark:bg-gray-800 rounded-lg p-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               Vista Previa del Producto
@@ -328,6 +359,42 @@ export default function ProductManager({ storeId, storeData }) {
                   showContactInfo={false}
                 />
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFeaturedModal && selectedProduct && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Destacar Producto
+                </h2>
+                <button
+                  onClick={() => setShowFeaturedModal(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                  {selectedProduct.titulo || selectedProduct.nombre}
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Este producto aparecerá en la sección destacada del home
+                </p>
+              </div>
+
+              <FeaturedProductButton
+                product={selectedProduct}
+                user={user}
+                onSuccess={handleFeatureSuccess}
+                onClose={() => setShowFeaturedModal(false)}
+              />
             </div>
           </div>
         </div>

@@ -1,346 +1,242 @@
 // src/components/home/FeaturedProducts.js
-'use client'
-import { useState, useRef, useEffect, useCallback } from 'react'
-import { Star, Flame, MapPin, Shield } from 'lucide-react'
+'use client';
+
+import { useState, useEffect } from 'react';
+import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
+import ProductCard from '@/components/ui/ProductCard';
+import { Star, Sparkles, ArrowRight } from 'lucide-react';
+import Link from 'next/link';
 
 export default function FeaturedProducts() {
-  const [windowWidth, setWindowWidth] = useState(0)
-  const [isClient, setIsClient] = useState(false)
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [isDragging, setIsDragging] = useState(false)
-  const [startX, setStartX] = useState(0)
-  const [scrollLeft, setScrollLeft] = useState(0)
-  const [dragOffset, setDragOffset] = useState(0)
-  const [isTransitioning, setIsTransitioning] = useState(false)
-  const scrollContainerRef = useRef(null)
-  const rafRef = useRef()
+  const [featuredProducts, setFeaturedProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    setIsClient(true)
-    const handleResize = () => setWindowWidth(window.innerWidth)
-    handleResize()
-    window.addEventListener('resize', handleResize)
-    return () => window.removeEventListener('resize', handleResize)
-  }, [])
+    loadFeaturedProducts();
+  }, []);
 
-  // Productos de prueba (8)
-  const featuredProducts = [
-    {
-      id: 1,
-      nombre: 'Torta de Chocolate Premium',
-      precio: 25000,
-      imagen: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=400&h=300&fit=crop',
-      categoria: 'Repostería',
-      tienda: { nombre: 'Dulces de María', ubicacion: 'Córdoba Centro', rating: 4.9, verificada: true },
-      destacado: true,
-    },
-    {
-      id: 2,
-      nombre: 'Set de Organizadores Tejidos',
-      precio: 18500,
-      imagen: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=400&h=300&fit=crop',
-      categoria: 'Artesanías',
-      tienda: { nombre: 'Tejidos Ana', ubicacion: 'Nueva Córdoba', rating: 4.7, verificada: true },
-      destacado: true,
-    },
-    {
-      id: 3,
-      nombre: 'Servicio de Diseño Web Profesional',
-      precio: 150000,
-      imagen: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=400&h=300&fit=crop',
-      categoria: 'Servicios',
-      tienda: { nombre: 'DevCristiano', ubicacion: 'Remoto', rating: 5.0, verificada: true },
-      destacado: true,
-    },
-    {
-      id: 4,
-      nombre: 'Macetas de Cerámica Artesanal',
-      precio: 8500,
-      imagen: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?w=400&h=300&fit=crop',
-      categoria: 'Decoración',
-      tienda: { nombre: 'Cerámica Esperanza', ubicacion: 'Villa Allende', rating: 4.6, verificada: false },
-      destacado: true,
-    },
-    {
-      id: 5,
-      nombre: 'Clases de Piano Online',
-      precio: 12000,
-      imagen: 'https://images.unsplash.com/photo-1520523839897-bd0b52f945a0?w=400&h=300&fit=crop',
-      categoria: 'Educación',
-      tienda: { nombre: 'Música & Fe', ubicacion: 'Córdoba', rating: 4.8, verificada: true },
-      destacado: true,
-    },
-    {
-      id: 6,
-      nombre: 'Pan Casero Integral',
-      precio: 3500,
-      imagen: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop',
-      categoria: 'Alimentos',
-      tienda: { nombre: 'Panadería Bendición', ubicacion: 'Barrio Jardín', rating: 4.5, verificada: true },
-      destacado: true,
-    },
-    {
-      id: 7,
-      nombre: 'Collar Artesanal de Plata',
-      precio: 45000,
-      imagen: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=400&h=300&fit=crop',
-      categoria: 'Joyería',
-      tienda: { nombre: 'Joyas Luna', ubicacion: 'Córdoba Centro', rating: 4.9, verificada: true },
-      destacado: true,
-    },
-    {
-      id: 8,
-      nombre: 'Curso de Fotografía Digital',
-      precio: 28000,
-      imagen: 'https://images.unsplash.com/photo-1502920917128-1aa500764cbd?w=400&h=300&fit=crop',
-      categoria: 'Educación',
-      tienda: { nombre: 'Foto Académica', ubicacion: 'Nueva Córdoba', rating: 4.7, verificada: true },
-      destacado: true,
-    },
-  ]
+  const loadFeaturedProducts = async () => {
+    try {
+      setLoading(true);
+      
+      // Obtener productos destacados activos
+      const now = new Date();
+      const productsRef = collection(db, 'productos');
+      const q = query(
+        productsRef,
+        where('featured', '==', true),
+        where('featuredUntil', '>', now),
+        where('estado', '==', 'disponible'),
+        orderBy('featuredUntil', 'desc'),
+        orderBy('fechaDestacado', 'desc')
+      );
 
-  const isMobile = windowWidth < 1024
-  const itemsPerView = isMobile ? 2 : 5
-  const maxIndex = Math.max(0, featuredProducts.length - itemsPerView)
+      const querySnapshot = await getDocs(q);
+      const products = [];
 
-  // Función para animar suavemente hacia un índice específico
-  const animateToIndex = useCallback((targetIndex) => {
-    const clampedIndex = Math.max(0, Math.min(maxIndex, targetIndex))
-    setIsTransitioning(true)
-    setCurrentIndex(clampedIndex)
-    setDragOffset(0)
-
-    // Resetear la transición después de que termine
-    setTimeout(() => {
-      setIsTransitioning(false)
-    }, 300)
-  }, [maxIndex])
-
-  // Manejo del inicio del arrastre (touch y mouse)
-  const handleDragStart = useCallback((clientX) => {
-    if (isTransitioning) return
-
-    setIsDragging(true)
-    setStartX(clientX)
-    setScrollLeft(currentIndex)
-
-    // Cancelar cualquier animación en curso
-    if (rafRef.current) {
-      cancelAnimationFrame(rafRef.current)
-    }
-  }, [currentIndex, isTransitioning])
-
-  // Manejo del movimiento durante el arrastre
-  const handleDragMove = useCallback((clientX) => {
-    if (!isDragging || isTransitioning) return
-
-    rafRef.current = requestAnimationFrame(() => {
-      const containerWidth = scrollContainerRef.current?.offsetWidth || 0
-      const itemWidth = containerWidth / itemsPerView
-      const deltaX = startX - clientX
-      const dragDistance = deltaX / itemWidth
-
-      // Limitar el arrastre en los extremos con efecto de resistencia
-      let newOffset = dragDistance
-      const futureIndex = scrollLeft + dragDistance
-
-      if (futureIndex < 0) {
-        // Resistencia al inicio
-        newOffset = dragDistance * (1 - Math.abs(futureIndex) * 0.3)
-      } else if (futureIndex > maxIndex) {
-        // Resistencia al final
-        const overflow = futureIndex - maxIndex
-        newOffset = dragDistance - (overflow * 0.7)
+      // Obtener datos de cada producto con información de la tienda
+      for (const docSnapshot of querySnapshot.docs) {
+        const productData = { id: docSnapshot.id, ...docSnapshot.data() };
+        
+        // Obtener datos de la tienda/usuario
+        try {
+          const userDoc = await getDoc(doc(db, 'users', productData.usuarioId));
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            productData.tiendaInfo = {
+              nombre: userData.businessName || userData.familyName || `${userData.firstName} ${userData.lastName}`.trim(),
+              slug: userData.storeSlug,
+              email: userData.email,
+              phone: userData.phone,
+              businessName: userData.businessName,
+              familyName: userData.familyName
+            };
+          }
+        } catch (error) {
+          console.error('Error loading store data for product:', productData.id, error);
+          productData.tiendaInfo = {
+            nombre: 'Tienda Family Market',
+            slug: '',
+            email: '',
+            phone: ''
+          };
+        }
+        
+        products.push(productData);
       }
 
-      setDragOffset(newOffset)
-    })
-  }, [isDragging, startX, scrollLeft, itemsPerView, maxIndex, isTransitioning])
-
-  // Manejo del final del arrastre
-  const handleDragEnd = useCallback(() => {
-    if (!isDragging || isTransitioning) return
-
-    setIsDragging(false)
-
-    const threshold = 0.3 // 30% del ancho de un item para cambiar
-    let targetIndex = scrollLeft + dragOffset
-
-    // Snap al índice más cercano
-    if (Math.abs(dragOffset) > threshold) {
-      targetIndex = dragOffset > 0 ? Math.ceil(scrollLeft + dragOffset) : Math.floor(scrollLeft + dragOffset)
-    } else {
-      targetIndex = Math.round(scrollLeft)
+      setFeaturedProducts(products);
+    } catch (error) {
+      console.error('Error loading featured products:', error);
+      setFeaturedProducts([]);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    animateToIndex(targetIndex)
-  }, [isDragging, scrollLeft, dragOffset, animateToIndex, isTransitioning])
-
-  // Eventos táctiles
-  const handleTouchStart = (e) => {
-    handleDragStart(e.touches[0].clientX)
-  }
-
-  const handleTouchMove = (e) => {
-    e.preventDefault() // Prevenir scroll de la página
-    handleDragMove(e.touches[0].clientX)
-  }
-
-  const handleTouchEnd = () => {
-    handleDragEnd()
-  }
-
-  // Eventos del mouse
-  const handleMouseDown = (e) => {
-    if (isMobile) return
-    e.preventDefault()
-    handleDragStart(e.clientX)
-  }
-
-  const handleMouseMove = (e) => {
-    handleDragMove(e.clientX)
-  }
-
-  const handleMouseUp = () => {
-    handleDragEnd()
-  }
-
-  const handleMouseLeave = () => {
-    if (isDragging) {
-      handleDragEnd()
-    }
-  }
-
-  // Cleanup effect
-  useEffect(() => {
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current)
-      }
-    }
-  }, [])
-
-  const formatPrice = (price) =>
-    new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(price)
-
-  if (!isClient) {
+  if (loading) {
     return (
-      <section className="py-8 lg:py-12">
-        <div className="text-center">Cargando productos destacados...</div>
+      <section className="py-16 bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <p className="text-gray-600 dark:text-gray-400">Cargando productos destacados...</p>
+          </div>
+        </div>
       </section>
-    )
+    );
   }
 
-  const currentOffset = currentIndex + dragOffset
-  const translateX = -(currentOffset * (100 / itemsPerView))
+  // No mostrar la sección si no hay productos destacados
+  if (featuredProducts.length === 0) {
+    return null;
+  }
 
   return (
-    <section className="pb-2 lg:pb-4">
+    <section className="py-16 bg-gradient-to-br from-orange-50 to-yellow-50 dark:from-gray-800 dark:to-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-r from-orange-400 to-red-500 rounded-lg">
-            <Flame className="w-6 h-6 text-white" />
+        <div className="text-center mb-12">
+          <div className="flex items-center justify-center space-x-3 mb-4">
+            <Sparkles className="w-8 h-8 text-yellow-500 animate-pulse" />
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 dark:text-white">
+              Productos Destacados
+            </h2>
+            <Sparkles className="w-8 h-8 text-yellow-500 animate-pulse" />
           </div>
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-            Productos Destacados
-          </h2>
+          <p className="text-lg text-gray-600 dark:text-gray-400 max-w-2xl mx-auto">
+            Descubre los productos que nuestros emprendedores han elegido destacar especialmente para ti
+          </p>
+          
+          {/* Contador de productos */}
+          <div className="mt-4">
+            <span className="inline-flex items-center px-4 py-2 bg-white dark:bg-gray-800 rounded-full text-sm font-medium text-gray-700 dark:text-gray-300 shadow-md">
+              <Star className="w-4 h-4 text-yellow-500 mr-2 fill-current" />
+              {featuredProducts.length} {featuredProducts.length === 1 ? 'producto destacado' : 'productos destacados'}
+            </span>
+          </div>
         </div>
 
-        {/* Carrusel */}
-        <div className="relative">
-          <div
-            ref={scrollContainerRef}
-            className={`overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            style={{ touchAction: 'pan-y' }}
-          >
-            <div
-              className="flex gap-4 will-change-transform"
-              style={{
-                transform: `translateX(${translateX}%)`,
-                transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
-              }}
-            >
-              {featuredProducts.map((product, index) => (
-                <div
-                  key={product.id}
-                  className={`flex-shrink-0 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 ${isDragging ? 'scale-[0.98]' : 'hover:shadow-md'
-                    }`}
-                  style={{
-                    width: `calc(${100 / itemsPerView}% - ${16 * (itemsPerView - 1) / itemsPerView}px)`,
-                  }}
-                >
-                  <div className="relative aspect-square overflow-hidden">
-                    <img
-                      src={product.imagen}
-                      alt={product.nombre}
-                      className="w-full h-full object-cover"
-                      draggable={false}
-                    />
-                    {product.destacado && (
-                      <div className="absolute top-2 left-2 bg-gradient-to-r from-orange-400 to-red-500 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-                        <Flame className="w-3 h-3" /> Destacado
-                      </div>
-                    )}
-                  </div>
-                  <div className="p-3">
-                    <div className="text-xs text-primary-600 font-medium uppercase mb-1">
-                      {product.categoria}
-                    </div>
-                    <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2">
-                      {product.nombre}
-                    </h3>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">
-                        {product.tienda.nombre}
-                      </span>
-                      <div className="flex items-center gap-1">
-                        <Star className="w-3 h-3 text-yellow-400 fill-current" />
-                        <span className="text-xs text-gray-600 dark:text-gray-400">
-                          {product.tienda.rating}
-                        </span>
-                      </div>
-                    </div>
-                    <div className="mt-2 font-bold text-gray-900 dark:text-white">
-                      {formatPrice(product.precio)}
-                    </div>
+        {/* Grid de productos destacados */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
+          {featuredProducts.map((product, index) => (
+            <div key={product.id} className="relative group">
+              {/* Badge de destacado */}
+              <div className="absolute -top-3 -right-3 z-10">
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 rounded-full text-xs font-bold shadow-lg flex items-center space-x-1 animate-bounce">
+                  <Star className="w-3 h-3 fill-current" />
+                  <span>DESTACADO</span>
+                </div>
+              </div>
+              
+              {/* Badge de posición para los primeros 3 */}
+              {index < 3 && (
+                <div className="absolute -top-2 -left-2 z-10">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-bold shadow-lg ${
+                    index === 0 ? 'bg-gradient-to-r from-yellow-400 to-yellow-600' :
+                    index === 1 ? 'bg-gradient-to-r from-gray-300 to-gray-500' :
+                    'bg-gradient-to-r from-orange-400 to-orange-600'
+                  }`}>
+                    {index + 1}
                   </div>
                 </div>
-              ))}
+              )}
+              
+              {/* Efecto de hover mejorado */}
+              <div className="transform group-hover:scale-105 transition-transform duration-300">
+                <ProductCard
+                  product={product}
+                  storeData={product.tiendaInfo}
+                  variant="featured"
+                  showStoreInfo={true}
+                  showContactInfo={true}
+                />
+              </div>
+              
+              {/* Glow effect */}
+              <div className="absolute inset-0 bg-gradient-to-r from-yellow-400/20 to-orange-500/20 rounded-xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 -z-10"></div>
+            </div>
+          ))}
+        </div>
+
+        {/* CTA Section */}
+        <div className="mt-16">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-8 shadow-xl border border-gray-200 dark:border-gray-700 max-w-4xl mx-auto">
+            <div className="text-center">
+              <div className="flex items-center justify-center mb-6">
+                <div className="bg-gradient-to-r from-yellow-400 to-orange-500 p-4 rounded-full">
+                  <Star className="w-8 h-8 text-white fill-current" />
+                </div>
+              </div>
+              
+              <h3 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+                ¿Quieres destacar tu producto?
+              </h3>
+              
+              <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-2xl mx-auto">
+                Con una contribución voluntaria desde $1000, puedes hacer que tu producto aparezca 
+                en esta sección especial por 7 días completos y llegue a más personas de la comunidad TTL.
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+                <div className="text-center p-4">
+                  <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Sparkles className="w-6 h-6 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Mayor Visibilidad</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Tu producto aparece en la sección principal del home
+                  </p>
+                </div>
+                
+                <div className="text-center p-4">
+                  <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <Star className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  </div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Badge Especial</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Distintivo de "DESTACADO" que llama la atención
+                  </p>
+                </div>
+                
+                <div className="text-center p-4">
+                  <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <ArrowRight className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  </div>
+                  <h4 className="font-semibold text-gray-900 dark:text-white mb-2">Más Contactos</h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    Aumenta significativamente las consultas por tu producto
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <Link
+                  href="/dashboard/tienda/productos"
+                  className="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold hover:from-orange-600 hover:to-orange-700 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:scale-105"
+                >
+                  <Star className="w-5 h-5 mr-2" />
+                  Destacar mi producto
+                </Link>
+                
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  Contribución sugerida: $5000 • Duración: 7 días
+                </p>
+              </div>
             </div>
           </div>
-          {/* Indicadores de posición (solo en mobile) */}
-          {isMobile && maxIndex > 0 && (
-            <div className="flex justify-center gap-2 mt-4">
-              {Array.from({ length: maxIndex + 1 }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => animateToIndex(i)}
-                  className={`w-2 h-2 rounded-full transition-all duration-200 ${Math.round(currentIndex) === i
-                      ? 'bg-primary-500 scale-125'
-                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-primary-300'
-                    }`}
-                  disabled={isDragging || isTransitioning}
-                />
-              ))}
-            </div>
-          )}
+        </div>
+
+        {/* Información adicional */}
+        <div className="mt-8 text-center">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Las contribuciones ayudan a mantener Family Market funcionando para toda la comunidad TTL
+          </p>
         </div>
       </div>
     </section>
-  )
+  );
 }
 
 

@@ -38,6 +38,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── tienda
 |   |   |   |   └── productos
 |   |   |   |   |   └── page.js
+|   |   |   |   └── servicios
+|   |   |   |   |   └── page.js
 |   |   |   └── users
 |   |   |   |   └── page.js
 |   |   └── favicon.ico
@@ -123,6 +125,11 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   └── ProductList.js
 |   |   |   |   └── ProductManager.js
 |   |   |   |   └── ProductRatingsAndComments.js
+|   |   |   └── servicios
+|   |   |   |   └── ServiceCard.js
+|   |   |   |   └── ServiceForm.js
+|   |   |   |   └── ServiceList.js
+|   |   |   |   └── ServiceManager.js
 |   |   |   └── StoreHeader.js
 |   |   |   └── StoreLayout.js
 |   |   |   └── StoreNavigation.js
@@ -162,6 +169,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   └── services
 |   |   |   └── adminService.js
 |   |   |   └── notificationService.js
+|   |   |   └── serviceUtils.js
 |   |   └── storeConfigUtils.js
 |   └── styles
 |   |   └── store-themes.css
