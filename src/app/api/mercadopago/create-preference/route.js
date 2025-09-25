@@ -11,7 +11,7 @@ export async function POST(request) {
     const body = await request.json();
     const { productId, userId, userName, productName, amount } = body;
 
-    console.log('Received request:', { productId, userId, userName, productName, amount });
+    console.log('📥 Received request:', { productId, userId, userName, productName, amount });
 
     // Validaciones
     if (!productId || !userId || !productName || !amount) {
@@ -27,8 +27,8 @@ export async function POST(request) {
     }
 
     // URL base
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    console.log('Using base URL:', baseUrl);
+    const baseUrl = process.env.NEXT_PUBLIC_URL || 'https://familymarket.vercel.app';
+    console.log('🌐 Using base URL:', baseUrl);
 
     const preference = new Preference(client);
 
@@ -49,24 +49,27 @@ export async function POST(request) {
         pending: `${baseUrl}/dashboard/tienda/productos?payment=pending`
       },
       auto_return: 'approved',
+      // ✅ ESTO ES CRUCIAL - notification_url
       notification_url: `${baseUrl}/api/mercadopago/webhook`,
-      external_reference: `featured_${productId}_${userId}_${Date.now()}`,
+      // ✅ USAR EL FORMATO CORRECTO para external_reference  
+      external_reference: `product_${productId}_${userId}`,
       payer: {
         name: userName || 'Usuario Family Market'
       },
+      // ✅ CORREGIR LOS NOMBRES DE LOS CAMPOS en metadata
       metadata: {
-        product_id: productId,
-        user_id: userId,
+        product_id: productId,     // ⬅️ Cambiar productId → product_id
+        user_id: userId,           // ⬅️ Cambiar userId → user_id
         type: 'featured_product',
         amount: amount.toString()
       }
     };
 
-    console.log('Creating preference with data:', JSON.stringify(preferenceData, null, 2));
+    console.log('🔄 Creating preference with data:', JSON.stringify(preferenceData, null, 2));
 
     const result = await preference.create({ body: preferenceData });
 
-    console.log('Preference created successfully:', result.id);
+    console.log('✅ Preference created successfully:', result.id);
 
     return NextResponse.json({
       preferenceId: result.id,
@@ -75,7 +78,7 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    console.error('Error creating MercadoPago preference:', error);
+    console.error('❌ Error creating MercadoPago preference:', error);
     return NextResponse.json({ 
       error: 'Error creating payment preference',
       details: error.message 
