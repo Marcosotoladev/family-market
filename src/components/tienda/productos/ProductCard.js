@@ -29,7 +29,7 @@ import {
   formatearPrecio, 
   TIPOS_PRECIO,
   renderEstrellas
-} from '@/types/product';
+} from '../../../types/product';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
   doc, 
