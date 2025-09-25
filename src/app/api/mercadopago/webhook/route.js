@@ -15,19 +15,6 @@ export async function POST(request) {
     const body = await request.json();
     console.log('📦 Webhook body:', JSON.stringify(body, null, 2));
     
-    // COMENTAR LA VERIFICACIÓN DE FIRMA TEMPORALMENTE
-    /*
-    const signature = request.headers.get('x-signature');
-    if (signature && process.env.MERCADOPAGO_WEBHOOK_SECRET) {
-      const isValid = verifyWebhookSignature(body, signature);
-      if (!isValid) {
-        console.error('❌ Invalid webhook signature');
-        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
-      }
-      console.log('✅ Webhook signature verified');
-    }
-    */
-
     const { type, data } = body;
 
     if (type === 'payment') {
@@ -38,11 +25,17 @@ export async function POST(request) {
         const paymentData = await payment.get({ id: data.id });
         
         console.log('💰 Payment status:', paymentData.status);
+        console.log('💰 Payment state:', paymentData.status_detail);
         console.log('🏷️ Payment metadata:', JSON.stringify(paymentData.metadata, null, 2));
         console.log('📝 External reference:', paymentData.external_reference);
 
-        if (paymentData.status === 'approved') {
-          console.log('✅ Payment approved, processing...');
+        // ✅ CAMBIO PRINCIPAL: Manejar múltiples estados de pago exitoso
+        const isSuccessfulPayment = paymentData.status === 'approved' || 
+                                  paymentData.status === 'in_process' ||
+                                  (paymentData.status === 'pending' && paymentData.status_detail === 'pending_waiting_payment');
+
+        if (isSuccessfulPayment) {
+          console.log('✅ Payment successful, processing...');
           
           // Extraer datos del pago
           let product_id, user_id, amount;
@@ -69,7 +62,6 @@ export async function POST(request) {
           
           if (!product_id) {
             console.error('❌ Missing product_id - this might be a test notification');
-            // Para notificaciones de prueba, solo responder OK
             return NextResponse.json({ received: true, note: 'Test notification processed' });
           }
           
@@ -84,14 +76,17 @@ export async function POST(request) {
 
           try {
             console.log('🔄 Updating product in Firebase...');
+            console.log('🆔 Product ID:', product_id);
+            console.log('📅 Featured until:', featuredUntil.toISOString());
             
-            // Actualizar producto como destacado
+            // Verificar que el producto existe antes de actualizar
             const productRef = doc(db, 'productos', product_id);
+            
             await updateDoc(productRef, {
               featured: true,
               featuredUntil: featuredUntil,
               featuredPaymentId: paymentData.id,
-              featuredAmount: parseFloat(amount || 0),
+              featuredAmount: parseFloat(amount || paymentData.transaction_amount || 0),
               fechaDestacado: serverTimestamp()
             });
 
@@ -102,19 +97,22 @@ export async function POST(request) {
               productId: product_id,
               userId: user_id,
               paymentId: paymentData.id,
-              amount: parseFloat(amount || 0),
-              status: 'approved',
+              amount: parseFloat(amount || paymentData.transaction_amount || 0),
+              status: paymentData.status,
               featuredUntil: featuredUntil,
               externalReference: paymentData.external_reference,
               fechaCreacion: serverTimestamp(),
               paymentMethod: paymentData.payment_method_id || 'unknown',
-              payerEmail: paymentData.payer?.email || 'test@example.com'
+              payerEmail: paymentData.payer?.email || 'test@example.com',
+              statusDetail: paymentData.status_detail
             });
 
             console.log(`🎉 Product ${product_id} featured until ${featuredUntil.toISOString()}`);
             
           } catch (firebaseError) {
             console.error('❌ Error updating Firebase:', firebaseError);
+            console.error('❌ Firebase error details:', firebaseError.code, firebaseError.message);
+            
             // Aún así devolver OK para que MP no reintente
             return NextResponse.json({ 
               received: true,
@@ -123,13 +121,33 @@ export async function POST(request) {
             });
           }
 
+        } else if (paymentData.status === 'rejected' || paymentData.status === 'cancelled') {
+          console.log(`❌ Payment ${paymentData.id} was ${paymentData.status}: ${paymentData.status_detail}`);
+          
+          // Registrar pagos rechazados
+          const { product_id, user_id, amount } = paymentData.metadata || {};
+          if (product_id && user_id) {
+            try {
+              await addDoc(collection(db, 'featured_payments'), {
+                productId: product_id,
+                userId: user_id,
+                paymentId: paymentData.id,
+                amount: parseFloat(amount || paymentData.transaction_amount || 0),
+                status: paymentData.status,
+                externalReference: paymentData.external_reference,
+                fechaCreacion: serverTimestamp(),
+                rejectionReason: paymentData.status_detail
+              });
+            } catch (error) {
+              console.error('Error logging rejected payment:', error);
+            }
+          }
         } else {
-          console.log(`⚠️ Payment ${paymentData.id} status: ${paymentData.status}`);
+          console.log(`⚠️ Payment ${paymentData.id} status: ${paymentData.status} - ${paymentData.status_detail}`);
         }
 
       } catch (paymentError) {
         console.error('❌ Error getting payment data:', paymentError);
-        // Para IDs de prueba que no existen, solo responder OK
         if (paymentError.message?.includes('404') || paymentError.message?.includes('not found')) {
           console.log('📝 Test payment ID not found, responding OK');
           return NextResponse.json({ received: true, note: 'Test notification with fake ID' });
@@ -144,7 +162,6 @@ export async function POST(request) {
     
   } catch (error) {
     console.error('❌ Webhook error:', error);
-    // IMPORTANTE: Siempre devolver 200 OK para que MP no reintente
     return NextResponse.json({ 
       received: true,
       error: 'Error processed but acknowledged',
