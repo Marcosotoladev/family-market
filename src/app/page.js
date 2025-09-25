@@ -17,15 +17,16 @@ export default function HomePage() {
         <HeroCarousel />
       </section>
 
+            {/* Productos Destacados */}
+      <section className="pb-2 lg:pb-4">
+        <FeaturedProducts />
+      </section>
+
       {/* Sección de What's New */}
       <section className="pb-2 lg:pb-4">
         <WhatsNew />
       </section>
 
-      {/* Productos Destacados */}
-      <section className="pb-2 lg:pb-4">
-        <FeaturedProducts />
-      </section>
 
       {/* Servicios Destacados */}
       <section className="pb-2 lg:pb-4">
