@@ -114,61 +114,73 @@ export default function FeaturedProducts() {
   }, []);
 
   const loadFeaturedProducts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const now = new Date();
-      const productsRef = collection(db, 'productos');
-      const q = query(
-        productsRef,
-        where('featured', '==', true),
-        where('featuredUntil', '>', now),
-        where('estado', '==', 'disponible'),
-        orderBy('featuredUntil', 'desc'),
-        orderBy('fechaDestacado', 'desc'),
-limit(20)
-      );
+  try {
+    setLoading(true);
+    setError(null);
 
-      const querySnapshot = await getDocs(q);
-      const products = [];
+    const now = new Date();
+    const productsRef = collection(db, 'productos');
+    const q = query(
+      productsRef,
+      where('featured', '==', true),
+      where('featuredUntil', '>', now),
+      where('estado', '==', 'disponible'),
+      orderBy('featuredUntil', 'desc'),
+      orderBy('fechaDestacado', 'desc'),
+      limit(20)
+    );
 
-      for (const docSnapshot of querySnapshot.docs) {
-        const productData = { id: docSnapshot.id, ...docSnapshot.data() };
-        
-        try {
-          const userDoc = await getDoc(doc(db, 'users', productData.usuarioId));
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            productData.tiendaInfo = {
-              nombre: userData.businessName || userData.familyName || `${userData.firstName} ${userData.lastName}`.trim(),
-              slug: userData.storeSlug,
-              email: userData.email,
-              phone: userData.phone,
-            };
-          }
-        } catch (error) {
-          console.error('Error loading store data for product:', productData.id, error);
-          productData.tiendaInfo = {
-            nombre: 'Tienda Family Market',
-            slug: '',
-            email: '',
-            phone: ''
-          };
-        }
-        
-        products.push(productData);
-      }
+    const querySnapshot = await getDocs(q);
+    const products = [];
+    const userIds = new Set();
 
-      setFeaturedProducts(products);
-    } catch (error) {
-      console.error('Error loading featured products:', error);
-      setError('Error cargando productos destacados');
-      setFeaturedProducts([]);
-    } finally {
-      setLoading(false);
+    // Procesar productos y recolectar userIds únicos
+    for (const docSnapshot of querySnapshot.docs) {
+      const productData = { id: docSnapshot.id, ...docSnapshot.data() };
+      products.push(productData);
+      userIds.add(productData.usuarioId);
     }
-  };
+
+    // Hacer consultas de usuarios EN PARALELO
+    const userPromises = Array.from(userIds).map(userId => 
+      getDoc(doc(db, 'users', userId))
+    );
+    const userDocs = await Promise.all(userPromises);
+
+    // Crear mapa de usuarios
+    const userMap = {};
+    userDocs.forEach((userDoc, index) => {
+      const userId = Array.from(userIds)[index];
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        userMap[userId] = {
+          nombre: userData.businessName || userData.familyName || `${userData.firstName} ${userData.lastName}`.trim(),
+          slug: userData.storeSlug,
+          email: userData.email,
+          phone: userData.phone,
+        };
+      }
+    });
+
+    // Asignar datos de tienda a productos
+    products.forEach(product => {
+      product.tiendaInfo = userMap[product.usuarioId] || {
+        nombre: 'Tienda Family Market',
+        slug: '',
+        email: '',
+        phone: ''
+      };
+    });
+
+    setFeaturedProducts(products);
+  } catch (error) {
+    console.error('Error loading featured products:', error);
+    setError('Error cargando productos destacados');
+    setFeaturedProducts([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Función para manejar click en producto
   const handleProductClick = (product) => {
