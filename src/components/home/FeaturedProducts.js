@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, doc, getDoc, limit} from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { Star, Package, Zap, Shield } from 'lucide-react';
 import { formatearPrecio } from '@/types/product';
