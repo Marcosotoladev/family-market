@@ -126,7 +126,8 @@ export default function FeaturedProducts() {
         where('featuredUntil', '>', now),
         where('estado', '==', 'disponible'),
         orderBy('featuredUntil', 'desc'),
-        orderBy('fechaDestacado', 'desc')
+        orderBy('fechaDestacado', 'desc'),
+limit(20)
       );
 
       const querySnapshot = await getDocs(q);
