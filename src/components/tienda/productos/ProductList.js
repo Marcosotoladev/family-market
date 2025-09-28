@@ -2,13 +2,13 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  Search, 
-  Filter, 
-  Plus, 
-  Edit3, 
-  Trash2, 
-  Eye, 
+import {
+  Search,
+  Filter,
+  Plus,
+  Edit3,
+  Trash2,
+  Eye,
   Package,
   TrendingUp,
   AlertTriangle,
@@ -19,47 +19,47 @@ import {
   Grid3X3,
   List
 } from 'lucide-react';
-import { 
-  ESTADOS_PRODUCTO, 
-  TIPOS_PRECIO, 
-  formatearPrecio, 
-  obtenerEstadoBadge 
+import {
+  ESTADOS_PRODUCTO,
+  TIPOS_PRECIO,
+  formatearPrecio,
+  obtenerEstadoBadge
 } from '@/types/product';
 import { CATEGORIAS_PRODUCTOS } from '@/types/categories';
 
-export default function ProductList({ 
-  products = [], 
-  onEdit, 
-  onDelete, 
+export default function ProductList({
+  products = [],
+  onEdit,
+  onDelete,
   onToggleStatus,
   onDuplicate,
   onView,
   onCreateNew,
-  onFeature, // NUEVO PROP
-  isLoading = false 
+  onFeature,
+  isLoading = false
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedStatus, setSelectedStatus] = useState('');
   const [sortBy, setSortBy] = useState('fechaCreacion');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [viewMode, setViewMode] = useState('grid');
+  const [viewMode, setViewMode] = useState('table'); // CAMBIADO: Vista por defecto es tabla (lista)
 
   // Filtrar y ordenar productos
   const filteredProducts = products
     .filter(product => {
       const matchesSearch = product.titulo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          product.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          product.descripcion?.toLowerCase().includes(searchTerm.toLowerCase());
-      
+        product.nombre?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.descripcion?.toLowerCase().includes(searchTerm.toLowerCase());
+
       const matchesCategory = !selectedCategory || product.categoria === selectedCategory;
       const matchesStatus = !selectedStatus || product.estado === selectedStatus;
-      
+
       return matchesSearch && matchesCategory && matchesStatus;
     })
     .sort((a, b) => {
       let aValue, bValue;
-      
+
       switch (sortBy) {
         case 'titulo':
           aValue = (a.titulo || a.nombre || '').toLowerCase();
@@ -81,7 +81,7 @@ export default function ProductList({
           aValue = new Date(a.fechaCreacion || 0);
           bValue = new Date(b.fechaCreacion || 0);
       }
-      
+
       if (sortOrder === 'asc') {
         return aValue > bValue ? 1 : -1;
       } else {
@@ -155,8 +155,8 @@ export default function ProductList({
                 {products.filter(p => {
                   if (!p.featured || !p.featuredUntil) return false;
                   const now = new Date();
-                  const featuredUntil = p.featuredUntil.toDate ? 
-                    p.featuredUntil.toDate() : 
+                  const featuredUntil = p.featuredUntil.toDate ?
+                    p.featuredUntil.toDate() :
                     new Date(p.featuredUntil);
                   return now < featuredUntil;
                 }).length}
@@ -167,11 +167,24 @@ export default function ProductList({
         </div>
       </div>
 
-      {/* Controles */}
+      {/* Controles MEJORADOS */}
       <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700">
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
-          <div className="flex flex-col sm:flex-row gap-4 flex-1">
-            {/* Búsqueda */}
+        {/* NUEVO: Botón + prominente en móvil */}
+        <div className="flex justify-between items-start mb-4 sm:hidden">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white">Productos</h3>
+          <button
+            onClick={onCreateNew}
+            className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Nuevo Producto
+          </button>
+        </div>
+
+        {/* Controles principales */}
+        <div className="space-y-4">
+          {/* Primera fila: Búsqueda */}
+          <div className="w-full">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -182,12 +195,14 @@ export default function ProductList({
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               />
             </div>
+          </div>
 
-            {/* Filtros */}
+          {/* Segunda fila: Filtros en grid responsivo */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
             >
               <option value="">Todas las categorías</option>
               {categories.map(cat => (
@@ -198,7 +213,7 @@ export default function ProductList({
             <select
               value={selectedStatus}
               onChange={(e) => setSelectedStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
             >
               <option value="">Todos los estados</option>
               <option value={ESTADOS_PRODUCTO.DISPONIBLE}>Disponible</option>
@@ -206,59 +221,66 @@ export default function ProductList({
               <option value={ESTADOS_PRODUCTO.PAUSADO}>Pausado</option>
               <option value={ESTADOS_PRODUCTO.INACTIVO}>Inactivo</option>
             </select>
+
+            {/* Ordenar combinado en un solo select para móvil */}
+            <select
+              value={`${sortBy}_${sortOrder}`}
+              onChange={(e) => {
+                const [field, order] = e.target.value.split('_');
+                setSortBy(field);
+                setSortOrder(order);
+              }}
+              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+            >
+              <option value="fechaCreacion_desc">Más recientes</option>
+              <option value="fechaCreacion_asc">Más antiguos</option>
+              <option value="titulo_asc">A-Z (Nombre)</option>
+              <option value="titulo_desc">Z-A (Nombre)</option>
+              <option value="precio_asc">Precio menor</option>
+              <option value="precio_desc">Precio mayor</option>
+              <option value="ventas_desc">Más ventas</option>
+              <option value="ventas_asc">Menos ventas</option>
+              <option value="stock_desc">Más stock</option>
+              <option value="stock_asc">Menos stock</option>
+            </select>
           </div>
 
-          <div className="flex items-center gap-4">
-            {/* Ordenar */}
-            <div className="flex items-center gap-2">
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              >
-                <option value="fechaCreacion">Fecha</option>
-                <option value="titulo">Nombre</option>
-                <option value="precio">Precio</option>
-                <option value="ventas">Ventas</option>
-              </select>
-              <button
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors"
-              >
-                {sortOrder === 'asc' ? '↑' : '↓'}
-              </button>
-            </div>
-
-            {/* Vista */}
+          {/* Tercera fila: Vista y botón para desktop */}
+          <div className="flex justify-between items-center">
+            {/* Toggle de vista */}
             <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
               <button
-                onClick={() => setViewMode('grid')}
-                className={`p-2 ${viewMode === 'grid' 
-                  ? 'bg-orange-600 text-white' 
+                onClick={() => setViewMode('table')}
+                className={`px-3 py-2 text-sm ${viewMode === 'table'
+                  ? 'bg-orange-600 text-white'
                   : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
-                } transition-colors`}
+                  } transition-colors flex items-center`}
               >
-                <Grid3X3 className="w-4 h-4" />
+                <List className="w-4 h-4 mr-2" />
+                Lista
               </button>
               <button
-                onClick={() => setViewMode('table')}
-                className={`p-2 ${viewMode === 'table' 
-                  ? 'bg-orange-600 text-white' 
+                onClick={() => setViewMode('grid')}
+                className={`px-3 py-2 text-sm ${viewMode === 'grid'
+                  ? 'bg-orange-600 text-white'
                   : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
-                } transition-colors`}
+                  } transition-colors flex items-center`}
               >
-                <List className="w-4 h-4" />
+                <Grid3X3 className="w-4 h-4 mr-2" />
+                Tarjetas
               </button>
             </div>
 
-            {/* Nuevo producto */}
-            <button
-              onClick={onCreateNew}
-              className="inline-flex items-center px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-            >
-              <Plus className="w-4 h-4 lg:mr-2" />
-              <span className="hidden lg:inline">Nuevo</span>
-            </button>
+            {/* Botón + para desktop */}
+            <div className="hidden sm:block">
+              <button
+                onClick={onCreateNew}
+                className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Nuevo Producto
+              </button>
+            </div>
           </div>
         </div>
       </div>
@@ -271,8 +293,8 @@ export default function ProductList({
             No se encontraron productos
           </h3>
           <p className="text-gray-500 dark:text-gray-400 mb-4">
-            {searchTerm || selectedCategory || selectedStatus 
-              ? 'Intenta ajustar los filtros de búsqueda' 
+            {searchTerm || selectedCategory || selectedStatus
+              ? 'Intenta ajustar los filtros de búsqueda'
               : 'Comienza agregando tu primer producto'
             }
           </p>
@@ -286,19 +308,18 @@ export default function ProductList({
         </div>
       ) : viewMode === 'grid' ? (
         // Vista en tarjetas
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4 lg:gap-6">
-          {filteredProducts.map((product) => (
-            <ProductCard 
-              key={product.id} 
-              product={product} 
-              onEdit={onEdit} 
-              onDelete={onDelete} 
-              onToggleStatus={onToggleStatus} 
-              onDuplicate={onDuplicate} 
-              onView={onView}
-              onFeature={onFeature}
-            />
-          ))}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">          {filteredProducts.map((product) => (
+          <ProductCard
+            key={product.id}
+            product={product}
+            onEdit={onEdit}
+            onDelete={onDelete}
+            onToggleStatus={onToggleStatus}
+            onDuplicate={onDuplicate}
+            onView={onView}
+            onFeature={onFeature}
+          />
+        ))}
         </div>
       ) : (
         // Vista de tabla
@@ -326,13 +347,13 @@ export default function ProductList({
               </thead>
               <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
                 {filteredProducts.map((product) => (
-                  <ProductTableRow 
-                    key={product.id} 
-                    product={product} 
-                    onEdit={onEdit} 
-                    onDelete={onDelete} 
-                    onToggleStatus={onToggleStatus} 
-                    onDuplicate={onDuplicate} 
+                  <ProductTableRow
+                    key={product.id}
+                    product={product}
+                    onEdit={onEdit}
+                    onDelete={onDelete}
+                    onToggleStatus={onToggleStatus}
+                    onDuplicate={onDuplicate}
                     onView={onView}
                     onFeature={onFeature}
                   />
@@ -351,30 +372,29 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, o
   const estadoBadge = obtenerEstadoBadge(product.estado);
   const categoryName = CATEGORIAS_PRODUCTOS[product.categoria]?.nombre || 'Sin categoría';
 
-  // Función para verificar si está destacado
   const isFeatureActive = () => {
     if (!product.featured) return false;
     if (!product.featuredUntil) return false;
-    
+
     const now = new Date();
-    const featuredUntil = product.featuredUntil.toDate ? 
-      product.featuredUntil.toDate() : 
+    const featuredUntil = product.featuredUntil.toDate ?
+      product.featuredUntil.toDate() :
       new Date(product.featuredUntil);
-    
+
     return now < featuredUntil;
   };
 
   const getRemainingDays = () => {
     if (!isFeatureActive()) return 0;
-    
+
     const now = new Date();
-    const featuredUntil = product.featuredUntil.toDate ? 
-      product.featuredUntil.toDate() : 
+    const featuredUntil = product.featuredUntil.toDate ?
+      product.featuredUntil.toDate() :
       new Date(product.featuredUntil);
-    
+
     const diffTime = featuredUntil - now;
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return Math.max(0, diffDays);
   };
 
@@ -393,15 +413,14 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, o
             <Package className="w-12 h-12 text-gray-400" />
           </div>
         )}
-        
+
         {/* Badge de estado */}
         <div className="absolute top-2 left-2">
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-            estadoBadge.color === 'green' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-            estadoBadge.color === 'red' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-            estadoBadge.color === 'yellow' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-            'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-          }`}>
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${estadoBadge.color === 'green' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+              estadoBadge.color === 'red' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+                estadoBadge.color === 'yellow' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                  'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+            }`}>
             {estadoBadge.texto}
           </span>
         </div>
@@ -425,11 +444,11 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, o
         <p className="text-sm text-gray-500 dark:text-gray-400 mb-2">
           {categoryName}
         </p>
-        
+
         <div className="flex items-center justify-between mb-4">
           <span className="font-bold text-orange-600 dark:text-orange-400">
-            {product.tipoPrecio === TIPOS_PRECIO.FIJO ? 
-              formatearPrecio(product.precio) : 
+            {product.tipoPrecio === TIPOS_PRECIO.FIJO ?
+              formatearPrecio(product.precio) :
               product.tipoPrecio?.replace('_', ' ') || 'Precio a consultar'
             }
           </span>
@@ -483,27 +502,30 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, o
               title="Duplicar"
             >
               <Copy className="w-4 h-4" />
+              <span className="hidden lg:inline text-xs">Duplicar</span>
             </button>
-            
-            {/* Botón de destacar */}
+
             <button
               onClick={() => onFeature && onFeature(product)}
-              className={`px-3 py-2 text-sm rounded transition-colors flex items-center justify-center gap-1 ${
-                isFeatureActive()
+              className={`px-3 py-2 text-sm rounded transition-colors flex items-center justify-center gap-1 ${isFeatureActive()
                   ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
                   : 'border border-yellow-500 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
-              }`}
+                }`}
               title={isFeatureActive() ? 'Ya destacado' : 'Destacar producto'}
             >
               <Star className="w-4 h-4" />
+              <span className="hidden lg:inline text-xs">
+                {isFeatureActive() ? 'Destacado' : 'Destacar'}
+              </span>
             </button>
-            
+
             <button
               onClick={() => onDelete(product.id)}
               className="px-3 py-2 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors flex items-center justify-center gap-1"
               title="Eliminar"
             >
               <Trash2 className="w-4 h-4" />
+              <span className="hidden lg:inline text-xs">Eliminar</span>
             </button>
           </div>
         </div>
@@ -520,12 +542,12 @@ function ProductTableRow({ product, onEdit, onDelete, onToggleStatus, onDuplicat
   const isFeatureActive = () => {
     if (!product.featured) return false;
     if (!product.featuredUntil) return false;
-    
+
     const now = new Date();
-    const featuredUntil = product.featuredUntil.toDate ? 
-      product.featuredUntil.toDate() : 
+    const featuredUntil = product.featuredUntil.toDate ?
+      product.featuredUntil.toDate() :
       new Date(product.featuredUntil);
-    
+
     return now < featuredUntil;
   };
 
@@ -568,19 +590,18 @@ function ProductTableRow({ product, onEdit, onDelete, onToggleStatus, onDuplicat
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm font-medium text-gray-900 dark:text-white">
-          {product.tipoPrecio === TIPOS_PRECIO.FIJO ? 
-            formatearPrecio(product.precio) : 
+          {product.tipoPrecio === TIPOS_PRECIO.FIJO ?
+            formatearPrecio(product.precio) :
             product.tipoPrecio?.replace('_', ' ') || 'Precio a consultar'
           }
         </div>
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
-        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-          estadoBadge.color === 'green' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-          estadoBadge.color === 'red' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-          estadoBadge.color === 'yellow' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-          'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-        }`}>
+        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${estadoBadge.color === 'green' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
+            estadoBadge.color === 'red' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+              estadoBadge.color === 'yellow' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+          }`}>
           {estadoBadge.texto}
         </span>
       </td>
@@ -612,11 +633,10 @@ function ProductTableRow({ product, onEdit, onDelete, onToggleStatus, onDuplicat
           </button>
           <button
             onClick={() => onFeature && onFeature(product)}
-            className={`${
-              isFeatureActive()
+            className={`${isFeatureActive()
                 ? 'text-yellow-500'
                 : 'text-yellow-600 dark:text-yellow-400'
-            } hover:text-yellow-700 dark:hover:text-yellow-300`}
+              } hover:text-yellow-700 dark:hover:text-yellow-300`}
             title={isFeatureActive() ? 'Ya destacado' : 'Destacar producto'}
           >
             <Star className={`w-4 h-4 ${isFeatureActive() ? 'fill-current' : ''}`} />

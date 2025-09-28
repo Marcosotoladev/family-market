@@ -25,6 +25,11 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   └── api
 |   |   |   └── firebase-messaging-sw
 |   |   |   |   └── route.js
+|   |   |   └── mercadopago
+|   |   |   |   └── create-preference
+|   |   |   |   |   └── route.js
+|   |   |   |   └── webhook
+|   |   |   |   |   └── route.js
 |   |   |   └── send-notification
 |   |   |   |   └── route.js
 |   |   └── dashboard
@@ -48,6 +53,9 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   └── login
 |   |   |   └── page.js
 |   |   └── page.js
+|   |   └── payment
+|   |   |   └── success
+|   |   |   |   └── page.js
 |   |   └── register
 |   |   |   └── page.js
 |   |   └── terms
@@ -120,6 +128,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── StoreSidebar.js
 |   |   └── tienda
 |   |   |   └── productos
+|   |   |   |   └── FeaturedProductButton.js
 |   |   |   |   └── ProductCard.js
 |   |   |   |   └── ProductForm.js
 |   |   |   |   └── ProductList.js

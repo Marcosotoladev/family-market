@@ -4,87 +4,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
-import { Star, Package, Zap, Shield } from 'lucide-react';
-import { formatearPrecio } from '@/types/product';
-
-// Componente simple para producto destacado con estilo carousel
-function FeaturedProductCard({ product, storeData, onClick }) {
-  const handleClick = () => {
-    if (onClick) {
-      onClick(product);
-    }
-  };
-
-  return (
-    <div 
-      className="flex-shrink-0 bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden transition-all duration-200 hover:shadow-md cursor-pointer"
-      onClick={handleClick}
-    >
-      <div className="relative aspect-square overflow-hidden">
-        {product.imagenes && product.imagenes.length > 0 ? (
-          <img
-            src={product.imagenes[0]}
-            alt={product.titulo || product.nombre}
-            className="w-full h-full object-cover"
-            draggable={false}
-          />
-        ) : (
-          <div className="w-full h-full bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
-            <Package className="w-12 h-12 text-gray-400" />
-          </div>
-        )}
-        
-        {/* Badge de tipo */}
-        <div className="absolute top-2 left-2 bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-2 py-1 rounded text-xs flex items-center gap-1">
-          <Package className="w-3 h-3" />
-          <span className="hidden sm:inline">Producto</span>
-        </div>
-
-        {/* Badge DESTACADO dentro de la imagen */}
-        <div className="absolute top-2 right-2 z-10">
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg flex items-center space-x-1 animate-bounce">
-            <Star className="w-3 h-3 fill-current" />
-            <span>DESTACADO</span>
-          </div>
-        </div>
-
-        {/* Badge de verificación */}
-        {storeData && (
-          <div className="absolute bottom-2 right-2 bg-green-500 text-white p-1 rounded-full">
-            <Shield className="w-3 h-3" />
-          </div>
-        )}
-      </div>
-      
-      <div className="p-3">
-        <h3 className="font-semibold text-sm text-gray-900 dark:text-white line-clamp-2 mb-2">
-          {product.titulo || product.nombre}
-        </h3>
-        
-        <div className="flex items-center justify-between mt-2">
-          <span className="text-xs text-gray-600 dark:text-gray-400">
-            {storeData?.nombre || 'Tienda'}
-          </span>
-          {storeData?.phone && (
-            <a
-              href={`https://wa.me/${storeData.phone.replace(/\D/g, '')}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-green-600 hover:text-green-700 font-medium"
-              onClick={(e) => e.stopPropagation()}
-            >
-              WhatsApp
-            </a>
-          )}
-        </div>
-
-        <div className="mt-2 font-bold text-orange-600 dark:text-orange-400">
-          {formatearPrecio(product.precio)}
-        </div>
-      </div>
-    </div>
-  );
-}
+import { Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import ProductCard from '@/components/tienda/productos/ProductCard'; // Importar ProductCard
 
 export default function FeaturedProducts() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -145,12 +66,31 @@ export default function FeaturedProducts() {
               email: userData.email,
               phone: userData.phone,
             };
+            
+            // Datos adicionales para el ProductCard
+            productData.storeData = {
+              businessName: userData.businessName,
+              familyName: userData.familyName,
+              firstName: userData.firstName,
+              lastName: userData.lastName,
+              storeSlug: userData.storeSlug,
+              email: userData.email,
+              phone: userData.phone,
+              storeLogo: userData.storeLogo,
+              profileImage: userData.profileImage
+            };
           }
         } catch (error) {
           console.error('Error loading store data for product:', productData.id, error);
           productData.tiendaInfo = {
             nombre: 'Tienda Family Market',
             slug: '',
+            email: '',
+            phone: ''
+          };
+          productData.storeData = {
+            businessName: 'Tienda Family Market',
+            storeSlug: '',
             email: '',
             phone: ''
           };
@@ -171,17 +111,30 @@ export default function FeaturedProducts() {
 
   // Función para manejar click en producto
   const handleProductClick = (product) => {
-    // Por ahora solo console.log, luego puedes agregar navegación
-    console.log('Ver producto:', product.id, product.titulo || product.nombre);
-    
-    // Aquí puedes agregar navegación, por ejemplo:
-    // router.push(`/productos/${product.id}`);
-    // o window.open para abrir en nueva pestaña
-    // window.open(`/productos/${product.id}`, '_blank');
+    // Navegar a la página del producto
+    const storeSlug = product.tiendaInfo?.slug || product.storeData?.storeSlug;
+    if (storeSlug && product.id) {
+      const url = `https://familymarket.vercel.app/tienda/${storeSlug}/producto/${product.id}`;
+      window.open(url, '_blank');
+    } else {
+      console.error('Faltan datos para la navegación:', { storeSlug, productId: product.id });
+    }
   };
 
-  const isMobile = windowWidth < 1024;
-  const itemsPerView = isMobile ? 2 : 5;
+  // Ajustar items por vista
+  const isMobile = windowWidth < 768;
+  const isTablet = windowWidth >= 768 && windowWidth < 1024;
+  const isDesktop = windowWidth >= 1024;
+  
+  let itemsPerView;
+  if (isMobile) {
+    itemsPerView = 2; // 2 productos en móvil
+  } else if (isTablet) {
+    itemsPerView = 3; // 3 productos en tablet
+  } else {
+    itemsPerView = 5; // 5 productos en desktop
+  }
+
   const maxIndex = Math.max(0, featuredProducts.length - itemsPerView);
 
   // Función para animar suavemente hacia un índice específico
@@ -192,6 +145,19 @@ export default function FeaturedProducts() {
     setDragOffset(0);
     setTimeout(() => setIsTransitioning(false), 300);
   }, [maxIndex]);
+
+  // Navegación con botones
+  const goToPrevious = () => {
+    if (currentIndex > 0) {
+      animateToIndex(currentIndex - 1);
+    }
+  };
+
+  const goToNext = () => {
+    if (currentIndex < maxIndex) {
+      animateToIndex(currentIndex + 1);
+    }
+  };
 
   // Manejo del arrastre
   const handleDragStart = useCallback((clientX) => {
@@ -267,7 +233,7 @@ export default function FeaturedProducts() {
 
   if (loading) {
     return (
-      <section className="pb-2 lg:pb-4">
+      <section className="py-8 lg:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
@@ -284,8 +250,8 @@ export default function FeaturedProducts() {
 
   if (!isClient) {
     return (
-      <section className="pb-2 lg:pb-4">
-        <div className="text-center">Cargando novedades...</div>
+      <section className="py-8 lg:py-12">
+        <div className="text-center">Cargando productos destacados...</div>
       </section>
     );
   }
@@ -294,24 +260,40 @@ export default function FeaturedProducts() {
   const translateX = -(currentOffset * (100 / itemsPerView));
 
   return (
-    <section className="pb-2 lg:pb-4">
+    <section className="py-0">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
+        {/* Header simplificado */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg relative">
+          <div className="p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg">
             <Star className="w-6 h-6 text-white fill-current" />
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-red-400 rounded-full animate-pulse"></div>
           </div>
           <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
             Productos Destacados
           </h2>
-          <div className="px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300 text-xs font-medium rounded-full">
-            Premium
-          </div>
         </div>
 
         {/* Carrusel */}
         <div className="relative">
+          {/* Botones de navegación */}
+          {!isMobile && maxIndex > 0 && (
+            <>
+              <button
+                onClick={goToPrevious}
+                disabled={currentIndex === 0 || isDragging || isTransitioning}
+                className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+              >
+                <ChevronLeft className="w-6 h-6" />
+              </button>
+              <button
+                onClick={goToNext}
+                disabled={currentIndex === maxIndex || isDragging || isTransitioning}
+                className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+              >
+                <ChevronRight className="w-6 h-6" />
+              </button>
+            </>
+          )}
+
           <div
             ref={scrollContainerRef}
             className={`overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
@@ -325,7 +307,7 @@ export default function FeaturedProducts() {
             style={{ touchAction: 'pan-y' }}
           >
             <div
-              className="flex gap-4 will-change-transform"
+              className="flex gap-6 will-change-transform"
               style={{
                 transform: `translateX(${translateX}%)`,
                 transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
@@ -336,29 +318,33 @@ export default function FeaturedProducts() {
                   key={product.id}
                   className={`transition-all duration-200 ${isDragging ? 'scale-[0.98]' : ''}`}
                   style={{
-                    width: `calc(${100 / itemsPerView}% - ${16 * (itemsPerView - 1) / itemsPerView}px)`,
+                    width: `calc(${100 / itemsPerView}% - ${24 * (itemsPerView - 1) / itemsPerView}px)`,
+                    minWidth: isMobile ? '180px' : isTablet ? '280px' : '220px', // Tamaños ajustados para el nuevo grid
                   }}
                 >
-                  <FeaturedProductCard
+                  <ProductCard
                     product={product}
-                    storeData={product.tiendaInfo}
-                    onClick={handleProductClick}
+                    storeData={product.storeData}
+                    variant="featured-compact" // Usar la variante compacta optimizada para grid
+                    showContactInfo={true}
+                    showStoreInfo={true}
+                    onClick={() => handleProductClick(product)}
                   />
                 </div>
               ))}
             </div>
           </div>
           
-          {/* Indicadores de posición (solo en mobile) */}
-          {isMobile && maxIndex > 0 && (
-            <div className="flex justify-center gap-2 mt-4">
+          {/* Indicadores de posición */}
+          {maxIndex > 0 && (
+            <div className="flex justify-center gap-2 mt-6">
               {Array.from({ length: maxIndex + 1 }, (_, i) => (
                 <button
                   key={i}
                   onClick={() => animateToIndex(i)}
-                  className={`w-2 h-2 rounded-full transition-all duration-200 ${Math.round(currentIndex) === i
-                      ? 'bg-yellow-500 scale-125'
-                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-yellow-300'
+                  className={`w-3 h-3 rounded-full transition-all duration-200 ${Math.round(currentIndex) === i
+                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500 scale-125 shadow-md'
+                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-yellow-300 dark:hover:bg-yellow-600'
                     }`}
                   disabled={isDragging || isTransitioning}
                 />

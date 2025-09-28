@@ -25,7 +25,10 @@ import {
   User,
   Monitor,
   Home,
-  Globe
+  Globe,
+  Crown,
+  Zap,
+  TrendingUp
 } from 'lucide-react';
 import { 
   formatearPrecioServicio, 
@@ -55,7 +58,7 @@ import { db } from '@/lib/firebase/config';
 export default function ServiceCard({ 
   service, 
   storeData,
-  variant = 'grid', // 'grid' | 'list' | 'featured'
+  variant = 'grid', // 'grid' | 'list' | 'featured' | 'featured-compact'
   showContactInfo = true,
   showStoreInfo = true,
   onClick = null
@@ -93,8 +96,10 @@ export default function ServiceCard({
     }
   };
 
+  // ... (resto de funciones helper como loadComments, nextImage, prevImage, etc. - igual al código original)
+
   const loadComments = async () => {
-    if (comments.length > 0) return; // Ya están cargados
+    if (comments.length > 0) return;
     
     try {
       setLoadingComments(true);
@@ -168,7 +173,6 @@ export default function ServiceCard({
       const serviceRef = doc(db, 'servicios', service.id);
 
       if (isLiked) {
-        // Quitar de favoritos
         await deleteDoc(favoritoRef);
         await updateDoc(serviceRef, {
           'interacciones.favoritos': increment(-1)
@@ -176,7 +180,6 @@ export default function ServiceCard({
         setIsLiked(false);
         setLikesCount(prev => Math.max(0, prev - 1));
       } else {
-        // Agregar a favoritos
         await setDoc(favoritoRef, {
           usuarioId: user.uid,
           servicioId: service.id,
@@ -230,7 +233,6 @@ export default function ServiceCard({
           url: serviceUrl,
         });
         
-        // Incrementar contador de compartidas
         const serviceRef = doc(db, 'servicios', service.id);
         await updateDoc(serviceRef, {
           'interacciones.compartidas': increment(1)
@@ -239,7 +241,6 @@ export default function ServiceCard({
         console.log('Error sharing:', err);
       }
     } else {
-      // Fallback para escritorio
       navigator.clipboard.writeText(serviceUrl);
       alert('Enlace copiado al portapapeles');
     }
@@ -301,7 +302,438 @@ export default function ServiceCard({
     return stars;
   };
 
-  // Variante Grid (tarjeta principal)
+  // Variante FEATURED COMPACT - Optimizada para grid de 5 columnas
+  if (variant === 'featured-compact') {
+    return (
+      <div 
+        className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-blue-200 dark:border-blue-700 ${
+          onClick ? 'cursor-pointer hover:scale-[1.02]' : ''
+        }`}
+        onClick={onClick}
+      >
+        {/* Badge compacto */}
+        <div className="absolute top-0 left-0 right-0 z-20">
+          <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2 py-1 text-center">
+            <div className="flex items-center justify-center space-x-1">
+              <Crown className="w-3 h-3" />
+              <span className="text-xs font-bold">DESTACADO</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Imagen compacta */}
+        <div className="relative h-40 overflow-hidden mt-6">
+          {images.length > 0 ? (
+            <>
+              <img
+                src={images[currentImageIndex] || images[0]}
+                alt={service.titulo}
+                className="w-full h-full object-cover"
+              />
+              {hasMultipleImages && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                    className="absolute left-1 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-1 rounded-full hover:bg-opacity-70"
+                  >
+                    <ChevronLeft className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                    className="absolute right-1 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-1 rounded-full hover:bg-opacity-70"
+                  >
+                    <ChevronRight className="w-3 h-3" />
+                  </button>
+                </>
+              )}
+            </>
+          ) : (
+            <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+              <Briefcase className="w-8 h-8 text-gray-400" />
+            </div>
+          )}
+
+          {/* Botones de acción compactos */}
+          <div className="absolute top-2 right-2 flex flex-col space-y-1">
+            <button
+              onClick={handleLike}
+              disabled={loading}
+              className={`p-1.5 rounded-full backdrop-blur-sm transition-all ${
+                isLiked 
+                  ? 'bg-red-500 text-white' 
+                  : 'bg-white bg-opacity-90 text-gray-700 hover:bg-opacity-100'
+              }`}
+            >
+              <Heart className="w-3 h-3" fill={isLiked ? 'currentColor' : 'none'} />
+            </button>
+            <button
+              onClick={handleShare}
+              className="p-1.5 bg-white bg-opacity-90 text-gray-700 rounded-full hover:bg-opacity-100 transition-all backdrop-blur-sm"
+            >
+              <Share2 className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Badge de modalidad */}
+          <div className="absolute top-2 left-2">
+            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-500 text-white shadow-md">
+              {getModalidadIcon(service.modalidad)}
+              <span className="ml-1">{formatearModalidad(service.modalidad)}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Contenido compacto */}
+        <div className="p-3">
+          {/* Título compacto */}
+          <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight">
+            {service.titulo}
+          </h3>
+
+          {/* Precio compacto */}
+          <div className="mb-3">
+            <div className="flex items-baseline space-x-1">
+              <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
+                {formatearPrecioServicio(service.precio, service.tipoPrecio, service.moneda)}
+              </span>
+            </div>
+          </div>
+
+          {/* Información del servicio compacta */}
+          <div className="space-y-1 mb-3">
+            {service.duracion && (
+              <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                <Clock className="w-3 h-3 mr-1" />
+                <span>{formatearDuracion(service.duracion, service.duracionPersonalizada)}</span>
+              </div>
+            )}
+            
+            {service.gestionCupos === 'limitado' && service.cuposDisponibles !== null && (
+              <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                <Users className="w-3 h-3 mr-1" />
+                <span>{service.cuposDisponibles} cupos</span>
+              </div>
+            )}
+          </div>
+
+          {/* Valoraciones compactas */}
+          <div className="flex items-center justify-between mb-3 text-xs">
+            <div className="flex items-center space-x-1">
+              {[1, 2, 3, 4, 5].map((starNumber) => {
+                const rating = service.valoraciones?.promedio || 0;
+                const isFilled = starNumber <= Math.floor(rating);
+                
+                return (
+                  <Star
+                    key={starNumber}
+                    className={`w-3 h-3 ${
+                      isFilled 
+                        ? 'text-yellow-400 fill-current' 
+                        : 'text-gray-300 dark:text-gray-600'
+                    }`}
+                  />
+                );
+              })}
+              <span className="text-gray-500 ml-1">
+                ({service.valoraciones?.total || 0})
+              </span>
+            </div>
+          </div>
+
+          {/* Tienda compacta */}
+          {showStoreInfo && (
+            <div className="flex items-center justify-between mb-3 text-xs">
+              <div className="flex items-center space-x-1 min-w-0 flex-1">
+                <Store className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                <span className="text-gray-600 dark:text-gray-400 truncate">
+                  {service.tiendaInfo?.nombre || storeData?.businessName}
+                </span>
+              </div>
+              <button
+                onClick={handleViewStore}
+                className="text-blue-600 hover:text-blue-700 flex-shrink-0 ml-1"
+              >
+                <ExternalLink className="w-3 h-3" />
+              </button>
+            </div>
+          )}
+
+          {/* Botones de contacto compactos */}
+          {showContactInfo && (
+            <div className="space-y-2">
+              {/* WhatsApp compacto */}
+              {(service.contacto?.whatsapp || storeData?.phone) && (
+                <button
+                  onClick={handleWhatsAppContact}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center space-x-1"
+                >
+                  <MessageCircle className="w-3 h-3" />
+                  <span>WhatsApp</span>
+                </button>
+              )}
+              
+              {/* Botones secundarios en fila */}
+              <div className="grid grid-cols-2 gap-1">
+                {(service.contacto?.telefono || storeData?.phone) && (
+                  <button
+                    onClick={handlePhoneContact}
+                    className="px-2 py-1.5 border border-blue-300 text-blue-700 dark:text-blue-300 rounded text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-center space-x-1"
+                  >
+                    <Phone className="w-3 h-3" />
+                    <span>Llamar</span>
+                  </button>
+                )}
+                
+                {(service.contacto?.email || storeData?.email) && (
+                  <button
+                    onClick={handleEmailContact}
+                    className="px-2 py-1.5 border border-blue-300 text-blue-700 dark:text-blue-300 rounded text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-center space-x-1"
+                  >
+                    <Mail className="w-3 h-3" />
+                    <span>Email</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Variante FEATURED - Para casos donde necesites la versión grande
+  if (variant === 'featured') {
+    return (
+      <div 
+        className={`relative bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden border-2 border-blue-200 dark:border-blue-700 ${
+          onClick ? 'cursor-pointer hover:scale-[1.02] hover:-translate-y-1' : ''
+        }`}
+        onClick={onClick}
+      >
+        {/* Header destacado */}
+        <div className="absolute top-0 left-0 right-0 z-20">
+          <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 text-center relative overflow-hidden">
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
+            <div className="relative flex items-center justify-center space-x-2">
+              <Crown className="w-4 h-4 text-yellow-200" />
+              <span className="text-sm font-bold tracking-wider">SERVICIO DESTACADO</span>
+              <TrendingUp className="w-4 h-4 text-yellow-200" />
+            </div>
+          </div>
+        </div>
+
+        {/* Imagen grande */}
+        <div className="relative h-80 overflow-hidden mt-12">
+          {images.length > 0 ? (
+            <>
+              <img
+                src={images[currentImageIndex] || images[0]}
+                alt={service.titulo}
+                className="w-full h-full object-cover transition-transform duration-300"
+              />
+              {hasMultipleImages && (
+                <>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); prevImage(); }}
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button
+                    onClick={(e) => { e.stopPropagation(); nextImage(); }}
+                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                  
+                  {/* Indicadores */}
+                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
+                    {images.map((_, index) => (
+                      <button
+                        key={index}
+                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(index); }}
+                        className={`w-4 h-4 rounded-full transition-all ${
+                          index === currentImageIndex 
+                            ? 'bg-white' 
+                            : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
+              <Briefcase className="w-24 h-24 text-gray-400" />
+            </div>
+          )}
+
+          {/* Botones de acción grandes */}
+          <div className="absolute top-4 right-4 flex flex-col space-y-2">
+            <button
+              onClick={handleLike}
+              disabled={loading}
+              className={`p-3 rounded-full backdrop-blur-sm transition-all ${
+                isLiked 
+                  ? 'bg-red-500 text-white shadow-lg' 
+                  : 'bg-white bg-opacity-90 text-gray-700 hover:bg-opacity-100'
+              } disabled:opacity-50`}
+            >
+              <Heart className="w-5 h-5" fill={isLiked ? 'currentColor' : 'none'} />
+            </button>
+            <button
+              onClick={handleShare}
+              className="p-3 bg-white bg-opacity-90 text-gray-700 rounded-full hover:bg-opacity-100 transition-all backdrop-blur-sm"
+            >
+              <Share2 className="w-5 h-5" />
+            </button>
+          </div>
+
+          {/* Badge de modalidad grande */}
+          <div className="absolute top-4 left-4">
+            <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-500 text-white shadow-lg">
+              {getModalidadIcon(service.modalidad)}
+              <span className="ml-2">{formatearModalidad(service.modalidad)}</span>
+            </span>
+          </div>
+        </div>
+
+        {/* Contenido completo */}
+        <div className="p-6">
+          <h3 className="font-bold text-2xl text-gray-900 dark:text-white mb-3 line-clamp-2 leading-tight">
+            {service.titulo}
+          </h3>
+          
+          <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 leading-relaxed">
+            {service.descripcion}
+          </p>
+
+          {/* Precio grande */}
+          <div className="mb-6">
+            <div className="flex items-baseline space-x-2">
+              <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                {formatearPrecioServicio(service.precio, service.tipoPrecio, service.moneda)}
+              </span>
+            </div>
+          </div>
+
+          {/* Información del servicio completa */}
+          <div className="grid grid-cols-2 gap-4 mb-6">
+            {service.duracion && (
+              <div className="flex items-center text-gray-600 dark:text-gray-400">
+                <Clock className="w-5 h-5 mr-2" />
+                <span>{formatearDuracion(service.duracion, service.duracionPersonalizada)}</span>
+              </div>
+            )}
+            
+            {service.gestionCupos === 'limitado' && service.cuposDisponibles !== null && (
+              <div className="flex items-center text-gray-600 dark:text-gray-400">
+                <Users className="w-5 h-5 mr-2" />
+                <span>{service.cuposDisponibles} cupos disponibles</span>
+              </div>
+            )}
+            
+            {service.ubicacion && (
+              <div className="flex items-center text-gray-600 dark:text-gray-400 col-span-2">
+                <MapPin className="w-5 h-5 mr-2 flex-shrink-0" />
+                <span className="truncate">{service.ubicacion}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Valoraciones */}
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-1">
+                {[1, 2, 3, 4, 5].map((starNumber) => {
+                  const rating = service.valoraciones?.promedio || 0;
+                  const isFilled = starNumber <= Math.floor(rating);
+                  
+                  return (
+                    <Star
+                      key={starNumber}
+                      className={`w-5 h-5 ${
+                        isFilled 
+                          ? 'text-yellow-400 fill-current' 
+                          : 'text-gray-300 dark:text-gray-600'
+                      }`}
+                    />
+                  );
+                })}
+              </div>
+              <span className="text-gray-600 dark:text-gray-400 font-medium">
+                {service.valoraciones?.total > 0 
+                  ? `${(service.valoraciones.promedio || 0).toFixed(1)} (${service.valoraciones.total})`
+                  : 'Sin valoraciones'
+                }
+              </span>
+            </div>
+          </div>
+
+          {/* Información de la tienda */}
+          {showStoreInfo && (
+            <div className="flex items-center justify-between mb-6 p-4 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
+              <div className="flex items-center space-x-3">
+                <Store className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+                <span className="font-medium text-gray-700 dark:text-gray-300">
+                  {service.tiendaInfo?.nombre || storeData?.businessName || storeData?.familyName}
+                </span>
+              </div>
+              <button
+                onClick={handleViewStore}
+                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
+                title="Ver tienda"
+              >
+                <ExternalLink className="w-5 h-5" />
+              </button>
+            </div>
+          )}
+
+          {/* Botones de contacto grandes */}
+          {showContactInfo && (
+            <div className="space-y-3">
+              {/* WhatsApp principal */}
+              {(service.contacto?.whatsapp || storeData?.phone) && (
+                <button
+                  onClick={handleWhatsAppContact}
+                  className="w-full bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl"
+                >
+                  <MessageCircle className="w-6 h-6" />
+                  <span>Contactar por WhatsApp</span>
+                </button>
+              )}
+              
+              {/* Botones secundarios */}
+              <div className="grid grid-cols-2 gap-3">
+                {(service.contacto?.telefono || storeData?.phone) && (
+                  <button
+                    onClick={handlePhoneContact}
+                    className="px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Phone className="w-5 h-5" />
+                    <span>Llamar</span>
+                  </button>
+                )}
+                
+                {(service.contacto?.email || storeData?.email) && (
+                  <button
+                    onClick={handleEmailContact}
+                    className="px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
+                  >
+                    <Mail className="w-5 h-5" />
+                    <span>Email</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // Variante Grid (código existente - mantengo el original)
   if (variant === 'grid') {
     return (
       <div 
@@ -416,7 +848,7 @@ export default function ServiceCard({
           {/* Precio */}
           <div className="mb-4">
             <div className="flex items-baseline space-x-2">
-              <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+              <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
                 {formatearPrecioServicio(service.precio, service.tipoPrecio, service.moneda)}
               </span>
             </div>
@@ -535,7 +967,7 @@ export default function ServiceCard({
                 const url = `https://familymarket.vercel.app/tienda/${storeSlug}/servicio/${serviceIdentifier}`;
                 window.location.href = url;
               }}
-              className="text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 text-sm font-medium transition-colors cursor-pointer"
+              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors cursor-pointer"
             >
               Valorar
             </button>
@@ -552,7 +984,7 @@ export default function ServiceCard({
               </div>
               <button
                 onClick={handleViewStore}
-                className="text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 transition-colors"
+                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
                 title="Ver tienda"
               >
                 <ExternalLink className="w-4 h-4" />
@@ -608,7 +1040,7 @@ export default function ServiceCard({
                 <div className="mt-3 space-y-3">
                   {loadingComments ? (
                     <div className="text-center py-4">
-                      <div className="w-6 h-6 border-2 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto"></div>
+                      <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
                     </div>
                   ) : comments.length > 0 ? (
                     comments.slice(0, 3).map((comment) => (
@@ -621,7 +1053,7 @@ export default function ServiceCard({
                               className="w-8 h-8 rounded-full object-cover"
                             />
                           ) : (
-                            <div className="w-8 h-8 bg-gradient-to-br from-orange-400 to-orange-600 rounded-full flex items-center justify-center text-white font-semibold text-xs">
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-xs">
                               {comment.usuario?.nombre ? comment.usuario.nombre.charAt(0).toUpperCase() : 'U'}
                             </div>
                           )}
@@ -667,7 +1099,7 @@ export default function ServiceCard({
                         const url = `https://familymarket.vercel.app/tienda/${storeSlug}/servicio/${serviceIdentifier}`;
                         window.location.href = url;
                       }}
-                      className="w-full text-sm text-orange-600 dark:text-orange-400 hover:text-orange-700 dark:hover:text-orange-300 text-center py-2 cursor-pointer"
+                      className="w-full text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-center py-2 cursor-pointer"
                     >
                       Ver todos los comentarios
                     </button>

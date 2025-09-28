@@ -20,13 +20,15 @@ import { autoCompletarDatosServicio, generarSlugServicio } from '../../../types/
 import ServiceForm from './ServiceForm';
 import ServiceList from './ServiceList';
 import ServiceCard from './ServiceCard';
-import { Plus, ArrowLeft, Briefcase } from 'lucide-react';
+import FeaturedServiceButton from './FeaturedServiceButton';
+import { Plus, ArrowLeft, Briefcase, X } from 'lucide-react';
 
 export default function ServiceManager({ storeId, storeData }) {
   const { user } = useAuth();
   const [view, setView] = useState('list'); // 'list' | 'form' | 'view'
   const [services, setServices] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
+  const [showFeaturedModal, setShowFeaturedModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -76,6 +78,20 @@ export default function ServiceManager({ storeId, storeData }) {
     setView('view');
   };
 
+  // Manejar destacar servicio
+  const handleFeatureService = (service) => {
+    setSelectedService(service);
+    setShowFeaturedModal(true);
+  };
+
+  // Callback después de pago exitoso
+  const handleFeatureSuccess = async () => {
+    setShowFeaturedModal(false);
+    setSelectedService(null);
+    // Recargar servicios para mostrar el estado actualizado
+    await loadServices();
+  };
+
   const handleSaveService = async (serviceData) => {
     try {
       setIsSaving(true);
@@ -107,7 +123,7 @@ export default function ServiceManager({ storeId, storeData }) {
           fechaActualizacion: serverTimestamp(),
           totalReservas: 0,
           totalVistas: 0,
-          // Inicializar funcionalidades
+          // Inicializar nuevas funcionalidades
           valoraciones: {
             promedio: 0,
             total: 0,
@@ -119,6 +135,12 @@ export default function ServiceManager({ storeId, storeData }) {
             compartidas: 0,
             comentarios: 0
           },
+          // Inicializar campos de destacado
+          featured: false,
+          featuredUntil: null,
+          featuredPaymentId: null,
+          featuredAmount: null,
+          fechaDestacado: null,
           slug: generarSlugServicio ? generarSlugServicio(serviceDataCompleto.titulo, Date.now().toString()) : serviceDataCompleto.titulo.toLowerCase().replace(/\s+/g, '-')
         };
         
@@ -186,7 +208,13 @@ export default function ServiceManager({ storeId, storeData }) {
       fechaCreacion: undefined,
       fechaActualizacion: undefined,
       totalReservas: 0,
-      totalVistas: 0
+      totalVistas: 0,
+      // Resetear campos de destacado
+      featured: false,
+      featuredUntil: null,
+      featuredPaymentId: null,
+      featuredAmount: null,
+      fechaDestacado: null
     };
     
     setSelectedService(duplicatedService);
@@ -233,7 +261,7 @@ export default function ServiceManager({ storeId, storeData }) {
               
               <button
                 onClick={handleCreateService}
-                className="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
+                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
               >
                 <Plus className="w-5 h-5 mr-2" />
                 Nuevo Servicio
@@ -250,6 +278,7 @@ export default function ServiceManager({ storeId, storeData }) {
             onDuplicate={handleDuplicateService}
             onView={handleViewService}
             onCreateNew={handleCreateService}
+            onFeature={handleFeatureService}
             isLoading={isLoading}
           />
         </div>
@@ -283,7 +312,7 @@ export default function ServiceManager({ storeId, storeData }) {
               <div className="flex space-x-3">
                 <button
                   onClick={() => handleEditService(selectedService)}
-                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Editar
                 </button>
@@ -292,6 +321,12 @@ export default function ServiceManager({ storeId, storeData }) {
                   className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
                 >
                   Duplicar
+                </button>
+                <button
+                  onClick={() => handleFeatureService(selectedService)}
+                  className="px-4 py-2 bg-gradient-to-r from-blue-500 to-purple-500 text-white rounded-lg hover:from-blue-600 hover:to-purple-600 transition-colors"
+                >
+                  Destacar
                 </button>
               </div>
             </div>
@@ -318,15 +353,54 @@ export default function ServiceManager({ storeId, storeData }) {
               
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                  Vista Destacada
+                  Vista Destacada Compacta
                 </h3>
                 <ServiceCard
                   service={selectedService}
                   storeData={storeData}
-                  variant="featured"
+                  variant="featured-compact"
                   showContactInfo={false}
                 />
               </div>
+            </div>
+
+
+          </div>
+        </div>
+      )}
+
+      {/* Modal de destacar servicio */}
+      {showFeaturedModal && selectedService && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Destacar Servicio
+                </h2>
+                <button
+                  onClick={() => setShowFeaturedModal(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                  {selectedService.titulo}
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Este servicio aparecerá en la sección destacada del home
+                </p>
+              </div>
+
+              <FeaturedServiceButton
+                service={selectedService}
+                user={user}
+                onSuccess={handleFeatureSuccess}
+                onClose={() => setShowFeaturedModal(false)}
+              />
             </div>
           </div>
         </div>

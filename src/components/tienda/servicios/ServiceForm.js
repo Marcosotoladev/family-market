@@ -12,7 +12,8 @@ import {
     GESTION_CUPOS,
     CATEGORIAS_SERVICIOS,
     formatearCategoria,
-    validarServicio
+    validarServicio,
+    getSubcategorias  // <- AGREGADO: Importación de getSubcategorias
 } from '../../../types/services';
 import { generarSlugServicio } from '../../../types/services';
 import {
@@ -66,6 +67,7 @@ const serviceCategoryIconMap = {
     'servicios_financieros': DollarSign,
     'otros': Package2
 };
+
 export default function ServiceForm({
     servicio = null,
     storeId,
@@ -302,8 +304,8 @@ export default function ServiceForm({
         onSave(serviceData);
     };
 
-    // Corregir la definición de categorías
-    const categorias = Object.values(CATEGORIAS_SERVICIOS);
+    // CORREGIDO: Usar Object.keys en lugar de Object.values
+    const categorias = Object.keys(CATEGORIAS_SERVICIOS);
 
     const diasSemana = [
         { id: DIAS_DISPONIBLES.LUNES, nombre: 'Lunes' },
@@ -323,20 +325,19 @@ export default function ServiceForm({
         { id: HORARIOS_DISPONIBLES.PERSONALIZADO, nombre: 'Horario personalizado' }
     ];
 
-const getValidationMessage = () => {
-    if (formData.titulo.length === 0) return null;
-    const errors = validarServicio({
-        ...formData,
-        usuarioId: storeId,
-        precio: parseFloat(formData.precio) || 0
-    });
-    
-    if (errors.length === 0) {
-        return <p className="text-green-600 text-sm mt-2">✓ El formulario está completo</p>;
-    }
-    return null;
-};
-
+    const getValidationMessage = () => {
+        if (formData.titulo.length === 0) return null;
+        const errors = validarServicio({
+            ...formData,
+            usuarioId: storeId,
+            precio: parseFloat(formData.precio) || 0
+        });
+        
+        if (errors.length === 0) {
+            return <p className="text-green-600 text-sm mt-2">✓ El formulario está completo</p>;
+        }
+        return null;
+    };
 
     return (
         <div className="max-w-4xl mx-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg">
@@ -417,7 +418,7 @@ const getValidationMessage = () => {
                         </p>
                     </div>
 
-                    {/* Categorías - CORREGIDO */}
+                    {/* Categorías */}
                     <div>
                         <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                             Categoría *
@@ -436,6 +437,25 @@ const getValidationMessage = () => {
                             ))}
                         </select>
                     </div>
+
+                    {/* NUEVO: Campo de Subcategorías */}
+                    {formData.categoria && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                Subcategoría
+                            </label>
+                            <select
+                                value={formData.subcategoria}
+                                onChange={(e) => handleInputChange('subcategoria', e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            >
+                                <option value="">Selecciona una subcategoría (opcional)</option>
+                                {Object.entries(getSubcategorias(formData.categoria)).map(([key, nombre]) => (
+                                    <option key={key} value={key}>{nombre}</option>
+                                ))}
+                            </select>
+                        </div>
+                    )}
                 </div>
 
                 {/* Modalidad */}

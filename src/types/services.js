@@ -25,28 +25,374 @@ export const MODALIDAD_SERVICIO = {
   HIBRIDO: 'hibrido'
 };
 
+// Categorías de servicios mejoradas con subcategorías
 export const CATEGORIAS_SERVICIOS = {
-  BELLEZA_Y_BIENESTAR: 'belleza_y_bienestar',
-  SALUD_Y_MEDICINA: 'salud_y_medicina',
-  EDUCACION_Y_CAPACITACION: 'educacion_y_capacitacion',
-  TECNOLOGIA_E_INFORMATICA: 'tecnologia_e_informatica',
-  HOGAR_Y_MANTENIMIENTO: 'hogar_y_mantenimiento',
-  AUTOMOTRIZ: 'automotriz',
-  EVENTOS_Y_CELEBRACIONES: 'eventos_y_celebraciones',
-  DEPORTES_Y_FITNESS: 'deportes_y_fitness',
-  MASCOTAS: 'mascotas',
-  CONSULTORIA_Y_NEGOCIOS: 'consultoria_y_negocios',
-  MARKETING_Y_PUBLICIDAD: 'marketing_y_publicidad',
-  DISEÑO_Y_CREATIVIDAD: 'diseño_y_creatividad',
-  FOTOGRAFIA_Y_VIDEO: 'fotografia_y_video',
-  MUSICA_Y_ENTRETENIMIENTO: 'musica_y_entretenimiento',
-  GASTRONOMIA: 'gastronomia',
-  JARDINERIA_Y_PAISAJISMO: 'jardineria_y_paisajismo',
-  LIMPIEZA: 'limpieza',
-  TRANSPORTE_Y_LOGISTICA: 'transporte_y_logistica',
-  SERVICIOS_LEGALES: 'servicios_legales',
-  SERVICIOS_FINANCIEROS: 'servicios_financieros',
-  OTROS: 'otros'
+  belleza_y_bienestar: {
+    id: 'belleza_y_bienestar',
+    nombre: 'Belleza y Bienestar',
+    descripcion: 'Servicios de cuidado personal, estética y bienestar',
+    subcategorias: {
+      peluqueria: 'Peluquería y Cortes',
+      barberia: 'Barbería',
+      manicura_pedicura: 'Manicura y Pedicura',
+      maquillaje: 'Maquillaje y Caracterización',
+      masajes: 'Masajes y Relajación',
+      tratamientos_faciales: 'Tratamientos Faciales',
+      depilacion: 'Depilación',
+      tatuajes_piercing: 'Tatuajes y Piercing',
+      spa_wellness: 'Spa y Wellness',
+      medicina_estetica: 'Medicina Estética',
+      podologia: 'Podología',
+      otros_belleza: 'Otros Servicios de Belleza'
+    }
+  },
+  salud_y_medicina: {
+    id: 'salud_y_medicina',
+    nombre: 'Salud y Medicina',
+    descripcion: 'Servicios médicos y de salud profesional',
+    subcategorias: {
+      consulta_medica: 'Consulta Médica General',
+      especialidades_medicas: 'Especialidades Médicas',
+      odontologia: 'Odontología',
+      psicologia: 'Psicología y Terapia',
+      fisioterapia: 'Fisioterapia y Rehabilitación',
+      nutricion: 'Nutrición y Dietética',
+      enfermeria: 'Enfermería a Domicilio',
+      cuidado_adultos_mayores: 'Cuidado de Adultos Mayores',
+      laboratorio: 'Análisis de Laboratorio',
+      farmacia: 'Servicios de Farmacia',
+      medicina_alternativa: 'Medicina Alternativa',
+      otros_salud: 'Otros Servicios de Salud'
+    }
+  },
+  educacion_y_capacitacion: {
+    id: 'educacion_y_capacitacion',
+    nombre: 'Educación y Capacitación',
+    descripcion: 'Clases, tutorías y formación académica/profesional',
+    subcategorias: {
+      clases_particulares: 'Clases Particulares',
+      apoyo_escolar: 'Apoyo Escolar',
+      idiomas: 'Idiomas',
+      musica: 'Música e Instrumentos',
+      arte_dibujo: 'Arte y Dibujo',
+      danza_baile: 'Danza y Baile',
+      deportes_entrenamiento: 'Deportes y Entrenamiento',
+      informatica_programacion: 'Informática y Programación',
+      capacitacion_profesional: 'Capacitación Profesional',
+      preparacion_examenes: 'Preparación para Exámenes',
+      coaching: 'Coaching y Desarrollo Personal',
+      otros_educacion: 'Otros Servicios Educativos'
+    }
+  },
+  tecnologia_e_informatica: {
+    id: 'tecnologia_e_informatica',
+    nombre: 'Tecnología e Informática',
+    descripcion: 'Servicios técnicos y desarrollo tecnológico',
+    subcategorias: {
+      desarrollo_web: 'Desarrollo Web',
+      desarrollo_apps: 'Desarrollo de Apps',
+      diseño_web: 'Diseño Web',
+      soporte_tecnico: 'Soporte Técnico',
+      reparacion_computadoras: 'Reparación de Computadoras',
+      reparacion_celulares: 'Reparación de Celulares',
+      instalacion_software: 'Instalación de Software',
+      redes_wifi: 'Redes y WiFi',
+      consultoria_ti: 'Consultoría en TI',
+      seguridad_informatica: 'Seguridad Informática',
+      recuperacion_datos: 'Recuperación de Datos',
+      otros_tecnologia: 'Otros Servicios Tecnológicos'
+    }
+  },
+  hogar_y_mantenimiento: {
+    id: 'hogar_y_mantenimiento',
+    nombre: 'Hogar y Mantenimiento',
+    descripcion: 'Servicios para el hogar, reparaciones y mantenimiento',
+    subcategorias: {
+      limpieza_hogar: 'Limpieza del Hogar',
+      limpieza_oficinas: 'Limpieza de Oficinas',
+      plomeria: 'Plomería',
+      electricidad: 'Electricidad',
+      pintura: 'Pintura y Decoración',
+      carpinteria: 'Carpintería',
+      cerrajeria: 'Cerrajería',
+      jardineria: 'Jardinería y Paisajismo',
+      fumigacion: 'Fumigación y Control de Plagas',
+      aire_acondicionado: 'Aire Acondicionado',
+      reparaciones_generales: 'Reparaciones Generales',
+      mudanzas: 'Mudanzas y Traslados',
+      otros_hogar: 'Otros Servicios del Hogar'
+    }
+  },
+  automotriz: {
+    id: 'automotriz',
+    nombre: 'Automotriz',
+    descripcion: 'Servicios para vehículos y transporte',
+    subcategorias: {
+      mecanica_general: 'Mecánica General',
+      mecanica_especializada: 'Mecánica Especializada',
+      lavado_autos: 'Lavado de Autos',
+      encerado_pulido: 'Encerado y Pulido',
+      neumaticos: 'Neumáticos',
+      electricidad_automotriz: 'Electricidad Automotriz',
+      chaperia_pintura: 'Chapería y Pintura',
+      grua: 'Grúa y Remolque',
+      transporte_personas: 'Transporte de Personas',
+      transporte_cargas: 'Transporte de Cargas',
+      alquiler_vehiculos: 'Alquiler de Vehículos',
+      otros_automotriz: 'Otros Servicios Automotrices'
+    }
+  },
+  eventos_y_celebraciones: {
+    id: 'eventos_y_celebraciones',
+    nombre: 'Eventos y Celebraciones',
+    descripcion: 'Organización y servicios para eventos especiales',
+    subcategorias: {
+      organizacion_eventos: 'Organización de Eventos',
+      catering: 'Catering y Banquetes',
+      animacion_infantil: 'Animación Infantil',
+      dj_musica: 'DJ y Música',
+      fotografia_eventos: 'Fotografía de Eventos',
+      video_eventos: 'Video y Filmación',
+      decoracion_eventos: 'Decoración de Eventos',
+      alquiler_equipos: 'Alquiler de Equipos',
+      maestro_ceremonias: 'Maestro de Ceremonias',
+      seguridad_eventos: 'Seguridad para Eventos',
+      servicios_boda: 'Servicios para Bodas',
+      otros_eventos: 'Otros Servicios para Eventos'
+    }
+  },
+  deportes_y_fitness: {
+    id: 'deportes_y_fitness',
+    nombre: 'Deportes y Fitness',
+    descripcion: 'Entrenamiento físico y actividades deportivas',
+    subcategorias: {
+      entrenamiento_personal: 'Entrenamiento Personal',
+      gimnasio: 'Gimnasio y Fitness',
+      pilates: 'Pilates',
+      yoga: 'Yoga',
+      crossfit: 'CrossFit',
+      artes_marciales: 'Artes Marciales',
+      natacion: 'Natación',
+      futbol: 'Fútbol',
+      tenis: 'Tenis',
+      basquet: 'Básquet',
+      running: 'Running y Atletismo',
+      deportes_extremos: 'Deportes Extremos',
+      otros_deportes: 'Otros Deportes'
+    }
+  },
+  mascotas: {
+    id: 'mascotas',
+    nombre: 'Mascotas',
+    descripcion: 'Cuidado y servicios para mascotas',
+    subcategorias: {
+      veterinaria: 'Veterinaria',
+      peluqueria_mascotas: 'Peluquería para Mascotas',
+      paseo_perros: 'Paseo de Perros',
+      cuidado_mascotas: 'Cuidado de Mascotas',
+      adiestramiento: 'Adiestramiento',
+      guarderia_mascotas: 'Guardería para Mascotas',
+      fotografia_mascotas: 'Fotografía de Mascotas',
+      pension_mascotas: 'Pensión para Mascotas',
+      transporte_mascotas: 'Transporte de Mascotas',
+      otros_mascotas: 'Otros Servicios para Mascotas'
+    }
+  },
+  consultoria_y_negocios: {
+    id: 'consultoria_y_negocios',
+    nombre: 'Consultoría y Negocios',
+    descripcion: 'Servicios profesionales para empresas y emprendedores',
+    subcategorias: {
+      consultoria_empresarial: 'Consultoría Empresarial',
+      plan_negocios: 'Plan de Negocios',
+      contabilidad: 'Contabilidad',
+      administracion: 'Administración',
+      recursos_humanos: 'Recursos Humanos',
+      auditoria: 'Auditoría',
+      coaching_empresarial: 'Coaching Empresarial',
+      estrategia_comercial: 'Estrategia Comercial',
+      gestion_proyectos: 'Gestión de Proyectos',
+      analisis_mercado: 'Análisis de Mercado',
+      otros_consultoria: 'Otras Consultorías'
+    }
+  },
+  marketing_y_publicidad: {
+    id: 'marketing_y_publicidad',
+    nombre: 'Marketing y Publicidad',
+    descripcion: 'Servicios de marketing digital y publicidad',
+    subcategorias: {
+      marketing_digital: 'Marketing Digital',
+      redes_sociales: 'Gestión de Redes Sociales',
+      publicidad_online: 'Publicidad Online',
+      seo: 'SEO y Posicionamiento',
+      email_marketing: 'Email Marketing',
+      branding: 'Branding e Identidad',
+      copywriting: 'Copywriting',
+      influencer_marketing: 'Influencer Marketing',
+      marketing_tradicional: 'Marketing Tradicional',
+      eventos_marketing: 'Eventos y Activaciones',
+      otros_marketing: 'Otros Servicios de Marketing'
+    }
+  },
+  diseño_y_creatividad: {
+    id: 'diseño_y_creatividad',
+    nombre: 'Diseño y Creatividad',
+    descripcion: 'Servicios de diseño gráfico y creativo',
+    subcategorias: {
+      diseño_grafico: 'Diseño Gráfico',
+      diseño_logos: 'Diseño de Logos',
+      diseño_web_ui: 'Diseño Web/UI',
+      ilustracion: 'Ilustración',
+      diseño_packaging: 'Diseño de Packaging',
+      diseño_interiores: 'Diseño de Interiores',
+      arquitectura: 'Arquitectura',
+      diseño_moda: 'Diseño de Moda',
+      animacion: 'Animación y Motion Graphics',
+      otros_diseño: 'Otros Servicios de Diseño'
+    }
+  },
+  fotografia_y_video: {
+    id: 'fotografia_y_video',
+    nombre: 'Fotografía y Video',
+    descripcion: 'Servicios audiovisuales profesionales',
+    subcategorias: {
+      fotografia_profesional: 'Fotografía Profesional',
+      fotografia_social: 'Fotografía Social',
+      fotografia_producto: 'Fotografía de Producto',
+      fotografia_corporativa: 'Fotografía Corporativa',
+      video_corporativo: 'Video Corporativo',
+      video_publicitario: 'Video Publicitario',
+      edicion_video: 'Edición de Video',
+      edicion_fotos: 'Edición de Fotos',
+      streaming: 'Streaming y Transmisión',
+      drones: 'Fotografía/Video con Drones',
+      otros_audiovisual: 'Otros Servicios Audiovisuales'
+    }
+  },
+  musica_y_entretenimiento: {
+    id: 'musica_y_entretenimiento',
+    nombre: 'Música y Entretenimiento',
+    descripcion: 'Servicios de entretenimiento y espectáculos',
+    subcategorias: {
+      musicos: 'Músicos y Bandas',
+      cantantes: 'Cantantes',
+      dj_fiestas: 'DJ para Fiestas',
+      shows_artisticos: 'Shows Artísticos',
+      espectaculos_infantiles: 'Espectáculos Infantiles',
+      teatro: 'Teatro y Actuación',
+      comedia: 'Comedia y Stand-up',
+      baile_shows: 'Baile y Shows',
+      karaoke: 'Karaoke',
+      grabacion_musica: 'Grabación de Música',
+      otros_entretenimiento: 'Otros Entretenimientos'
+    }
+  },
+  gastronomia: {
+    id: 'gastronomia',
+    nombre: 'Gastronomía',
+    descripcion: 'Servicios gastronómicos y alimentarios',
+    subcategorias: {
+      chef_domicilio: 'Chef a Domicilio',
+      catering_empresarial: 'Catering Empresarial',
+      reposteria: 'Repostería y Tortas',
+      panaderia: 'Panadería',
+      comida_casera: 'Comida Casera',
+      comida_dietetica: 'Comida Dietética',
+      bartender: 'Bartender y Cocteles',
+      asesoramiento_nutricional: 'Asesoramiento Nutricional',
+      cursos_cocina: 'Cursos de Cocina',
+      otros_gastronomia: 'Otros Servicios Gastronómicos'
+    }
+  },
+  jardineria_y_paisajismo: {
+    id: 'jardineria_y_paisajismo',
+    nombre: 'Jardinería y Paisajismo',
+    descripcion: 'Cuidado de jardines y espacios verdes',
+    subcategorias: {
+      diseño_jardines: 'Diseño de Jardines',
+      mantenimiento_jardines: 'Mantenimiento de Jardines',
+      poda_arboles: 'Poda de Árboles',
+      cesped: 'Césped y Grama',
+      riego: 'Sistemas de Riego',
+      plantas_flores: 'Plantas y Flores',
+      paisajismo: 'Paisajismo',
+      viveros: 'Viveros',
+      otros_jardineria: 'Otros Servicios de Jardinería'
+    }
+  },
+  limpieza: {
+    id: 'limpieza',
+    nombre: 'Limpieza',
+    descripcion: 'Servicios especializados de limpieza',
+    subcategorias: {
+      limpieza_domestica: 'Limpieza Doméstica',
+      limpieza_comercial: 'Limpieza Comercial',
+      limpieza_edificios: 'Limpieza de Edificios',
+      limpieza_ventanas: 'Limpieza de Ventanas',
+      limpieza_alfombras: 'Limpieza de Alfombras',
+      limpieza_profunda: 'Limpieza Profunda',
+      desinfeccion: 'Desinfección',
+      limpieza_mudanza: 'Limpieza Post-Mudanza',
+      otros_limpieza: 'Otros Servicios de Limpieza'
+    }
+  },
+  transporte_y_logistica: {
+    id: 'transporte_y_logistica',
+    nombre: 'Transporte y Logística',
+    descripcion: 'Servicios de transporte y logística',
+    subcategorias: {
+      taxi_remis: 'Taxi y Remis',
+      delivery: 'Delivery y Envíos',
+      mudanzas_fletes: 'Mudanzas y Fletes',
+      transporte_escolar: 'Transporte Escolar',
+      logistica_empresarial: 'Logística Empresarial',
+      courier: 'Courier y Mensajería',
+      transporte_turismo: 'Transporte Turístico',
+      alquiler_vehiculos_carga: 'Alquiler de Vehículos de Carga',
+      otros_transporte: 'Otros Servicios de Transporte'
+    }
+  },
+  servicios_legales: {
+    id: 'servicios_legales',
+    nombre: 'Servicios Legales',
+    descripcion: 'Asesoramiento y servicios jurídicos',
+    subcategorias: {
+      abogados_general: 'Abogados - Derecho General',
+      derecho_laboral: 'Derecho Laboral',
+      derecho_penal: 'Derecho Penal',
+      derecho_civil: 'Derecho Civil',
+      derecho_comercial: 'Derecho Comercial',
+      derecho_familia: 'Derecho de Familia',
+      tramites_legales: 'Trámites Legales',
+      escribania: 'Escribanía',
+      mediacion: 'Mediación',
+      otros_legales: 'Otros Servicios Legales'
+    }
+  },
+  servicios_financieros: {
+    id: 'servicios_financieros',
+    nombre: 'Servicios Financieros',
+    descripcion: 'Asesoramiento financiero y económico',
+    subcategorias: {
+      asesoramiento_financiero: 'Asesoramiento Financiero',
+      creditos_prestamos: 'Créditos y Préstamos',
+      seguros: 'Seguros',
+      inversiones: 'Inversiones',
+      planificacion_financiera: 'Planificación Financiera',
+      gestion_patrimonial: 'Gestión Patrimonial',
+      tramites_bancarios: 'Trámites Bancarios',
+      otros_financieros: 'Otros Servicios Financieros'
+    }
+  },
+  otros: {
+    id: 'otros',
+    nombre: 'Otros Servicios',
+    descripcion: 'Otros servicios no clasificados',
+    subcategorias: {
+      servicios_diversos: 'Servicios Diversos',
+      servicios_especializados: 'Servicios Especializados'
+    }
+  }
 };
 
 export const DURACION_SERVICIO = {
@@ -83,6 +429,39 @@ export const GESTION_CUPOS = {
   ILIMITADO: 'ilimitado',
   LIMITADO: 'limitado',
   UNICO: 'unico' // Para servicios únicos como trabajos específicos
+};
+
+// Función para obtener categorías como array (compatibilidad hacia atrás)
+export const getCategoriasList = () => {
+  return Object.values(CATEGORIAS_SERVICIOS);
+};
+
+// Función para obtener solo los IDs de categorías (para compatibilidad)
+export const getCategoriasIds = () => {
+  return Object.keys(CATEGORIAS_SERVICIOS);
+};
+
+// Función para obtener categorías para select/dropdown (compatibilidad hacia atrás)
+export const getCategoriasForSelect = () => {
+  return Object.keys(CATEGORIAS_SERVICIOS);
+};
+
+// Función para obtener subcategorías de una categoría específica
+export const getSubcategorias = (categoriaId) => {
+  const categoria = CATEGORIAS_SERVICIOS[categoriaId];
+  return categoria ? categoria.subcategorias : {};
+};
+
+// Función para buscar categorías por texto
+export const buscarCategorias = (texto) => {
+  const textoLower = texto.toLowerCase();
+  return Object.values(CATEGORIAS_SERVICIOS).filter(categoria => 
+    categoria.nombre.toLowerCase().includes(textoLower) ||
+    categoria.descripcion.toLowerCase().includes(textoLower) ||
+    Object.values(categoria.subcategorias).some(sub => 
+      sub.toLowerCase().includes(textoLower)
+    )
+  );
 };
 
 // Función para formatear precio de servicio
@@ -152,32 +531,17 @@ export const formatearModalidad = (modalidad) => {
 };
 
 // Función para formatear categoría
-export const formatearCategoria = (categoria) => {
-  const nombres = {
-    [CATEGORIAS_SERVICIOS.BELLEZA_Y_BIENESTAR]: 'Belleza y Bienestar',
-    [CATEGORIAS_SERVICIOS.SALUD_Y_MEDICINA]: 'Salud y Medicina',
-    [CATEGORIAS_SERVICIOS.EDUCACION_Y_CAPACITACION]: 'Educación y Capacitación',
-    [CATEGORIAS_SERVICIOS.TECNOLOGIA_E_INFORMATICA]: 'Tecnología e Informática',
-    [CATEGORIAS_SERVICIOS.HOGAR_Y_MANTENIMIENTO]: 'Hogar y Mantenimiento',
-    [CATEGORIAS_SERVICIOS.AUTOMOTRIZ]: 'Automotriz',
-    [CATEGORIAS_SERVICIOS.EVENTOS_Y_CELEBRACIONES]: 'Eventos y Celebraciones',
-    [CATEGORIAS_SERVICIOS.DEPORTES_Y_FITNESS]: 'Deportes y Fitness',
-    [CATEGORIAS_SERVICIOS.MASCOTAS]: 'Mascotas',
-    [CATEGORIAS_SERVICIOS.CONSULTORIA_Y_NEGOCIOS]: 'Consultoría y Negocios',
-    [CATEGORIAS_SERVICIOS.MARKETING_Y_PUBLICIDAD]: 'Marketing y Publicidad',
-    [CATEGORIAS_SERVICIOS.DISEÑO_Y_CREATIVIDAD]: 'Diseño y Creatividad',
-    [CATEGORIAS_SERVICIOS.FOTOGRAFIA_Y_VIDEO]: 'Fotografía y Video',
-    [CATEGORIAS_SERVICIOS.MUSICA_Y_ENTRETENIMIENTO]: 'Música y Entretenimiento',
-    [CATEGORIAS_SERVICIOS.GASTRONOMIA]: 'Gastronomía',
-    [CATEGORIAS_SERVICIOS.JARDINERIA_Y_PAISAJISMO]: 'Jardinería y Paisajismo',
-    [CATEGORIAS_SERVICIOS.LIMPIEZA]: 'Limpieza',
-    [CATEGORIAS_SERVICIOS.TRANSPORTE_Y_LOGISTICA]: 'Transporte y Logística',
-    [CATEGORIAS_SERVICIOS.SERVICIOS_LEGALES]: 'Servicios Legales',
-    [CATEGORIAS_SERVICIOS.SERVICIOS_FINANCIEROS]: 'Servicios Financieros',
-    [CATEGORIAS_SERVICIOS.OTROS]: 'Otros'
-  };
+export const formatearCategoria = (categoriaId) => {
+  const categoria = CATEGORIAS_SERVICIOS[categoriaId];
+  return categoria ? categoria.nombre : categoriaId;
+};
+
+// Función para formatear subcategoría
+export const formatearSubcategoria = (categoriaId, subcategoriaId) => {
+  const categoria = CATEGORIAS_SERVICIOS[categoriaId];
+  if (!categoria || !categoria.subcategorias) return subcategoriaId;
   
-  return nombres[categoria] || categoria;
+  return categoria.subcategorias[subcategoriaId] || subcategoriaId;
 };
 
 // Función para formatear duración
@@ -367,6 +731,7 @@ export const verificarDisponibilidadCupos = (servicio) => {
   return servicio.cuposDisponibles > 0;
 };
 
+// Export por defecto con todas las utilidades
 export default {
   ESTADOS_SERVICIO,
   TIPOS_PRECIO_SERVICIO,
@@ -376,10 +741,14 @@ export default {
   DIAS_DISPONIBLES,
   HORARIOS_DISPONIBLES,
   GESTION_CUPOS,
+  getCategoriasList,
+  getSubcategorias,
+  buscarCategorias,
   formatearPrecioServicio,
   obtenerEstadoBadgeServicio,
   formatearModalidad,
   formatearCategoria,
+  formatearSubcategoria,
   formatearDuracion,
   formatearDiasDisponibles,
   formatearHorarios,
