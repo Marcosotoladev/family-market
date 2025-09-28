@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { collection, query, where, getDocs, orderBy, doc, getDoc } from 'firebase/firestore';
+import { collection, query, where, getDocs, orderBy, doc, getDoc, limit} from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from '@/components/tienda/productos/ProductCard'; // Importar ProductCard
@@ -35,23 +35,25 @@ export default function FeaturedProducts() {
   }, []);
 
   const loadFeaturedProducts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      const now = new Date();
-      const productsRef = collection(db, 'productos');
-      const q = query(
-        productsRef,
-        where('featured', '==', true),
-        where('featuredUntil', '>', now),
-        where('estado', '==', 'disponible'),
-        orderBy('featuredUntil', 'desc'),
-        orderBy('fechaDestacado', 'desc')
-      );
+  try {
+    setLoading(true);
+    setError(null);
 
-      const querySnapshot = await getDocs(q);
-      const products = [];
+    const now = new Date();
+    const productsRef = collection(db, 'productos');
+    const q = query(
+      productsRef,
+      where('featured', '==', true),
+      where('featuredUntil', '>', now),
+      where('estado', '==', 'disponible'),
+      orderBy('featuredUntil', 'desc'),
+      orderBy('fechaDestacado', 'desc'),
+      limit(20)
+    );
+
+    const querySnapshot = await getDocs(q);
+    const products = [];
+    const userIds = new Set();
 
       for (const docSnapshot of querySnapshot.docs) {
         const productData = { id: docSnapshot.id, ...docSnapshot.data() };
@@ -66,19 +68,6 @@ export default function FeaturedProducts() {
               email: userData.email,
               phone: userData.phone,
             };
-            
-            // Datos adicionales para el ProductCard
-            productData.storeData = {
-              businessName: userData.businessName,
-              familyName: userData.familyName,
-              firstName: userData.firstName,
-              lastName: userData.lastName,
-              storeSlug: userData.storeSlug,
-              email: userData.email,
-              phone: userData.phone,
-              storeLogo: userData.storeLogo,
-              profileImage: userData.profileImage
-            };
           }
         } catch (error) {
           console.error('Error loading store data for product:', productData.id, error);
@@ -88,26 +77,20 @@ export default function FeaturedProducts() {
             email: '',
             phone: ''
           };
-          productData.storeData = {
-            businessName: 'Tienda Family Market',
-            storeSlug: '',
-            email: '',
-            phone: ''
-          };
         }
         
         products.push(productData);
       }
 
-      setFeaturedProducts(products);
-    } catch (error) {
-      console.error('Error loading featured products:', error);
-      setError('Error cargando productos destacados');
-      setFeaturedProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
+    setFeaturedProducts(products);
+  } catch (error) {
+    console.error('Error loading featured products:', error);
+    setError('Error cargando productos destacados');
+    setFeaturedProducts([]);
+  } finally {
+    setLoading(false);
+  }
+};
 
   // Función para manejar click en producto
   const handleProductClick = (product) => {
