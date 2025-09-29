@@ -29,7 +29,6 @@ export async function POST(request) {
         console.log('🏷️ Payment metadata:', JSON.stringify(paymentData.metadata, null, 2));
         console.log('📝 External reference:', paymentData.external_reference);
 
-        // ✅ CAMBIO PRINCIPAL: Manejar múltiples estados de pago exitoso
         const isSuccessfulPayment = paymentData.status === 'approved' || 
                                   paymentData.status === 'in_process' ||
                                   (paymentData.status === 'pending' && paymentData.status_detail === 'pending_waiting_payment');
@@ -37,31 +36,32 @@ export async function POST(request) {
         if (isSuccessfulPayment) {
           console.log('✅ Payment successful, processing...');
           
-          // Extraer datos del pago
-          let product_id, user_id, amount;
+          let item_id, user_id, amount, item_type;
           
           // Intentar obtener de metadata primero
           if (paymentData.metadata && Object.keys(paymentData.metadata).length > 0) {
-            product_id = paymentData.metadata.product_id;
+            item_id = paymentData.metadata.item_id;
             user_id = paymentData.metadata.user_id;
             amount = paymentData.metadata.amount || paymentData.transaction_amount;
-            console.log('📋 Data from metadata:', { product_id, user_id, amount });
+            item_type = paymentData.metadata.item_type || 'product';
+            console.log('📋 Data from metadata:', { item_id, user_id, amount, item_type });
           }
           
-          // Si no hay metadata, intentar extraer de external_reference
-          if (!product_id && paymentData.external_reference) {
+          // Si no hay metadata, extraer de external_reference
+          if (!item_id && paymentData.external_reference) {
             console.log('🔍 Extracting from external_reference:', paymentData.external_reference);
             const parts = paymentData.external_reference.split('_');
-            if (parts.length >= 3 && parts[0] === 'product') {
-              product_id = parts[1];
+            if (parts.length >= 3) {
+              item_type = parts[0]; // 'product' o 'service'
+              item_id = parts[1];
               user_id = parts[2];
               amount = paymentData.transaction_amount;
-              console.log('📋 Data from external_reference:', { product_id, user_id, amount });
+              console.log('📋 Data from external_reference:', { item_id, user_id, amount, item_type });
             }
           }
           
-          if (!product_id) {
-            console.error('❌ Missing product_id - this might be a test notification');
+          if (!item_id) {
+            console.error('❌ Missing item_id - test notification');
             return NextResponse.json({ received: true, note: 'Test notification processed' });
           }
           
@@ -69,20 +69,23 @@ export async function POST(request) {
             console.warn('⚠️ Missing user_id, using default');
             user_id = 'test_user';
           }
+
+          // Determinar colección según el tipo
+          const collectionName = item_type === 'service' ? 'servicios' : 'productos';
+          const itemLabel = item_type === 'service' ? 'servicio' : 'producto';
           
-          // Calcular fecha de expiración (7 días)
           const featuredUntil = new Date();
           featuredUntil.setDate(featuredUntil.getDate() + 7);
 
           try {
-            console.log('🔄 Updating product in Firebase...');
-            console.log('🆔 Product ID:', product_id);
+            console.log(`🔄 Updating ${itemLabel} in Firebase...`);
+            console.log(`🆔 ${itemLabel} ID:`, item_id);
             console.log('📅 Featured until:', featuredUntil.toISOString());
+            console.log('📚 Collection:', collectionName);
             
-            // Verificar que el producto existe antes de actualizar
-            const productRef = doc(db, 'productos', product_id);
+            const itemRef = doc(db, collectionName, item_id);
             
-            await updateDoc(productRef, {
+            await updateDoc(itemRef, {
               featured: true,
               featuredUntil: featuredUntil,
               featuredPaymentId: paymentData.id,
@@ -90,11 +93,12 @@ export async function POST(request) {
               fechaDestacado: serverTimestamp()
             });
 
-            console.log('✅ Product updated successfully');
+            console.log(`✅ ${itemLabel} updated successfully`);
 
             // Crear registro de pago
             await addDoc(collection(db, 'featured_payments'), {
-              productId: product_id,
+              itemId: item_id,
+              itemType: item_type,
               userId: user_id,
               paymentId: paymentData.id,
               amount: parseFloat(amount || paymentData.transaction_amount || 0),
@@ -107,13 +111,12 @@ export async function POST(request) {
               statusDetail: paymentData.status_detail
             });
 
-            console.log(`🎉 Product ${product_id} featured until ${featuredUntil.toISOString()}`);
+            console.log(`🎉 ${itemLabel} ${item_id} featured until ${featuredUntil.toISOString()}`);
             
           } catch (firebaseError) {
             console.error('❌ Error updating Firebase:', firebaseError);
             console.error('❌ Firebase error details:', firebaseError.code, firebaseError.message);
             
-            // Aún así devolver OK para que MP no reintente
             return NextResponse.json({ 
               received: true,
               error: 'Database error but notification acknowledged',
@@ -124,12 +127,12 @@ export async function POST(request) {
         } else if (paymentData.status === 'rejected' || paymentData.status === 'cancelled') {
           console.log(`❌ Payment ${paymentData.id} was ${paymentData.status}: ${paymentData.status_detail}`);
           
-          // Registrar pagos rechazados
-          const { product_id, user_id, amount } = paymentData.metadata || {};
-          if (product_id && user_id) {
+          const { item_id, user_id, amount, item_type } = paymentData.metadata || {};
+          if (item_id && user_id) {
             try {
               await addDoc(collection(db, 'featured_payments'), {
-                productId: product_id,
+                itemId: item_id,
+                itemType: item_type || 'product',
                 userId: user_id,
                 paymentId: paymentData.id,
                 amount: parseFloat(amount || paymentData.transaction_amount || 0),

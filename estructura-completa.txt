@@ -135,10 +135,12 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   └── ProductManager.js
 |   |   |   |   └── ProductRatingsAndComments.js
 |   |   |   └── servicios
+|   |   |   |   └── FeaturedServiceButton.js
 |   |   |   |   └── ServiceCard.js
 |   |   |   |   └── ServiceForm.js
 |   |   |   |   └── ServiceList.js
 |   |   |   |   └── ServiceManager.js
+|   |   |   |   └── ServiceRatingsAndComments.js
 |   |   |   └── StoreHeader.js
 |   |   |   └── StoreLayout.js
 |   |   |   └── StoreNavigation.js

@@ -9,14 +9,36 @@ const client = new MercadoPagoConfig({
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { productId, userId, userName, productName, amount } = body;
+    const { 
+      productId, 
+      serviceId, 
+      userId, 
+      userName, 
+      productName, 
+      serviceName, 
+      amount, 
+      type 
+    } = body;
 
-    console.log('📥 Received request:', { productId, userId, userName, productName, amount });
+    // Determinar si es producto o servicio
+    const isService = type === 'service' || serviceId;
+    const itemId = isService ? serviceId : productId;
+    const itemName = isService ? serviceName : productName;
+    const itemType = isService ? 'service' : 'product';
+
+    console.log('📥 Received request:', { 
+      itemId, 
+      userId, 
+      userName, 
+      itemName, 
+      amount, 
+      type: itemType 
+    });
 
     // Validaciones
-    if (!productId || !userId || !productName || !amount) {
+    if (!itemId || !userId || !itemName || !amount) {
       return NextResponse.json({ 
-        error: 'Datos requeridos: productId, userId, productName, amount' 
+        error: `Datos requeridos: ${itemType}Id, userId, ${itemType}Name, amount` 
       }, { status: 400 });
     }
 
@@ -32,36 +54,40 @@ export async function POST(request) {
 
     const preference = new Preference(client);
 
+    // Configurar URLs de retorno según el tipo
+    const dashboardPath = isService ? 
+      '/dashboard/tienda/servicios' : 
+      '/dashboard/tienda/productos';
+
     const preferenceData = {
       items: [
         {
-          id: productId,
-          title: `Destacar: ${productName}`,
-          description: 'Destacar producto por 7 días en Family Market',
+          id: itemId,
+          title: `Destacar: ${itemName}`,
+          description: `Destacar ${itemType === 'service' ? 'servicio' : 'producto'} por 7 días en Family Market`,
           quantity: 1,
           unit_price: parseFloat(amount),
           currency_id: 'ARS'
         }
       ],
       back_urls: {
-        success: `${baseUrl}/payment/success?product_id=${productId}`,
-        failure: `${baseUrl}/dashboard/tienda/productos?payment=failed`,
-        pending: `${baseUrl}/dashboard/tienda/productos?payment=pending`
+        success: `${baseUrl}/payment/success?${itemType}_id=${itemId}`,
+        failure: `${baseUrl}${dashboardPath}?payment=failed`,
+        pending: `${baseUrl}${dashboardPath}?payment=pending`
       },
       auto_return: 'approved',
-      // ✅ ESTO ES CRUCIAL - notification_url
       notification_url: `${baseUrl}/api/mercadopago/webhook`,
-      // ✅ USAR EL FORMATO CORRECTO para external_reference  
-      external_reference: `product_${productId}_${userId}`,
+      // External reference con formato: tipo_id_userId
+      external_reference: `${itemType}_${itemId}_${userId}`,
       payer: {
         name: userName || 'Usuario Family Market'
       },
-      // ✅ CORREGIR LOS NOMBRES DE LOS CAMPOS en metadata
       metadata: {
-        product_id: productId,     // ⬅️ Cambiar productId → product_id
-        user_id: userId,           // ⬅️ Cambiar userId → user_id
-        type: 'featured_product',
-        amount: amount.toString()
+        item_id: itemId,
+        user_id: userId,
+        type: `featured_${itemType}`,
+        amount: amount.toString(),
+        item_type: itemType
       }
     };
 

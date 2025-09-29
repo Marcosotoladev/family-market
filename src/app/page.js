@@ -17,9 +17,14 @@ export default function HomePage() {
         <HeroCarousel />
       </section>
 
-            {/* Productos Destacados */}
+      {/* Productos Destacados */}
       <section className="pb-2 lg:pb-4">
         <FeaturedProducts />
+      </section>
+
+      {/* Servicios Destacados */}
+      <section className="pb-2 lg:pb-4">
+        <FeaturedServices />
       </section>
 
       {/* Sección de What's New */}
@@ -51,6 +56,6 @@ export default function HomePage() {
       {/* Footer */}
 
       <NotificationManager />
-      </>
+    </>
   )
 }

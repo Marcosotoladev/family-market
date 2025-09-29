@@ -9,8 +9,15 @@ import Link from 'next/link';
 function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const productId = searchParams.get('product_id');
+  const serviceId = searchParams.get('service_id');
   const status = searchParams.get('status');
   const paymentId = searchParams.get('payment_id');
+
+  const isService = !!serviceId;
+  const itemId = isService ? serviceId : productId;
+  const itemType = isService ? 'servicio' : 'producto';
+  const dashboardPath = isService ? '/dashboard/tienda/servicios' : '/dashboard/tienda/productos';
+  const sectionLabel = isService ? 'Servicios Destacados' : 'Productos Destacados';
 
   return (
     <div className="max-w-md w-full">
@@ -21,7 +28,7 @@ function PaymentSuccessContent() {
             ¡Pago Exitoso!
           </h1>
           <p className="text-gray-600 dark:text-gray-400">
-            Tu producto ahora está destacado por 7 días
+            Tu {itemType} ahora está destacado por 7 días
           </p>
           
           {paymentId && (
@@ -34,7 +41,7 @@ function PaymentSuccessContent() {
         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4 mb-6">
           <div className="flex items-center justify-center space-x-2 text-yellow-700 dark:text-yellow-300 mb-2">
             <Star className="w-5 h-5 fill-current" />
-            <span className="font-medium">Producto Destacado</span>
+            <span className="font-medium">{itemType === 'servicio' ? 'Servicio' : 'Producto'} Destacado</span>
           </div>
           <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
             Aparecerá en la sección principal del home
@@ -45,7 +52,7 @@ function PaymentSuccessContent() {
               Beneficios activos:
             </h3>
             <ul className="text-xs text-gray-600 dark:text-gray-400 space-y-1">
-              <li>✅ Aparece en sección "Productos Destacados"</li>
+              <li>✅ Aparece en sección "{sectionLabel}"</li>
               <li>✅ Badge especial de "DESTACADO"</li>
               <li>✅ Mayor visibilidad y contactos</li>
               <li>✅ Duración: 7 días completos</li>
@@ -55,11 +62,11 @@ function PaymentSuccessContent() {
 
         <div className="space-y-3">
           <Link
-            href="/dashboard/tienda/productos"
+            href={dashboardPath}
             className="w-full bg-orange-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-orange-700 transition-colors flex items-center justify-center space-x-2"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>Volver a mis productos</span>
+            <span>Volver a mis {itemType}s</span>
           </Link>
           
           <Link
@@ -67,7 +74,7 @@ function PaymentSuccessContent() {
             className="w-full border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 px-6 py-3 rounded-lg font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
           >
             <Star className="w-4 h-4" />
-            <span>Ver productos destacados</span>
+            <span>Ver {itemType}s destacados</span>
           </Link>
         </div>
 
