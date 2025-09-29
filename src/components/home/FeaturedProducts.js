@@ -5,7 +5,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { collection, query, where, getDocs, orderBy, doc, getDoc, limit} from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { Star, ChevronLeft, ChevronRight } from 'lucide-react';
-import ProductCard from '@/components/tienda/productos/ProductCard'; // Importar ProductCard
+import ProductCard from '@/components/tienda/productos/ProductCard';
 
 export default function FeaturedProducts() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -35,29 +35,28 @@ export default function FeaturedProducts() {
   }, []);
 
   const loadFeaturedProducts = async () => {
-  try {
-    setLoading(true);
-    setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-    const now = new Date();
-    const productsRef = collection(db, 'productos');
-    const q = query(
-      productsRef,
-      where('featured', '==', true),
-      where('featuredUntil', '>', now),
-      where('estado', '==', 'disponible'),
-      orderBy('featuredUntil', 'desc'),
-      orderBy('fechaDestacado', 'desc'),
-      limit(20)
-    );
+      const now = new Date();
+      const productsRef = collection(db, 'productos');
+      const q = query(
+        productsRef,
+        where('featured', '==', true),
+        where('featuredUntil', '>', now),
+        where('estado', '==', 'disponible'),
+        orderBy('featuredUntil', 'desc'),
+        orderBy('fechaDestacado', 'desc'),
+        limit(20)
+      );
 
-    const querySnapshot = await getDocs(q);
-    const products = [];
-    const userIds = new Set();
+      const querySnapshot = await getDocs(q);
+      const products = [];
 
       for (const docSnapshot of querySnapshot.docs) {
         const productData = { id: docSnapshot.id, ...docSnapshot.data() };
-        
+
         try {
           const userDoc = await getDoc(doc(db, 'users', productData.usuarioId));
           if (userDoc.exists()) {
@@ -78,23 +77,21 @@ export default function FeaturedProducts() {
             phone: ''
           };
         }
-        
+
         products.push(productData);
       }
 
-    setFeaturedProducts(products);
-  } catch (error) {
-    console.error('Error loading featured products:', error);
-    setError('Error cargando productos destacados');
-    setFeaturedProducts([]);
-  } finally {
-    setLoading(false);
-  }
-};
+      setFeaturedProducts(products);
+    } catch (error) {
+      console.error('Error loading featured products:', error);
+      setError('Error cargando productos destacados');
+      setFeaturedProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  // Función para manejar click en producto
   const handleProductClick = (product) => {
-    // Navegar a la página del producto
     const storeSlug = product.tiendaInfo?.slug || product.storeData?.storeSlug;
     if (storeSlug && product.id) {
       const url = `https://familymarket.vercel.app/tienda/${storeSlug}/producto/${product.id}`;
@@ -104,23 +101,20 @@ export default function FeaturedProducts() {
     }
   };
 
-  // Ajustar items por vista
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth >= 768 && windowWidth < 1024;
-  const isDesktop = windowWidth >= 1024;
-  
+
   let itemsPerView;
   if (isMobile) {
-    itemsPerView = 2; // 2 productos en móvil
+    itemsPerView = 2;
   } else if (isTablet) {
-    itemsPerView = 3; // 3 productos en tablet
+    itemsPerView = 3;
   } else {
-    itemsPerView = 5; // 5 productos en desktop
+    itemsPerView = 5;
   }
 
   const maxIndex = Math.max(0, featuredProducts.length - itemsPerView);
 
-  // Función para animar suavemente hacia un índice específico
   const animateToIndex = useCallback((targetIndex) => {
     const clampedIndex = Math.max(0, Math.min(maxIndex, targetIndex));
     setIsTransitioning(true);
@@ -129,7 +123,6 @@ export default function FeaturedProducts() {
     setTimeout(() => setIsTransitioning(false), 300);
   }, [maxIndex]);
 
-  // Navegación con botones
   const goToPrevious = () => {
     if (currentIndex > 0) {
       animateToIndex(currentIndex - 1);
@@ -142,7 +135,6 @@ export default function FeaturedProducts() {
     }
   };
 
-  // Manejo del arrastre
   const handleDragStart = useCallback((clientX) => {
     if (isTransitioning) return;
     setIsDragging(true);
@@ -188,7 +180,6 @@ export default function FeaturedProducts() {
     animateToIndex(targetIndex);
   }, [isDragging, scrollLeft, dragOffset, animateToIndex, isTransitioning]);
 
-  // Eventos táctiles
   const handleTouchStart = (e) => handleDragStart(e.touches[0].clientX);
   const handleTouchMove = (e) => {
     e.preventDefault();
@@ -196,7 +187,6 @@ export default function FeaturedProducts() {
   };
   const handleTouchEnd = () => handleDragEnd();
 
-  // Eventos del mouse
   const handleMouseDown = (e) => {
     if (isMobile) return;
     e.preventDefault();
@@ -217,7 +207,7 @@ export default function FeaturedProducts() {
   if (loading) {
     return (
       <section className="py-8 lg:py-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-2 sm:px-4 lg:px-8">
           <div className="text-center">
             <div className="w-8 h-8 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
             <p className="text-gray-600 dark:text-gray-400">Cargando productos destacados...</p>
@@ -242,10 +232,14 @@ export default function FeaturedProducts() {
   const currentOffset = currentIndex + dragOffset;
   const translateX = -(currentOffset * (100 / itemsPerView));
 
+  // Gap ajustado: muy pequeño en móvil, más grande en desktop
+  const gapClass = isMobile ? 'gap-2' : isTablet ? 'gap-4' : 'gap-6';
+
   return (
-    <section className="py-0">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header simplificado */}
+    <section className="py-0 w-full">
+      {/* Contenedor sin max-width para ancho completo */}
+      <div className="w-full px-2 sm:px-4 lg:px-8">
+        {/* Header */}
         <div className="flex items-center gap-3 mb-6">
           <div className="p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg">
             <Star className="w-6 h-6 text-white fill-current" />
@@ -290,34 +284,39 @@ export default function FeaturedProducts() {
             style={{ touchAction: 'pan-y' }}
           >
             <div
-              className="flex gap-6 will-change-transform"
+              className={`flex ${gapClass} will-change-transform`}
               style={{
                 transform: `translateX(${translateX}%)`,
                 transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
               }}
             >
-              {featuredProducts.map((product) => (
-                <div
-                  key={product.id}
-                  className={`transition-all duration-200 ${isDragging ? 'scale-[0.98]' : ''}`}
-                  style={{
-                    width: `calc(${100 / itemsPerView}% - ${24 * (itemsPerView - 1) / itemsPerView}px)`,
-                    minWidth: isMobile ? '180px' : isTablet ? '280px' : '220px', // Tamaños ajustados para el nuevo grid
-                  }}
-                >
-                  <ProductCard
-                    product={product}
-                    storeData={product.storeData}
-                    variant="featured-compact" // Usar la variante compacta optimizada para grid
-                    showContactInfo={true}
-                    showStoreInfo={true}
-                    onClick={() => handleProductClick(product)}
-                  />
-                </div>
-              ))}
+              {featuredProducts.map((product) => {
+                // Calcular el ancho considerando el gap
+                const gapPx = isMobile ? 8 : isTablet ? 16 : 24; // gap-2=8px, gap-4=16px, gap-6=24px
+                const totalGapPx = gapPx * (itemsPerView - 1);
+                
+                return (
+                  <div
+                    key={product.id}
+                    className={`flex-shrink-0 transition-all duration-200 ${isDragging ? 'scale-[0.98]' : ''}`}
+                    style={{
+                      width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
+                    }}
+                  >
+                    <ProductCard
+                      product={product}
+                      storeData={product.storeData}
+                      variant="featured-compact"
+                      showContactInfo={true}
+                      showStoreInfo={true}
+                      onClick={() => handleProductClick(product)}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
-          
+
           {/* Indicadores de posición */}
           {maxIndex > 0 && (
             <div className="flex justify-center gap-2 mt-6">
@@ -325,10 +324,11 @@ export default function FeaturedProducts() {
                 <button
                   key={i}
                   onClick={() => animateToIndex(i)}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${Math.round(currentIndex) === i
+                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                    Math.round(currentIndex) === i
                       ? 'bg-gradient-to-r from-yellow-500 to-orange-500 scale-125 shadow-md'
                       : 'bg-gray-300 dark:bg-gray-600 hover:bg-yellow-300 dark:hover:bg-yellow-600'
-                    }`}
+                  }`}
                   disabled={isDragging || isTransitioning}
                 />
               ))}
@@ -339,6 +339,4 @@ export default function FeaturedProducts() {
     </section>
   );
 }
-
-
 
