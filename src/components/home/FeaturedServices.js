@@ -29,13 +29,12 @@ export default function FeaturedServices() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Cargar servicios destacados
   useEffect(() => {
     const loadFeaturedServices = async () => {
       try {
         setLoading(true);
         const now = new Date();
-        
+
         const servicesRef = collection(db, 'servicios');
         const q = query(
           servicesRef,
@@ -45,13 +44,13 @@ export default function FeaturedServices() {
           orderBy('featuredUntil', 'desc'),
           limit(10)
         );
-        
+
         const querySnapshot = await getDocs(q);
         const services = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
-        
+
         setFeaturedServices(services);
       } catch (error) {
         console.error('Error loading featured services:', error);
@@ -65,23 +64,28 @@ export default function FeaturedServices() {
     }
   }, [isClient]);
 
-  const isMobile = windowWidth < 1024;
-  const itemsPerView = isMobile ? 2 : 5;
+  const isMobile = windowWidth < 768;
+  const isTablet = windowWidth >= 768 && windowWidth < 1024;
+
+  let itemsPerView;
+  if (isMobile) {
+    itemsPerView = 2;
+  } else if (isTablet) {
+    itemsPerView = 3;
+  } else {
+    itemsPerView = 5;
+  }
+
   const maxIndex = Math.max(0, featuredServices.length - itemsPerView);
 
-  // Función para animar suavemente hacia un índice específico
   const animateToIndex = useCallback((targetIndex) => {
     const clampedIndex = Math.max(0, Math.min(maxIndex, targetIndex));
     setIsTransitioning(true);
     setCurrentIndex(clampedIndex);
     setDragOffset(0);
-
-    setTimeout(() => {
-      setIsTransitioning(false);
-    }, 300);
+    setTimeout(() => setIsTransitioning(false), 300);
   }, [maxIndex]);
 
-  // Manejo del inicio del arrastre
   const handleDragStart = useCallback((clientX) => {
     if (isTransitioning) return;
     setIsDragging(true);
@@ -92,7 +96,6 @@ export default function FeaturedServices() {
     }
   }, [currentIndex, isTransitioning]);
 
-  // Manejo del movimiento durante el arrastre
   const handleDragMove = useCallback((clientX) => {
     if (!isDragging || isTransitioning) return;
 
@@ -116,7 +119,6 @@ export default function FeaturedServices() {
     });
   }, [isDragging, startX, scrollLeft, itemsPerView, maxIndex, isTransitioning]);
 
-  // Manejo del final del arrastre
   const handleDragEnd = useCallback(() => {
     if (!isDragging || isTransitioning) return;
     setIsDragging(false);
@@ -133,7 +135,6 @@ export default function FeaturedServices() {
     animateToIndex(targetIndex);
   }, [isDragging, scrollLeft, dragOffset, animateToIndex, isTransitioning]);
 
-  // Eventos táctiles
   const handleTouchStart = (e) => {
     handleDragStart(e.touches[0].clientX);
   };
@@ -147,7 +148,6 @@ export default function FeaturedServices() {
     handleDragEnd();
   };
 
-  // Eventos del mouse
   const handleMouseDown = (e) => {
     if (isMobile) return;
     e.preventDefault();
@@ -176,7 +176,6 @@ export default function FeaturedServices() {
     };
   }, []);
 
-  // Botones de navegación
   const handlePrev = () => {
     if (currentIndex > 0) {
       animateToIndex(currentIndex - 1);
@@ -192,7 +191,7 @@ export default function FeaturedServices() {
   if (!isClient || loading) {
     return (
       <section className="pb-2 lg:pb-4">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-2 sm:px-4 lg:px-8">
           <div className="text-center py-8">
             <div className="w-8 h-8 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
             <p className="mt-4 text-gray-600 dark:text-gray-400">Cargando servicios destacados...</p>
@@ -209,9 +208,13 @@ export default function FeaturedServices() {
   const currentOffset = currentIndex + dragOffset;
   const translateX = -(currentOffset * (100 / itemsPerView));
 
+  // Gap ajustado: muy pequeño en móvil, más grande en desktop
+  const gapClass = isMobile ? 'gap-2' : isTablet ? 'gap-4' : 'gap-6';
+
   return (
-    <section className="pb-2 lg:pb-4">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="pb-2 lg:pb-4 w-full">
+      {/* Contenedor sin max-width para ancho completo */}
+      <div className="w-full px-2 sm:px-4 lg:px-8">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
@@ -223,11 +226,11 @@ export default function FeaturedServices() {
               <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
                 Servicios Destacados
               </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600 dark:text-gray-400 hidden sm:block">
                 Los mejores servicios seleccionados para ti
               </p>
             </div>
-            <div className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full flex items-center gap-1">
+            <div className="px-2 py-1 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs font-medium rounded-full flex items-center gap-1 hidden md:flex">
               <TrendingUp className="w-3 h-3" />
               <span>Premium</span>
             </div>
@@ -269,50 +272,56 @@ export default function FeaturedServices() {
             style={{ touchAction: 'pan-y' }}
           >
             <div
-              className="flex gap-4 will-change-transform"
+              className={`flex ${gapClass} will-change-transform`}
               style={{
                 transform: `translateX(${translateX}%)`,
                 transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
               }}
             >
-              {featuredServices.map((service) => (
-                <div
-                  key={service.id}
-                  className={`flex-shrink-0 transition-all duration-200 ${
-                    isDragging ? 'scale-[0.98]' : ''
-                  }`}
-                  style={{
-                    width: `calc(${100 / itemsPerView}% - ${16 * (itemsPerView - 1) / itemsPerView}px)`,
-                  }}
-                >
-                  <ServiceCard
-                    service={service}
-                    storeData={service.tiendaInfo}
-                    variant="featured-compact"
-                    showContactInfo={true}
-                    showStoreInfo={true}
-                    onClick={() => {
-                      if (!isDragging) {
-                        window.location.href = `/tienda/${service.tiendaInfo?.slug}/servicio/${service.id}`;
-                      }
+              {featuredServices.map((service) => {
+                // Calcular el ancho considerando el gap
+                const gapPx = isMobile ? 8 : isTablet ? 16 : 24; // gap-2=8px, gap-4=16px, gap-6=24px
+                const totalGapPx = gapPx * (itemsPerView - 1);
+                
+                return (
+                  <div
+                    key={service.id}
+                    className={`flex-shrink-0 transition-all duration-200 ${
+                      isDragging ? 'scale-[0.98]' : ''
+                    }`}
+                    style={{
+                      width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
                     }}
-                  />
-                </div>
-              ))}
+                  >
+                    <ServiceCard
+                      service={service}
+                      storeData={service.tiendaInfo}
+                      variant="featured-compact"
+                      showContactInfo={true}
+                      showStoreInfo={true}
+                      onClick={() => {
+                        if (!isDragging) {
+                          window.location.href = `/tienda/${service.tiendaInfo?.slug}/servicio/${service.id}`;
+                        }
+                      }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </div>
 
-          {/* Indicadores de posición (solo en mobile) */}
-          {isMobile && maxIndex > 0 && (
-            <div className="flex justify-center gap-2 mt-4">
+          {/* Indicadores de posición */}
+          {maxIndex > 0 && (
+            <div className="flex justify-center gap-2 mt-6">
               {Array.from({ length: maxIndex + 1 }, (_, i) => (
                 <button
                   key={i}
                   onClick={() => animateToIndex(i)}
-                  className={`w-2 h-2 rounded-full transition-all duration-200 ${
+                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
                     Math.round(currentIndex) === i
-                      ? 'bg-blue-500 scale-125'
-                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-blue-300'
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 scale-125 shadow-md'
+                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-blue-300 dark:hover:bg-blue-600'
                   }`}
                   disabled={isDragging || isTransitioning}
                 />
