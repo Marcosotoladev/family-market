@@ -61,7 +61,7 @@ export default function RootLayout({ children }) {
               
                 {/* Contenido principal */}
                 <main className="pb-20 lg:pb-8">
-                  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                  <div className="max-w-7xl lg:px-8">
                     {children}
                   </div>
                 </main>
