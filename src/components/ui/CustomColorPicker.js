@@ -1,4 +1,3 @@
-// src/components/ui/CustomColorPicker.js
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { ChevronDown } from 'lucide-react';
 
@@ -132,11 +131,18 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
     if (!gradientRef.current) return;
     
     const rect = gradientRef.current.getBoundingClientRect();
-    const x = event.clientX - rect.left;
-    const y = event.clientY - rect.top;
+    const x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
+    const y = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
     
-    const newSaturation = Math.max(0, Math.min(100, (x / rect.width) * 100));
-    const newLightness = Math.max(0, Math.min(100, 100 - (y / rect.height) * 100));
+    // Normalizar coordenadas (0-1)
+    const xPercent = x / rect.width;
+    const yPercent = y / rect.height;
+    
+    // Saturación: 0% (izquierda) a 100% (derecha)
+    const newSaturation = xPercent * 100;
+    
+    // Luminosidad: 100% (arriba) a 0% (abajo) - mapeo lineal simple
+    const newLightness = (1 - yPercent) * 100;
     
     setSaturation(newSaturation);
     setLightness(newLightness);
@@ -179,24 +185,22 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
           <div className="mb-4">
             <div
               ref={gradientRef}
-              className="relative w-full h-48 rounded-lg cursor-crosshair border border-gray-200 dark:border-gray-600"
+              className="relative w-full h-48 rounded-lg cursor-crosshair border border-gray-200 dark:border-gray-600 overflow-hidden"
               style={{
-                background: `linear-gradient(to bottom, 
-                  hsl(${hue}, 100%, 50%) 0%, 
-                  hsla(${hue}, 100%, 50%, 0) 50%, 
-                  hsl(0, 0%, 0%) 100%), 
-                  linear-gradient(to right, 
-                  hsl(0, 0%, 100%) 0%, 
-                  hsla(0, 0%, 100%, 0) 100%)`
+                background: `
+                  linear-gradient(to bottom, rgba(0,0,0,0), rgba(0,0,0,1)),
+                  linear-gradient(to right, rgba(255,255,255,1), rgba(255,255,255,0)),
+                  hsl(${hue}, 100%, 50%)`
               }}
               onClick={handleGradientClick}
             >
               {/* Cursor indicator */}
               <div
-                className="absolute w-3 h-3 border-2 border-white rounded-full shadow-lg transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+                className="absolute w-4 h-4 border-2 border-white rounded-full shadow-lg transform -translate-x-1/2 -translate-y-1/2 pointer-events-none"
                 style={{
                   left: `${saturation}%`,
-                  top: `${100 - lightness}%`
+                  top: `${100 - lightness}%`,
+                  boxShadow: '0 0 0 1px rgba(0,0,0,0.3), 0 2px 4px rgba(0,0,0,0.2)'
                 }}
               />
             </div>
@@ -223,60 +227,62 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
           </div>
 
           {/* RGB Inputs */}
-          <div className="grid grid-cols-4 gap-2 mb-4">
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">R</label>
-              <input
-                type="number"
-                min="0"
-                max="255"
-                value={rgbValues.r}
-                onChange={(e) => {
-                  const r = Math.max(0, Math.min(255, Number(e.target.value)));
-                  const newHex = `#${r.toString(16).padStart(2, '0')}${rgbValues.g.toString(16).padStart(2, '0')}${rgbValues.b.toString(16).padStart(2, '0')}`;
-                  setIsUpdating(true);
-                  onChange(newHex);
-                  setTimeout(() => setIsUpdating(false), 0);
-                }}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
+          <div className="mb-4">
+            <div className="grid grid-cols-3 gap-2 mb-2">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">R</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="255"
+                  value={rgbValues.r}
+                  onChange={(e) => {
+                    const r = Math.max(0, Math.min(255, Number(e.target.value)));
+                    const newHex = `#${r.toString(16).padStart(2, '0')}${rgbValues.g.toString(16).padStart(2, '0')}${rgbValues.b.toString(16).padStart(2, '0')}`;
+                    setIsUpdating(true);
+                    onChange(newHex);
+                    setTimeout(() => setIsUpdating(false), 0);
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">G</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="255"
+                  value={rgbValues.g}
+                  onChange={(e) => {
+                    const g = Math.max(0, Math.min(255, Number(e.target.value)));
+                    const newHex = `#${rgbValues.r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${rgbValues.b.toString(16).padStart(2, '0')}`;
+                    setIsUpdating(true);
+                    onChange(newHex);
+                    setTimeout(() => setIsUpdating(false), 0);
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">B</label>
+                <input
+                  type="number"
+                  min="0"
+                  max="255"
+                  value={rgbValues.b}
+                  onChange={(e) => {
+                    const b = Math.max(0, Math.min(255, Number(e.target.value)));
+                    const newHex = `#${rgbValues.r.toString(16).padStart(2, '0')}${rgbValues.g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
+                    setIsUpdating(true);
+                    onChange(newHex);
+                    setTimeout(() => setIsUpdating(false), 0);
+                  }}
+                  className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
+                />
+              </div>
             </div>
             <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">G</label>
-              <input
-                type="number"
-                min="0"
-                max="255"
-                value={rgbValues.g}
-                onChange={(e) => {
-                  const g = Math.max(0, Math.min(255, Number(e.target.value)));
-                  const newHex = `#${rgbValues.r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${rgbValues.b.toString(16).padStart(2, '0')}`;
-                  setIsUpdating(true);
-                  onChange(newHex);
-                  setTimeout(() => setIsUpdating(false), 0);
-                }}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">B</label>
-              <input
-                type="number"
-                min="0"
-                max="255"
-                value={rgbValues.b}
-                onChange={(e) => {
-                  const b = Math.max(0, Math.min(255, Number(e.target.value)));
-                  const newHex = `#${rgbValues.r.toString(16).padStart(2, '0')}${rgbValues.g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-                  setIsUpdating(true);
-                  onChange(newHex);
-                  setTimeout(() => setIsUpdating(false), 0);
-                }}
-                className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Hex</label>
+              <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Hexadecimal</label>
               <input
                 type="text"
                 value={value}
@@ -322,4 +328,20 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
   );
 };
 
-export default CustomColorPicker;
+// Demo Component
+const Demo = () => {
+  const [color, setColor] = useState('#3b82f6');
+  
+  return (
+    <div className="bg-gray-50 dark:bg-gray-900 p-8">
+      <div className="w-full max-w-md mx-auto">
+        <CustomColorPicker 
+          value={color} 
+          onChange={setColor}
+        />
+      </div>
+    </div>
+  );
+};
+
+export default Demo;

@@ -13,6 +13,7 @@ export default function BusinessInfoSection({ showMessage }) {
   const [formData, setFormData] = useState({
     businessName: '',
     familyName: '',
+    slogan: '',
     storeSlug: ''
   });
   
@@ -23,6 +24,7 @@ export default function BusinessInfoSection({ showMessage }) {
       setFormData({
         businessName: userData.businessName || '',
         familyName: userData.familyName || '',
+        slogan: userData.slogan || '',
         storeSlug: userData.storeSlug || ''
       });
     }
@@ -126,6 +128,23 @@ export default function BusinessInfoSection({ showMessage }) {
 
         <div>
           <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Slogan de la Tienda
+          </label>
+          <input
+            type="text"
+            name="slogan"
+            value={formData.slogan}
+            onChange={handleInputChange}
+            placeholder="Ej: Tu tienda familiar de confianza"
+            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Una frase corta que describa tu negocio (opcional)
+          </p>
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
             URL de la Tienda
           </label>
           <div className="flex flex-col sm:flex-row">
@@ -138,29 +157,29 @@ export default function BusinessInfoSection({ showMessage }) {
               value={formData.storeSlug}
               onChange={handleInputChange}
               className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-b-lg sm:rounded-b-none sm:rounded-r-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white min-w-0"
-            placeholder="mi-tienda"
-          />
+              placeholder="mi-tienda"
+            />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Solo letras, números y guiones. Ejemplo: mi-tienda-familiar
+          </p>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Solo letras, números y guiones. Ejemplo: mi-tienda-familiar
-        </p>
-      </div>
 
-      <div className="flex justify-end">
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-        >
-          {loading ? (
-            <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-          ) : (
-            <Save className="w-4 h-4 mr-2" />
-          )}
-          {loading ? 'Guardando...' : 'Guardar Cambios'}
-        </button>
-      </div>
-    </form>
-  </div>
-);
-};
+        <div className="flex justify-end">
+          <button
+            type="submit"
+            disabled={loading}
+            className="flex items-center px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          >
+            {loading ? (
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+            ) : (
+              <Save className="w-4 h-4 mr-2" />
+            )}
+            {loading ? 'Guardando...' : 'Guardar Cambios'}
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

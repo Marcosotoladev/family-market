@@ -156,7 +156,7 @@ export default function StorePage() {
               Bienvenidos a {storeData.businessName || storeData.familyName}
             </h1>
             <p className="text-xl opacity-90 max-w-2xl mx-auto">
-              Productos y servicios de calidad, hechos con amor para tu familia
+              {storeData.slogan || 'Productos y servicios de calidad, hechos con amor para tu familia'}
             </p>
           </div>
         </section>
