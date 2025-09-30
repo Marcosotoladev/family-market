@@ -32,12 +32,6 @@ export default function HomePage() {
         <WhatsNew />
       </section>
 
-
-      {/* Servicios Destacados */}
-      <section className="pb-2 lg:pb-4">
-        <FeaturedServices />
-      </section>
-
       {/* Empleos Destacados */}
       <section className="pb-2 lg:pb-4">
         <FeaturedJobs />

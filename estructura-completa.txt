@@ -141,10 +141,14 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   └── ServiceList.js
 |   |   |   |   └── ServiceManager.js
 |   |   |   |   └── ServiceRatingsAndComments.js
+|   |   |   └── StoreGallerySection.js
 |   |   |   └── StoreHeader.js
+|   |   |   └── StoreJobsSection.js
 |   |   |   └── StoreLayout.js
 |   |   |   └── StoreNavigation.js
 |   |   |   └── StoreProductsSection.js
+|   |   |   └── StoreServicesSection.js
+|   |   |   └── StoreTestimonialsSection.js
 |   |   └── ui
 |   |   |   └── CustomColorPicker.js
 |   |   |   └── ImageUpload.js

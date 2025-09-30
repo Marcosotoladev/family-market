@@ -321,4 +321,6 @@ export const CATEGORIAS_PRODUCTOS = {
       OTRO: 'otro'
     }
   }
+
+  
 }

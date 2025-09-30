@@ -8,12 +8,16 @@ import { db } from '@/lib/firebase/config';
 import { getPublicStoreConfig } from '@/lib/storeConfigUtils';
 import StoreLayout from '@/components/tienda/StoreLayout';
 import StoreProductsSection from '@/components/tienda/StoreProductsSection';
+import StoreServicesSection from '@/components/tienda/StoreServicesSection';
+import StoreJobsSection from '@/components/tienda/StoreJobsSection';
+import StoreGallerySection from '@/components/tienda/StoreGallerySection';
+import StoreTestimonialsSection from '@/components/tienda/StoreTestimonialsSection';
 import { Store, Loader2 } from 'lucide-react';
 
 export default function StorePage() {
   const params = useParams();
   const { slug } = params;
-  
+
   const [storeData, setStoreData] = useState(null);
   const [storeConfig, setStoreConfig] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -26,32 +30,32 @@ export default function StorePage() {
       try {
         console.log('Buscando tienda con slug:', slug);
         setLoading(true);
-        
+
         // Buscar usuario por storeSlug
         const usersRef = collection(db, 'users');
         const q = query(usersRef, where('storeSlug', '==', slug));
         const querySnapshot = await getDocs(q);
-        
+
         if (querySnapshot.empty) {
           setError('Tienda no encontrada');
           return;
         }
-        
+
         const userDoc = querySnapshot.docs[0];
         const userData = { id: userDoc.id, ...userDoc.data() };
-        
+
         // Verificar que la cuenta esté aprobada
         if (userData.accountStatus !== 'approved' && userData.accountStatus !== 'true') {
           setError('Esta tienda no está disponible');
           return;
         }
-        
+
         // Obtener configuración de la tienda
         const config = await getPublicStoreConfig(userData.id);
-        
+
         setStoreData(userData);
         setStoreConfig(config);
-        
+
       } catch (error) {
         console.error('Error al cargar la tienda:', error);
         setError('Error al cargar la tienda');
@@ -69,7 +73,7 @@ export default function StorePage() {
   useEffect(() => {
     if (storeConfig) {
       const root = document.documentElement;
-      
+
       if (storeConfig.primaryColor) {
         root.style.setProperty('--store-primary-color', storeConfig.primaryColor);
       }
@@ -77,7 +81,7 @@ export default function StorePage() {
         root.style.setProperty('--store-secondary-color', storeConfig.secondaryColor);
       }
     }
-    
+
     return () => {
       const root = document.documentElement;
       root.style.removeProperty('--store-primary-color');
@@ -131,7 +135,7 @@ export default function StorePage() {
     return null;
   }
 
-  const heroGradient = storeConfig.primaryColor && storeConfig.secondaryColor 
+  const heroGradient = storeConfig.primaryColor && storeConfig.secondaryColor
     ? `linear-gradient(135deg, ${storeConfig.primaryColor} 0%, ${storeConfig.secondaryColor} 100%)`
     : 'linear-gradient(135deg, #ea580c 0%, #dc2626 100%)';
 
@@ -143,7 +147,7 @@ export default function StorePage() {
         onSearch={handleSearch}
       >
         {/* Hero Section */}
-        <section 
+        <section
           className="text-white py-12 lg:py-16"
           style={{ background: heroGradient }}
         >
@@ -172,58 +176,41 @@ export default function StorePage() {
 
         {/* Servicios */}
         {storeConfig.showServices && (
-          <section id="servicios" className="py-8 lg:py-12 bg-white dark:bg-gray-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                Nuestros Servicios
-              </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                Próximamente...
-              </p>
-            </div>
-          </section>
+          <StoreServicesSection
+            storeId={storeData.id}
+            storeData={storeData}
+            storeConfig={storeConfig}
+            searchQuery={searchQuery}
+            showFilters={false}
+            maxServices={6}
+            variant="grid"
+          />
         )}
 
         {/* Empleos */}
         {storeConfig.showJobs && (
-          <section id="empleos" className="py-8 lg:py-12 bg-gray-50 dark:bg-gray-900">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                Oportunidades de Empleo
-              </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                Únete a nuestro equipo
-              </p>
-            </div>
-          </section>
+          <StoreJobsSection
+            storeId={storeData.id}
+            storeData={storeData}
+            maxJobs={3}
+          />
         )}
 
         {/* Galería */}
         {storeConfig.showGallery && (
-          <section id="galeria" className="py-8 lg:py-12 bg-white dark:bg-gray-800">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                Galería
-              </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                Conoce más sobre nosotros
-              </p>
-            </div>
-          </section>
+          <StoreGallerySection
+            storeData={storeData}
+            maxImages={10}
+          />
         )}
 
         {/* Testimonios */}
         {storeConfig.showTestimonials && (
-          <section id="testimonios" className="py-8 lg:py-12 bg-gray-50 dark:bg-gray-900">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-              <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-                Testimonios
-              </h2>
-              <p className="text-lg text-gray-600 dark:text-gray-400">
-                Lo que dicen nuestros clientes
-              </p>
-            </div>
-          </section>
+          <StoreTestimonialsSection
+            storeId={storeData.id}
+            storeData={storeData}
+            maxTestimonials={6}
+          />
         )}
 
         {/* Nosotros - Resumen */}
@@ -237,26 +224,26 @@ export default function StorePage() {
                 Conoce nuestra historia, valores y compromiso
               </p>
             </div>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
               <div>
                 <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
                   Nuestra Historia
                 </h3>
                 <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Somos una familia dedicada a ofrecer productos y servicios de calidad, 
+                  Somos una familia dedicada a ofrecer productos y servicios de calidad,
                   con valores cristianos y compromiso con nuestra comunidad.
                 </p>
                 <p className="text-gray-600 dark:text-gray-400">
                   Todo lo que hacemos está elaborado con ingredientes frescos y mucho amor.
                 </p>
               </div>
-              
+
               <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-6">
                 <h4 className="font-semibold text-gray-900 dark:text-white mb-4">
                   Información de Contacto
                 </h4>
-                
+
                 <div className="space-y-3 text-sm">
                   {storeData.phone && (
                     <div className="flex items-center space-x-2">
@@ -264,14 +251,14 @@ export default function StorePage() {
                       <span className="text-gray-600 dark:text-gray-400">{storeData.phone}</span>
                     </div>
                   )}
-                  
+
                   {storeData.email && (
                     <div className="flex items-center space-x-2">
                       <span className="font-medium text-gray-700 dark:text-gray-300">Email:</span>
                       <span className="text-gray-600 dark:text-gray-400">{storeData.email}</span>
                     </div>
                   )}
-                  
+
                   {storeData.address && (
                     <div className="flex items-center space-x-2">
                       <span className="font-medium text-gray-700 dark:text-gray-300">Dirección:</span>
@@ -281,7 +268,7 @@ export default function StorePage() {
                 </div>
               </div>
             </div>
-            
+
             <div className="text-center">
               <a
                 href={`/tienda/${slug}/nosotros`}

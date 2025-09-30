@@ -375,12 +375,12 @@ export default function ServiceCard({
           </div>
 
           {/* Badge de modalidad */}
-          <div className="absolute top-2 left-2">
+{/*           <div className="absolute top-2 left-2">
             <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-500 text-white shadow-md">
               {getModalidadIcon(service.modalidad)}
               <span className="ml-1">{formatearModalidad(service.modalidad)}</span>
             </span>
-          </div>
+          </div> */}
         </div>
 
         {/* Contenido compacto */}
@@ -591,12 +591,12 @@ export default function ServiceCard({
           </div>
 
           {/* Badge de modalidad grande */}
-          <div className="absolute top-4 left-4">
+{/*           <div className="absolute top-4 left-4">
             <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-500 text-white shadow-lg">
               {getModalidadIcon(service.modalidad)}
               <span className="ml-2">{formatearModalidad(service.modalidad)}</span>
             </span>
-          </div>
+          </div> */}
         </div>
 
         {/* Contenido completo */}
@@ -811,12 +811,12 @@ export default function ServiceCard({
           </div>
 
           {/* Badge de modalidad */}
-          <div className="absolute top-3 left-3">
+{/*           <div className="absolute top-3 left-3">
             <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500 text-white shadow-md">
               {getModalidadIcon(service.modalidad)}
               <span className="ml-1">{formatearModalidad(service.modalidad)}</span>
             </span>
-          </div>
+          </div> */}
 
           {/* Badge de estado si NO está disponible */}
           {service.estado && service.estado !== 'disponible' && (
