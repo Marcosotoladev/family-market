@@ -1,8 +1,8 @@
 // src/components/dashboard/FavoritesSection.js
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useAuth } from '@/contexts/AuthContext';
+import { useState } from 'react';
+import { useFavorites } from '@/lib/hooks/useFavorites';
 import { 
   Heart, 
   Package, 
@@ -10,122 +10,25 @@ import {
   Briefcase,
   Search,
   MapPin,
-  DollarSign,
-  Calendar,
   ExternalLink,
   Trash2,
   Grid3X3,
   List,
-  Filter
+  AlertCircle
 } from 'lucide-react';
 
 export default function FavoritesSection() {
-  const { userData } = useAuth();
-  const [activeTab, setActiveTab] = useState('all'); // 'all' | 'product' | 'service' | 'job'
-  const [favorites, setFavorites] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    favorites, 
+    loading, 
+    error,
+    removeFavoriteById,
+    getFavoritesByType 
+  } = useFavorites();
+  
+  const [activeTab, setActiveTab] = useState('all');
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('grid'); // 'grid' | 'list'
-
-  // Mock data - reemplazar con llamadas a Firebase
-  useEffect(() => {
-    // Simular carga de datos
-    setTimeout(() => {
-      setFavorites([
-        {
-          id: '1',
-          itemId: 'prod_1',
-          itemType: 'product',
-          createdAt: new Date('2025-09-12'),
-          itemData: {
-            title: 'Tomates orgánicos',
-            description: 'Tomates frescos cultivados sin pesticidas',
-            price: 850,
-            image: 'https://images.unsplash.com/photo-1546470427-e2544e1b6e8e?w=400&h=300&fit=crop',
-            ownerName: 'María González',
-            ownerFamily: 'Familia González',
-            location: 'Nueva Córdoba'
-          }
-        },
-        {
-          id: '2',
-          itemId: 'serv_1',
-          itemType: 'service',
-          createdAt: new Date('2025-09-10'),
-          itemData: {
-            title: 'Plomería a domicilio',
-            description: 'Reparación de caños y grifería',
-            price: 2500,
-            image: 'https://images.unsplash.com/photo-1621905251189-08b45d6a269e?w=400&h=300&fit=crop',
-            ownerName: 'Carlos Méndez',
-            ownerFamily: 'Familia Méndez',
-            location: 'Centro'
-          }
-        },
-        {
-          id: '3',
-          itemId: 'job_1',
-          itemType: 'job',
-          createdAt: new Date('2025-09-08'),
-          itemData: {
-            title: 'Desarrollador Frontend',
-            description: 'React.js y Next.js para e-commerce',
-            price: null,
-            image: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=400&h=300&fit=crop',
-            ownerName: 'Ana López',
-            ownerFamily: 'Familia López',
-            location: 'Remoto/Córdoba'
-          }
-        },
-        {
-          id: '4',
-          itemId: 'prod_2',
-          itemType: 'product',
-          createdAt: new Date('2025-09-05'),
-          itemData: {
-            title: 'Pan casero integral',
-            description: 'Pan artesanal con semillas',
-            price: 450,
-            image: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?w=400&h=300&fit=crop',
-            ownerName: 'Luis Fernández',
-            ownerFamily: 'Familia Fernández',
-            location: 'Güemes'
-          }
-        },
-        {
-          id: '5',
-          itemId: 'serv_2',
-          itemType: 'service',
-          createdAt: new Date('2025-09-03'),
-          itemData: {
-            title: 'Clases de guitarra',
-            description: 'Clases particulares de guitarra',
-            price: 1200,
-            image: 'https://images.unsplash.com/photo-1510915361894-db8b60106cb1?w=400&h=300&fit=crop',
-            ownerName: 'Roberto Silva',
-            ownerFamily: 'Familia Silva',
-            location: 'Alberdi'
-          }
-        },
-        {
-          id: '6',
-          itemId: 'prod_3',
-          itemType: 'product',
-          createdAt: new Date('2025-09-01'),
-          itemData: {
-            title: 'Miel artesanal',
-            description: 'Miel pura de colmenas propias',
-            price: 1800,
-            image: 'https://images.unsplash.com/photo-1587049633312-d628ae50a8ae?w=400&h=300&fit=crop',
-            ownerName: 'Elena Morales',
-            ownerFamily: 'Familia Morales',
-            location: 'Villa Allende'
-          }
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
-  }, []);
+  const [viewMode, setViewMode] = useState('list'); // Vista de lista por defecto
 
   const getTabIcon = (type) => {
     switch (type) {
@@ -156,20 +59,18 @@ export default function FavoritesSection() {
 
   const filteredFavorites = favorites.filter(favorite => {
     const matchesTab = activeTab === 'all' || favorite.itemType === activeTab;
-    const matchesSearch = favorite.itemData.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         favorite.itemData.description.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = favorite.itemData?.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         favorite.itemData?.description?.toLowerCase().includes(searchTerm.toLowerCase());
     return matchesTab && matchesSearch;
   });
 
-  const favoritesByType = {
-    all: favorites.length,
-    product: favorites.filter(f => f.itemType === 'product').length,
-    service: favorites.filter(f => f.itemType === 'service').length,
-    job: favorites.filter(f => f.itemType === 'job').length
-  };
-
-  const handleRemoveFavorite = (favoriteId) => {
-    setFavorites(prev => prev.filter(f => f.id !== favoriteId));
+  const handleRemoveFavorite = async (favoriteId, itemType) => {
+    try {
+      await removeFavoriteById(favoriteId, itemType);
+    } catch (error) {
+      console.error('Error al eliminar favorito:', error);
+      alert('No se pudo eliminar el favorito. Inténtalo de nuevo.');
+    }
   };
 
   const formatPrice = (price) => {
@@ -180,11 +81,28 @@ export default function FavoritesSection() {
     }).format(price);
   };
 
-  const formatDate = (date) => {
-    return date.toLocaleDateString('es-ES', {
-      day: 'numeric',
-      month: 'short'
-    });
+  const handleViewItem = (favorite) => {
+    // Construir la URL completa con el dominio de producción
+    const baseUrl = 'https://familymarket.vercel.app';
+    let url = '';
+    
+    if (favorite.itemType === 'product') {
+      // Para productos: /tienda/[slug]/producto/[productId]
+      const storeSlug = favorite.itemData?.storeSlug || 'tienda';
+      url = `${baseUrl}/tienda/${storeSlug}/producto/${favorite.itemId}`;
+    } else if (favorite.itemType === 'service') {
+      // Para servicios: /tienda/[slug]/servicios
+      const storeSlug = favorite.itemData?.storeSlug || 'tienda';
+      url = `${baseUrl}/tienda/${storeSlug}/servicios`;
+    } else if (favorite.itemType === 'job') {
+      // Para empleos: /tienda/[slug]/empleos
+      const storeSlug = favorite.itemData?.storeSlug || 'tienda';
+      url = `${baseUrl}/tienda/${storeSlug}/empleos`;
+    }
+    
+    if (url) {
+      window.open(url, '_blank');
+    }
   };
 
   if (loading) {
@@ -197,6 +115,17 @@ export default function FavoritesSection() {
               <div key={i} className="h-48 bg-gray-200 dark:bg-gray-700 rounded-lg"></div>
             ))}
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex items-center justify-center py-8 text-red-600 dark:text-red-400">
+          <AlertCircle className="w-5 h-5 mr-2" />
+          <span>{error}</span>
         </div>
       </div>
     );
@@ -270,7 +199,7 @@ export default function FavoritesSection() {
                     <TabIcon className="w-4 h-4" />
                     <span className="hidden sm:block">{getTabLabel(tab)}</span>
                     <span className="bg-gray-200 dark:bg-gray-500 text-xs px-2 py-0.5 rounded-full">
-                      {favoritesByType[tab]}
+                      {getFavoritesByType(tab)}
                     </span>
                   </div>
                 </button>
@@ -310,135 +239,159 @@ export default function FavoritesSection() {
         ) : (
           <div className={viewMode === 'grid' 
             ? 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4'
-            : 'space-y-4'
+            : 'overflow-x-auto'
           }>
-            {filteredFavorites.map((favorite) => (
-              <div
-                key={favorite.id}
-                className={`bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all hover:shadow-md overflow-hidden ${
-                  viewMode === 'list' ? 'flex items-center p-4' : ''
-                }`}
-              >
-                {viewMode === 'grid' ? (
-                  // Vista Grid - Minimalista
-                  <>
-                    {/* Imagen */}
-                    <div className="relative">
-                      <img
-                        src={favorite.itemData.image}
-                        alt={favorite.itemData.title}
-                        className="w-full h-32 sm:h-40 object-cover"
-                      />
-                      {/* Botón favorito superpuesto */}
-                      <button
-                        onClick={() => handleRemoveFavorite(favorite.id)}
-                        className="absolute top-2 right-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full p-1.5 text-red-500 hover:text-red-600 hover:bg-white dark:hover:bg-gray-800 transition-colors"
-                        title="Quitar de favoritos"
-                      >
-                        <Heart className="w-3 h-3 fill-current" />
-                      </button>
-                      {/* Badge de tipo */}
-                      <span className={`absolute top-2 left-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(favorite.itemType)}`}>
-                        {getTabLabel(favorite.itemType).slice(0, -1)}
-                      </span>
-                    </div>
+            {viewMode === 'grid' ? (
+              // Vista Grid
+              filteredFavorites.map((favorite) => (
+                <div
+                  key={favorite.id}
+                  className="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all hover:shadow-md overflow-hidden"
+                >
+                  <div className="relative">
+                    <img
+                      src={favorite.itemData?.image || '/placeholder-image.jpg'}
+                      alt={favorite.itemData?.title || 'Sin título'}
+                      className="w-full h-32 sm:h-40 object-cover"
+                      onError={(e) => {
+                        e.target.src = '/placeholder-image.jpg';
+                      }}
+                    />
+                    <button
+                      onClick={() => handleRemoveFavorite(favorite.id, favorite.itemType)}
+                      className="absolute top-2 right-2 bg-white/90 dark:bg-gray-800/90 backdrop-blur-sm rounded-full p-1.5 text-red-500 hover:text-red-600 hover:bg-white dark:hover:bg-gray-800 transition-colors"
+                      title="Quitar de favoritos"
+                    >
+                      <Heart className="w-3 h-3 fill-current" />
+                    </button>
+                    <span className={`absolute top-2 left-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(favorite.itemType)}`}>
+                      {getTabLabel(favorite.itemType).slice(0, -1)}
+                    </span>
+                  </div>
+                  
+                  <div className="p-3">
+                    <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
+                      {favorite.itemData?.title || 'Sin título'}
+                    </h3>
                     
-                    {/* Información */}
-                    <div className="p-3">
-                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-1 line-clamp-2">
-                        {favorite.itemData.title}
-                      </h3>
-                      
-                      {favorite.itemData.price ? (
-                        <p className="text-lg font-bold text-green-600 dark:text-green-400">
-                          {formatPrice(favorite.itemData.price)}
-                        </p>
-                      ) : (
-                        <p className="text-sm text-gray-600 dark:text-gray-400">
-                          Consultar precio
-                        </p>
-                      )}
-                      
-                      {/* Botón ver más */}
-                      <button className="w-full mt-2 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium py-1">
-                        Ver detalles
-                      </button>
-                    </div>
-                  </>
-                ) : (
-                  // Vista Lista - Original
-                  <>
-                    {/* Imagen en lista */}
-                    <div className="w-16 h-16 mr-4 flex-shrink-0 rounded-lg overflow-hidden">
-                      <img
-                        src={favorite.itemData.image}
-                        alt={favorite.itemData.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-
-                    <div className="flex-1">
-                      {/* Header del card */}
-                      <div className="flex items-start justify-between mb-2">
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-sm font-semibold text-gray-900 dark:text-white truncate">
-                            {favorite.itemData.title}
-                          </h3>
-                          <p className="text-gray-600 dark:text-gray-400 text-xs truncate">
-                            {favorite.itemData.description}
-                          </p>
+                    {favorite.itemData?.price ? (
+                      <p className="text-lg font-bold text-green-600 dark:text-green-400">
+                        {formatPrice(favorite.itemData.price)}
+                      </p>
+                    ) : (
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Consultar precio
+                      </p>
+                    )}
+                    
+                    <button className="w-full mt-2 text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium py-1">
+                      Ver detalles
+                    </button>
+                  </div>
+                </div>
+              ))
+            ) : (
+              // Vista Tabla
+              <table className="w-full min-w-[800px]">
+                <thead className="bg-gray-50 dark:bg-gray-700/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Imagen
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Título
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Tipo
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Precio
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Ubicación
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Dueño
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredFavorites.map((favorite) => (
+                    <tr key={favorite.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="w-12 h-12 flex-shrink-0 rounded overflow-hidden">
+                          <img
+                            src={favorite.itemData?.image || '/placeholder-image.jpg'}
+                            alt={favorite.itemData?.title || 'Sin título'}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              e.target.src = '/placeholder-image.jpg';
+                            }}
+                          />
                         </div>
-                        
-                        <div className="flex items-center space-x-2 ml-2">
-                          <span className={`inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getTypeColor(favorite.itemType)}`}>
-                            {getTabLabel(favorite.itemType).slice(0, -1)}
+                      </td>
+                      <td className="px-4 py-3">
+                        <div className="text-sm font-medium text-gray-900 dark:text-white max-w-xs truncate">
+                          {favorite.itemData?.title || 'Sin título'}
+                        </div>
+                        <div className="text-xs text-gray-500 dark:text-gray-400 max-w-xs truncate">
+                          {favorite.itemData?.description || ''}
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(favorite.itemType)}`}>
+                          {getTabLabel(favorite.itemType).slice(0, -1)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        {favorite.itemData?.price ? (
+                          <span className="text-sm font-semibold text-green-600 dark:text-green-400">
+                            {formatPrice(favorite.itemData.price)}
                           </span>
+                        ) : (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            Consultar
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                          <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+                          <span className="truncate max-w-[150px]">{favorite.itemData?.location || 'N/A'}</span>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className="text-sm text-gray-600 dark:text-gray-400 truncate max-w-[120px] block">
+                          {favorite.itemData?.ownerName || 'Desconocido'}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-2">
                           <button
-                            onClick={() => handleRemoveFavorite(favorite.id)}
-                            className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-1"
+                            onClick={() => handleViewItem(favorite)}
+                            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 p-1"
+                            title="Ver publicación"
+                          >
+                            <ExternalLink className="w-4 h-4" />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleRemoveFavorite(favorite.id, favorite.itemType)}
+                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 p-1"
                             title="Quitar de favoritos"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
-                      </div>
-
-                      {/* Información adicional */}
-                      <div className="flex items-center space-x-4 mb-2">
-                        {favorite.itemData.price && (
-                          <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                            <DollarSign className="w-3 h-3 mr-1" />
-                            <span className="font-medium text-green-600 dark:text-green-400">
-                              {formatPrice(favorite.itemData.price)}
-                            </span>
-                          </div>
-                        )}
-                        
-                        <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                          <MapPin className="w-3 h-3 mr-1" />
-                          <span>{favorite.itemData.location}</span>
-                        </div>
-                      </div>
-
-                      {/* Footer del card */}
-                      <div className="flex items-center justify-between">
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
-                          <span className="font-medium">{favorite.itemData.ownerName}</span>
-                        </div>
-                        
-                        <button
-                          className="flex items-center text-xs text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium"
-                          title="Ver detalle"
-                        >
-                          <span className="hidden sm:inline mr-1">Ver</span>
-                          <ExternalLink className="w-3 h-3" />
-                        </button>
-                      </div>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
       </div>

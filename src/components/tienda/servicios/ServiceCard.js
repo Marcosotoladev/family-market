@@ -1,9 +1,8 @@
 // src/components/tienda/servicios/ServiceCard.js
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
-  Heart, 
   Share2, 
   MessageCircle, 
   Phone, 
@@ -11,7 +10,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Star,
-  Eye,
   Briefcase,
   Clock,
   MapPin,
@@ -19,16 +17,12 @@ import {
   Calendar,
   Store,
   ExternalLink,
-  MessageSquare,
   ChevronDown,
   ChevronUp,
-  User,
   Monitor,
   Home,
   Globe,
-  Crown,
-  Zap,
-  TrendingUp
+  Crown
 } from 'lucide-react';
 import { 
   formatearPrecioServicio, 
@@ -39,21 +33,19 @@ import {
   formatearDiasDisponibles,
   formatearHorarios
 } from '../../../types/services';
-import { useAuth } from '@/contexts/AuthContext';
 import { 
   doc, 
-  setDoc, 
-  deleteDoc, 
-  getDoc, 
   updateDoc, 
   increment,
   collection,
   query,
   where,
   getDocs,
-  orderBy
+  orderBy,
+  getDoc
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import FavoriteButton from '@/components/ui/FavoriteButton';
 
 export default function ServiceCard({ 
   service, 
@@ -63,11 +55,7 @@ export default function ServiceCard({
   showStoreInfo = true,
   onClick = null
 }) {
-  const { user } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(0);
-  const [loading, setLoading] = useState(false);
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
@@ -77,24 +65,6 @@ export default function ServiceCard({
 
   const images = service.imagenes || [];
   const hasMultipleImages = images.length > 1;
-
-  useEffect(() => {
-    if (user && service.id) {
-      checkIfLiked();
-    }
-    setLikesCount(service.interacciones?.favoritos || 0);
-  }, [user, service.id]);
-
-  const checkIfLiked = async () => {
-    if (!user) return;
-    try {
-      const favoritoRef = doc(db, 'favoritos_servicios', `${user.uid}_${service.id}`);
-      const favoritoDoc = await getDoc(favoritoRef);
-      setIsLiked(favoritoDoc.exists());
-    } catch (error) {
-      console.error('Error verificando favorito:', error);
-    }
-  };
 
   const loadComments = async () => {
     if (comments.length > 0) return;
@@ -156,44 +126,6 @@ export default function ServiceCard({
 
   const prevImage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
-
-  const handleLike = async (e) => {
-    e.stopPropagation();
-    if (!user) {
-      alert('Debes iniciar sesión para marcar favoritos');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const favoritoRef = doc(db, 'favoritos_servicios', `${user.uid}_${service.id}`);
-      const serviceRef = doc(db, 'servicios', service.id);
-
-      if (isLiked) {
-        await deleteDoc(favoritoRef);
-        await updateDoc(serviceRef, {
-          'interacciones.favoritos': increment(-1)
-        });
-        setIsLiked(false);
-        setLikesCount(prev => Math.max(0, prev - 1));
-      } else {
-        await setDoc(favoritoRef, {
-          usuarioId: user.uid,
-          servicioId: service.id,
-          fechaCreacion: new Date()
-        });
-        await updateDoc(serviceRef, {
-          'interacciones.favoritos': increment(1)
-        });
-        setIsLiked(true);
-        setLikesCount(prev => prev + 1);
-      }
-    } catch (error) {
-      console.error('Error actualizando favorito:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleWhatsAppContact = (e) => {
@@ -278,33 +210,6 @@ export default function ServiceCard({
     }
   };
 
-  const renderStars = (rating) => {
-    const stars = [];
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-    
-    for (let i = 0; i < fullStars; i++) {
-      stars.push(
-        <Star key={`full-${i}`} className="w-4 h-4 text-yellow-400 fill-current" />
-      );
-    }
-    
-    if (hasHalfStar) {
-      stars.push(
-        <Star key="half" className="w-4 h-4 text-yellow-400 fill-current opacity-50" />
-      );
-    }
-    
-    const emptyStars = 5 - Math.ceil(rating);
-    for (let i = 0; i < emptyStars; i++) {
-      stars.push(
-        <Star key={`empty-${i}`} className="w-4 h-4 text-gray-300 dark:text-gray-600" />
-      );
-    }
-    
-    return stars;
-  };
-
   // Variante FEATURED COMPACT con desplegable
   if (variant === 'featured-compact') {
     return (
@@ -354,18 +259,13 @@ export default function ServiceCard({
             </div>
           )}
 
-          <div className="absolute top-2 right-2 flex flex-col space-y-1">
-            <button
-              onClick={handleLike}
-              disabled={loading}
-              className={`p-1.5 rounded-full backdrop-blur-sm transition-all ${
-                isLiked 
-                  ? 'bg-red-500 text-white' 
-                  : 'bg-white bg-opacity-90 text-gray-700 hover:bg-opacity-100'
-              }`}
-            >
-              <Heart className="w-3 h-3" fill={isLiked ? 'currentColor' : 'none'} />
-            </button>
+          {/* BOTONES DE ACCIÓN - Con nuevo FavoriteButton */}
+          <div className="absolute top-2 right-2 flex flex-col space-y-1 z-10">
+            <FavoriteButton 
+              itemId={service.id} 
+              itemType="service"
+              size="sm"
+            />
             <button
               onClick={handleShare}
               className="p-1.5 bg-white bg-opacity-90 text-gray-700 rounded-full hover:bg-opacity-100 transition-all backdrop-blur-sm"
@@ -564,18 +464,13 @@ export default function ServiceCard({
             </div>
           )}
 
-          <div className="absolute top-3 right-3 flex flex-col space-y-2">
-            <button
-              onClick={handleLike}
-              disabled={loading}
-              className={`p-2 rounded-full backdrop-blur-sm transition-all ${
-                isLiked 
-                  ? 'bg-red-500 text-white shadow-lg' 
-                  : 'bg-white bg-opacity-90 text-gray-700 hover:bg-opacity-100'
-              } disabled:opacity-50`}
-            >
-              <Heart className="w-4 h-4" fill={isLiked ? 'currentColor' : 'none'} />
-            </button>
+          {/* BOTONES DE ACCIÓN - Con nuevo FavoriteButton */}
+          <div className="absolute top-3 right-3 flex flex-col space-y-2 z-10">
+            <FavoriteButton 
+              itemId={service.id} 
+              itemType="service"
+              size="md"
+            />
             <button
               onClick={handleShare}
               className="p-2 bg-white bg-opacity-90 text-gray-700 rounded-full hover:bg-opacity-100 transition-all backdrop-blur-sm"

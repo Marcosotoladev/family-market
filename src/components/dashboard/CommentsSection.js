@@ -4,132 +4,312 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  MessageCircle, 
-  Star, 
-  TrendingUp, 
-  TrendingDown,
-  Users,
+  MessageSquare,
+  Package,
+  Wrench,
+  Briefcase,
   Calendar,
-  Eye,
-  Edit3,
-  Flag,
-  ChevronLeft,
-  ChevronRight,
-  Filter
+  User,
+  ExternalLink,
+  Star,
+  Search,
+  Loader,
+  Trash2,
+  Grid3X3,
+  List
 } from 'lucide-react';
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  orderBy,
+  doc,
+  getDoc,
+  deleteDoc
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 
 export default function CommentsSection() {
-  const { userData } = useAuth();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState('received'); // 'received' | 'made'
-  const [commentsReceived, setCommentsReceived] = useState([]);
-  const [commentsMade, setCommentsMade] = useState([]);
+  const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [filter, setFilter] = useState('all'); // 'all' | '5' | '4' | '3' | '2' | '1'
+  const [searchTerm, setSearchTerm] = useState('');
+  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
 
-  // Mock data - reemplazar con llamadas a Firebase
   useEffect(() => {
-    // Simular carga de datos
-    setTimeout(() => {
-      setCommentsReceived([
-        {
-          id: '1',
-          fromUserId: 'user2',
-          rating: 5,
-          comment: 'Excelente servicio, muy recomendable. Los productos llegaron en perfecto estado.',
-          createdAt: new Date('2025-09-10'),
-          fromUserData: {
-            name: 'María González',
-            profileImage: 'https://images.unsplash.com/photo-1494790108755-2616b612b5bc?w=150&h=150&fit=crop&crop=face',
-            familyName: 'Familia González'
-          }
-        },
-        {
-          id: '2', 
-          fromUserId: 'user3',
-          rating: 4,
-          comment: 'Buen servicio, aunque la entrega se demoró un poco más de lo esperado.',
-          createdAt: new Date('2025-09-08'),
-          fromUserData: {
-            name: 'Carlos Méndez',
-            profileImage: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
-            familyName: 'Familia Méndez'
-          }
-        },
-        {
-          id: '3',
-          fromUserId: 'user4',
-          rating: 3,
-          comment: 'Regular, podría mejorar en algunos aspectos.',
-          createdAt: new Date('2025-09-05'),
-          fromUserData: {
-            name: 'Ana López',
-            profileImage: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
-            familyName: 'Familia López'
-          }
-        },
-        {
-          id: '4',
-          fromUserId: 'user5',
-          rating: 5,
-          comment: 'Perfecto, exactamente lo que necesitaba.',
-          createdAt: new Date('2025-09-03'),
-          fromUserData: {
-            name: 'Luis Fernández',
-            profileImage: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
-            familyName: 'Familia Fernández'
-          }
-        }
-      ]);
+    if (user?.uid) {
+      loadComments();
+    }
+  }, [user?.uid, activeTab]);
 
-      setCommentsMade([
-        {
-          id: '5',
-          toUserId: 'user6',
-          rating: 5,
-          comment: 'Muy buena atención y productos frescos. Volveré a comprar.',
-          createdAt: new Date('2025-09-12'),
-          toUserData: {
-            name: 'Elena Morales',
-            profileImage: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face',
-            familyName: 'Familia Morales'
-          }
-        },
-        {
-          id: '6',
-          toUserId: 'user7',
-          rating: 4,
-          comment: 'Buen trabajo, aunque puede mejorar los tiempos.',
-          createdAt: new Date('2025-09-09'),
-          toUserData: {
-            name: 'Roberto Silva',
-            profileImage: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-            familyName: 'Familia Silva'
-          }
-        }
-      ]);
-      
+  const loadComments = async () => {
+    if (!user?.uid) return;
+
+    setLoading(true);
+    try {
+      let allComments = [];
+
+      if (activeTab === 'made') {
+        // Comentarios que YO hice
+        allComments = await getCommentsMadeByUser(user.uid);
+      } else {
+        // Comentarios que ME hicieron
+        allComments = await getCommentsReceivedByUser(user.uid);
+      }
+
+      // Ordenar por fecha más reciente
+      allComments.sort((a, b) => b.fechaCreacion - a.fechaCreacion);
+      setComments(allComments);
+    } catch (error) {
+      console.error('Error cargando comentarios:', error);
+    } finally {
       setLoading(false);
-    }, 1000);
-  }, []);
-
-  const getAverageRating = (comments) => {
-    if (comments.length === 0) return 0;
-    const sum = comments.reduce((acc, comment) => acc + comment.rating, 0);
-    return (sum / comments.length).toFixed(1);
+    }
   };
 
-  const renderStars = (rating) => {
-    return Array.from({ length: 5 }, (_, index) => (
-      <Star
-        key={index}
-        className={`w-4 h-4 ${
-          index < rating 
-            ? 'text-yellow-400 fill-current' 
-            : 'text-gray-300 dark:text-gray-600'
-        }`}
-      />
-    ));
+  // Obtener comentarios que el usuario hizo
+  const getCommentsMadeByUser = async (userId) => {
+    const allComments = [];
+
+    // Comentarios en productos
+    const productCommentsRef = collection(db, 'comentarios');
+    const productQuery = query(
+      productCommentsRef,
+      where('usuarioId', '==', userId),
+      orderBy('fechaCreacion', 'desc')
+    );
+    const productSnapshot = await getDocs(productQuery);
+
+    for (const commentDoc of productSnapshot.docs) {
+      const commentData = commentDoc.data();
+      const itemData = await getItemData('productos', commentData.productoId);
+      
+      allComments.push({
+        id: commentDoc.id,
+        type: 'product',
+        ...commentData,
+        fechaCreacion: commentData.fechaCreacion?.toDate() || new Date(),
+        itemData
+      });
+    }
+
+    // Comentarios en servicios
+    const serviceCommentsRef = collection(db, 'comentarios_servicios');
+    const serviceQuery = query(
+      serviceCommentsRef,
+      where('usuarioId', '==', userId),
+      orderBy('fechaCreacion', 'desc')
+    );
+    const serviceSnapshot = await getDocs(serviceQuery);
+
+    for (const commentDoc of serviceSnapshot.docs) {
+      const commentData = commentDoc.data();
+      const itemData = await getItemData('servicios', commentData.servicioId);
+      
+      allComments.push({
+        id: commentDoc.id,
+        type: 'service',
+        ...commentData,
+        fechaCreacion: commentData.fechaCreacion?.toDate() || new Date(),
+        itemData
+      });
+    }
+
+    // Comentarios en empleos
+    const jobCommentsRef = collection(db, 'comentarios_empleos');
+    const jobQuery = query(
+      jobCommentsRef,
+      where('usuarioId', '==', userId),
+      orderBy('fechaCreacion', 'desc')
+    );
+    const jobSnapshot = await getDocs(jobQuery);
+
+    for (const commentDoc of jobSnapshot.docs) {
+      const commentData = commentDoc.data();
+      const itemData = await getItemData('empleos', commentData.empleoId);
+      
+      allComments.push({
+        id: commentDoc.id,
+        type: 'job',
+        ...commentData,
+        fechaCreacion: commentData.fechaCreacion?.toDate() || new Date(),
+        itemData
+      });
+    }
+
+    return allComments;
+  };
+
+  // Obtener comentarios que el usuario recibió
+  const getCommentsReceivedByUser = async (userId) => {
+    const allComments = [];
+
+    // Primero obtener todos los items del usuario
+    const userProducts = await getUserItems('productos', userId);
+    const userServices = await getUserItems('servicios', userId);
+    const userJobs = await getUserItems('empleos', userId);
+
+    // Comentarios en productos del usuario
+    for (const productId of userProducts) {
+      const productCommentsRef = collection(db, 'comentarios');
+      const productQuery = query(
+        productCommentsRef,
+        where('productoId', '==', productId)
+      );
+      const snapshot = await getDocs(productQuery);
+
+      for (const commentDoc of snapshot.docs) {
+        const commentData = commentDoc.data();
+        const itemData = await getItemData('productos', productId);
+        const userData = await getUserData(commentData.usuarioId);
+
+        allComments.push({
+          id: commentDoc.id,
+          type: 'product',
+          ...commentData,
+          fechaCreacion: commentData.fechaCreacion?.toDate() || new Date(),
+          itemData,
+          userData
+        });
+      }
+    }
+
+    // Comentarios en servicios del usuario
+    for (const serviceId of userServices) {
+      const serviceCommentsRef = collection(db, 'comentarios_servicios');
+      const serviceQuery = query(
+        serviceCommentsRef,
+        where('servicioId', '==', serviceId)
+      );
+      const snapshot = await getDocs(serviceQuery);
+
+      for (const commentDoc of snapshot.docs) {
+        const commentData = commentDoc.data();
+        const itemData = await getItemData('servicios', serviceId);
+        const userData = await getUserData(commentData.usuarioId);
+
+        allComments.push({
+          id: commentDoc.id,
+          type: 'service',
+          ...commentData,
+          fechaCreacion: commentData.fechaCreacion?.toDate() || new Date(),
+          itemData,
+          userData
+        });
+      }
+    }
+
+    // Comentarios en empleos del usuario
+    for (const jobId of userJobs) {
+      const jobCommentsRef = collection(db, 'comentarios_empleos');
+      const jobQuery = query(
+        jobCommentsRef,
+        where('empleoId', '==', jobId)
+      );
+      const snapshot = await getDocs(jobQuery);
+
+      for (const commentDoc of snapshot.docs) {
+        const commentData = commentDoc.data();
+        const itemData = await getItemData('empleos', jobId);
+        const userData = await getUserData(commentData.usuarioId);
+
+        allComments.push({
+          id: commentDoc.id,
+          type: 'job',
+          ...commentData,
+          fechaCreacion: commentData.fechaCreacion?.toDate() || new Date(),
+          itemData,
+          userData
+        });
+      }
+    }
+
+    return allComments;
+  };
+
+  // Helpers
+  const getUserItems = async (collectionName, userId) => {
+    const itemsRef = collection(db, collectionName);
+    const q = query(itemsRef, where('usuarioId', '==', userId));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => doc.id);
+  };
+
+  const getItemData = async (collectionName, itemId) => {
+    try {
+      const itemRef = doc(db, collectionName, itemId);
+      const itemSnap = await getDoc(itemRef);
+      
+      if (itemSnap.exists()) {
+        const data = itemSnap.data();
+        return {
+          id: itemId,
+          title: data.titulo || data.nombre || 'Sin título',
+          image: data.imagen || data.imagenes?.[0] || null
+        };
+      }
+    } catch (error) {
+      console.error('Error obteniendo item:', error);
+    }
+    
+    return {
+      id: itemId,
+      title: 'Item eliminado',
+      image: null
+    };
+  };
+
+  const getUserData = async (userId) => {
+    try {
+      const userRef = doc(db, 'users', userId);
+      const userSnap = await getDoc(userRef);
+      
+      if (userSnap.exists()) {
+        const data = userSnap.data();
+        return {
+          name: data.firstName && data.lastName 
+            ? `${data.firstName} ${data.lastName}`
+            : data.firstName || data.businessName || 'Usuario',
+          avatar: data.profileImage || data.storeLogo || null
+        };
+      }
+    } catch (error) {
+      console.error('Error obteniendo usuario:', error);
+    }
+    
+    return {
+      name: 'Usuario',
+      avatar: null
+    };
+  };
+
+  const getTypeIcon = (type) => {
+    switch (type) {
+      case 'product': return Package;
+      case 'service': return Wrench;
+      case 'job': return Briefcase;
+      default: return MessageSquare;
+    }
+  };
+
+  const getTypeLabel = (type) => {
+    switch (type) {
+      case 'product': return 'Producto';
+      case 'service': return 'Servicio';
+      case 'job': return 'Empleo';
+      default: return 'Item';
+    }
+  };
+
+  const getTypeColor = (type) => {
+    switch (type) {
+      case 'product': return 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300';
+      case 'service': return 'bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300';
+      case 'job': return 'bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300';
+      default: return 'bg-gray-100 dark:bg-gray-900/30 text-gray-700 dark:text-gray-300';
+    }
   };
 
   const formatDate = (date) => {
@@ -140,23 +320,80 @@ export default function CommentsSection() {
     });
   };
 
-  const filteredComments = (comments) => {
-    if (filter === 'all') return comments;
-    return comments.filter(comment => comment.rating === parseInt(filter));
+  const handleDeleteComment = async (commentId, commentType) => {
+    if (!window.confirm('¿Estás seguro de que quieres eliminar este comentario?')) {
+      return;
+    }
+
+    try {
+      // Determinar la colección según el tipo
+      let collectionName;
+      switch (commentType) {
+        case 'product':
+          collectionName = 'comentarios';
+          break;
+        case 'service':
+          collectionName = 'comentarios_servicios';
+          break;
+        case 'job':
+          collectionName = 'comentarios_empleos';
+          break;
+        default:
+          throw new Error('Tipo de comentario no válido');
+      }
+
+      // Eliminar el comentario
+      const commentRef = doc(db, collectionName, commentId);
+      await deleteDoc(commentRef);
+
+      // Actualizar el estado local
+      setComments(prev => prev.filter(c => c.id !== commentId));
+    } catch (error) {
+      console.error('Error al eliminar comentario:', error);
+      alert('No se pudo eliminar el comentario. Inténtalo de nuevo.');
+    }
   };
 
-  const currentComments = activeTab === 'received' ? commentsReceived : commentsMade;
-  const displayComments = filteredComments(currentComments);
+  const handleViewItem = (comment) => {
+    // Construir la URL completa con el dominio de producción
+    const baseUrl = 'https://familymarket.vercel.app';
+    let url = '';
+    
+    if (comment.type === 'product') {
+      // Para productos: /tienda/[slug]/producto/[productId]
+      const storeSlug = comment.itemData?.storeSlug || 'tienda';
+      const productId = comment.productoId || comment.itemData?.id;
+      url = `${baseUrl}/tienda/${storeSlug}/producto/${productId}`;
+    } else if (comment.type === 'service') {
+      // Para servicios
+      const storeSlug = comment.itemData?.storeSlug || 'tienda';
+      url = `${baseUrl}/tienda/${storeSlug}/servicios`;
+    } else if (comment.type === 'job') {
+      // Para empleos
+      const storeSlug = comment.itemData?.storeSlug || 'tienda';
+      url = `${baseUrl}/tienda/${storeSlug}/empleos`;
+    }
+    
+    if (url) {
+      window.open(url, '_blank');
+    }
+  };
+
+  const filteredComments = comments.filter(comment => {
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      comment.contenido?.toLowerCase().includes(searchLower) ||
+      comment.itemData?.title?.toLowerCase().includes(searchLower) ||
+      comment.userData?.name?.toLowerCase().includes(searchLower)
+    );
+  });
 
   if (loading) {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="animate-pulse">
-          <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/4 mb-4"></div>
-          <div className="space-y-3">
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
-            <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-          </div>
+        <div className="flex items-center justify-center py-8">
+          <Loader className="w-6 h-6 animate-spin text-gray-400" />
+          <span className="ml-2 text-gray-600 dark:text-gray-400">Cargando comentarios...</span>
         </div>
       </div>
     );
@@ -164,50 +401,54 @@ export default function CommentsSection() {
 
   return (
     <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
-      {/* Header con estadísticas */}
+      {/* Header */}
       <div className="bg-gray-50 dark:bg-gray-700/30 px-6 py-4 border-b border-gray-200 dark:border-gray-700">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-lg flex items-center justify-center">
-              <MessageCircle className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+              <MessageSquare className="w-5 h-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Gestión de Comentarios
+                Comentarios
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                Administra tus reseñas y feedback
+                {comments.length} comentarios totales
               </p>
             </div>
           </div>
 
-          {/* Estadísticas rápidas */}
-          <div className="grid grid-cols-2 gap-4 sm:flex sm:space-x-6">
-            <div className="text-center">
-              <div className="text-lg font-bold text-gray-900 dark:text-white">
-                {getAverageRating(commentsReceived)}
-              </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center justify-center">
-                <Star className="w-3 h-3 text-yellow-400 mr-1" />
-                Promedio
-              </div>
-            </div>
-            <div className="text-center">
-              <div className="text-lg font-bold text-gray-900 dark:text-white">
-                {commentsReceived.length}
-              </div>
-              <div className="text-xs text-gray-600 dark:text-gray-400 flex items-center justify-center">
-                <TrendingDown className="w-3 h-3 mr-1" />
-                Recibidos
-              </div>
+          {/* Controles de vista */}
+          <div className="flex items-center space-x-2">
+            <div className="flex bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'grid'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                <Grid3X3 className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`p-2 rounded-md transition-colors ${
+                  viewMode === 'list'
+                    ? 'bg-white dark:bg-gray-600 text-gray-900 dark:text-white shadow-sm'
+                    : 'text-gray-600 dark:text-gray-400'
+                }`}
+              >
+                <List className="w-4 h-4" />
+              </button>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Tabs y filtros */}
+      {/* Tabs y búsqueda */}
       <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between space-y-4 sm:space-y-0">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between space-y-4 lg:space-y-0">
           {/* Tabs */}
           <div className="flex space-x-1 bg-gray-100 dark:bg-gray-700 rounded-lg p-1">
             <button
@@ -218,13 +459,7 @@ export default function CommentsSection() {
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              <div className="flex items-center space-x-2">
-                <TrendingDown className="w-4 h-4" />
-                <span>Recibidos</span>
-                <span className="bg-gray-200 dark:bg-gray-500 text-xs px-2 py-0.5 rounded-full">
-                  {commentsReceived.length}
-                </span>
-              </div>
+              Recibidos
             </button>
             <button
               onClick={() => setActiveTab('made')}
@@ -234,120 +469,262 @@ export default function CommentsSection() {
                   : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
               }`}
             >
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="w-4 h-4" />
-                <span>Realizados</span>
-                <span className="bg-gray-200 dark:bg-gray-500 text-xs px-2 py-0.5 rounded-full">
-                  {commentsMade.length}
-                </span>
-              </div>
+              Realizados
             </button>
           </div>
 
-          {/* Filtro por rating */}
-          <div className="flex items-center space-x-2">
-            <Filter className="w-4 h-4 text-gray-400" />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value)}
-              className="text-sm border border-gray-300 dark:border-gray-600 rounded-md px-3 py-1 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            >
-              <option value="all">Todas las calificaciones</option>
-              <option value="5">5 estrellas</option>
-              <option value="4">4 estrellas</option>
-              <option value="3">3 estrellas</option>
-              <option value="2">2 estrellas</option>
-              <option value="1">1 estrella</option>
-            </select>
+          {/* Búsqueda */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Buscar comentarios..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+            />
           </div>
         </div>
       </div>
 
       {/* Lista de comentarios */}
       <div className="p-6">
-        {displayComments.length === 0 ? (
+        {filteredComments.length === 0 ? (
           <div className="text-center py-8">
-            <MessageCircle className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+            <MessageSquare className="w-12 h-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No hay comentarios
+              {searchTerm ? 'No se encontraron resultados' : 'No hay comentarios'}
             </h3>
             <p className="text-gray-600 dark:text-gray-400">
-              {activeTab === 'received' 
-                ? 'Aún no has recibido comentarios de otros usuarios.' 
-                : 'Aún no has realizado comentarios a otros usuarios.'
+              {searchTerm 
+                ? 'Intenta con otros términos de búsqueda'
+                : activeTab === 'received' 
+                  ? 'Aún no has recibido comentarios en tus publicaciones'
+                  : 'Aún no has hecho comentarios'
               }
             </p>
           </div>
         ) : (
-          <div className="space-y-4">
-            {/* Grid de comentarios */}
-            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
-              {displayComments.map((comment) => {
-                const userData = activeTab === 'received' ? comment.fromUserData : comment.toUserData;
+          <div className={viewMode === 'grid'
+            ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4'
+            : 'overflow-x-auto'
+          }>
+            {viewMode === 'grid' ? (
+              // Vista Grid (Tarjetas)
+              filteredComments.map((comment) => {
+                const TypeIcon = getTypeIcon(comment.type);
+                
                 return (
                   <div
                     key={comment.id}
                     className="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all hover:shadow-md overflow-hidden"
                   >
-                    {/* Header con avatar y estrellas */}
-                    <div className="p-3 border-b border-gray-100 dark:border-gray-600">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0">
-                          <img
-                            src={userData.profileImage}
-                            alt={userData.name}
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="text-xs font-medium text-gray-900 dark:text-white truncate">
-                            {userData.name}
-                          </h3>
-                          <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                            {userData.familyName}
-                          </p>
-                        </div>
-                      </div>
-                      
-                      {/* Estrellas */}
-                      <div className="flex items-center justify-center space-x-1">
-                        {renderStars(comment.rating)}
-                      </div>
-                    </div>
-                    
-                    {/* Comentario */}
-                    <div className="p-3">
-                      <p className="text-xs text-gray-700 dark:text-gray-300 line-clamp-4 mb-3">
-                        {comment.comment}
-                      </p>
-                      
-                      {/* Footer */}
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500 dark:text-gray-400">
-                          {formatDate(comment.createdAt)}
+                    {/* Imagen */}
+                    {comment.itemData?.image && (
+                      <div className="relative h-40">
+                        <img
+                          src={comment.itemData.image}
+                          alt={comment.itemData.title}
+                          className="w-full h-full object-cover"
+                        />
+                        <span className={`absolute top-2 left-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getTypeColor(comment.type)}`}>
+                          <TypeIcon className="w-3 h-3 mr-1" />
+                          {getTypeLabel(comment.type)}
                         </span>
+                      </div>
+                    )}
+
+                    {/* Contenido */}
+                    <div className="p-4">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
+                        {comment.itemData?.title || 'Sin título'}
+                      </h3>
+
+                      {activeTab === 'received' && comment.userData && (
+                        <div className="flex items-center text-xs text-gray-600 dark:text-gray-400 mb-2">
+                          <User className="w-3 h-3 mr-1" />
+                          <span className="truncate">{comment.userData.name}</span>
+                        </div>
+                      )}
+
+                      <p className="text-sm text-gray-700 dark:text-gray-300 mb-3 line-clamp-3">
+                        {comment.contenido}
+                      </p>
+
+                      {/* Rating */}
+                      {comment.puntuacion && (
+                        <div className="flex items-center mb-3">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <Star
+                              key={star}
+                              className={`w-3.5 h-3.5 ${
+                                star <= comment.puntuacion
+                                  ? 'text-yellow-400 fill-current'
+                                  : 'text-gray-300 dark:text-gray-600'
+                              }`}
+                            />
+                          ))}
+                        </div>
+                      )}
+
+                      {/* Footer */}
+                      <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-600">
+                        <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                          <Calendar className="w-3 h-3 mr-1" />
+                          <span>{formatDate(comment.fechaCreacion)}</span>
+                        </div>
                         
-                        <div className="flex items-center space-x-1">
-                          <button className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 p-1">
-                            <Eye className="w-3 h-3" />
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => handleViewItem(comment)}
+                            className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 p-1"
+                            title="Ver publicación"
+                          >
+                            <ExternalLink className="w-4 h-4" />
                           </button>
-                          {activeTab === 'made' && (
-                            <button className="text-gray-400 hover:text-blue-600 dark:hover:text-blue-400 p-1">
-                              <Edit3 className="w-3 h-3" />
-                            </button>
-                          )}
-                          {activeTab === 'received' && (
-                            <button className="text-gray-400 hover:text-red-600 dark:hover:text-red-400 p-1">
-                              <Flag className="w-3 h-3" />
-                            </button>
-                          )}
+                          
+                          <button
+                            onClick={() => handleDeleteComment(comment.id, comment.type)}
+                            className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 p-1"
+                            title="Eliminar comentario"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
                         </div>
                       </div>
                     </div>
                   </div>
                 );
-              })}
-            </div>
+              })
+            ) : (
+              // Vista Tabla
+              <table className="w-full min-w-[900px]">
+                <thead className="bg-gray-50 dark:bg-gray-700/50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Imagen
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Título
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Tipo
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Comentario
+                    </th>
+                    {activeTab === 'received' && (
+                      <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                        Usuario
+                      </th>
+                    )}
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Rating
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Fecha
+                    </th>
+                    <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                  {filteredComments.map((comment) => {
+                    const TypeIcon = getTypeIcon(comment.type);
+                    
+                    return (
+                      <tr key={comment.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="w-12 h-12 flex-shrink-0 rounded overflow-hidden">
+                            {comment.itemData?.image ? (
+                              <img
+                                src={comment.itemData.image}
+                                alt={comment.itemData.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center">
+                                <MessageSquare className="w-5 h-5 text-gray-400" />
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm font-medium text-gray-900 dark:text-white max-w-xs truncate">
+                            {comment.itemData?.title || 'Sin título'}
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTypeColor(comment.type)}`}>
+                            <TypeIcon className="w-3 h-3 mr-1" />
+                            {getTypeLabel(comment.type)}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm text-gray-700 dark:text-gray-300 max-w-md truncate">
+                            {comment.contenido}
+                          </div>
+                        </td>
+                        {activeTab === 'received' && (
+                          <td className="px-4 py-3 whitespace-nowrap">
+                            <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                              <User className="w-3.5 h-3.5 mr-1" />
+                              <span className="truncate max-w-[120px]">
+                                {comment.userData?.name || 'Usuario'}
+                              </span>
+                            </div>
+                          </td>
+                        )}
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          {comment.puntuacion ? (
+                            <div className="flex items-center">
+                              {[1, 2, 3, 4, 5].map((star) => (
+                                <Star
+                                  key={star}
+                                  className={`w-3.5 h-3.5 ${
+                                    star <= comment.puntuacion
+                                      ? 'text-yellow-400 fill-current'
+                                      : 'text-gray-300 dark:text-gray-600'
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                          ) : (
+                            <span className="text-xs text-gray-400">Sin rating</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                            <Calendar className="w-3.5 h-3.5 mr-1" />
+                            <span>{formatDate(comment.fechaCreacion)}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => handleViewItem(comment)}
+                              className="text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 p-1"
+                              title="Ver publicación"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </button>
+                            
+                            <button
+                              onClick={() => handleDeleteComment(comment.id, comment.type)}
+                              className="text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 p-1"
+                              title="Eliminar comentario"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
         )}
       </div>

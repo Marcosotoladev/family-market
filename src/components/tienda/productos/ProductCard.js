@@ -1,9 +1,8 @@
 // src/components/tienda/productos/ProductCard.js
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
-  Heart, 
   Share2, 
   MessageCircle, 
   Phone, 
@@ -11,43 +10,26 @@ import {
   ChevronLeft,
   ChevronRight,
   Star,
-  Eye,
   Package,
   Truck,
-  Clock,
   MapPin,
   Store,
   ExternalLink,
-  MessageSquare,
   ChevronDown,
   ChevronUp,
-  User,
-  Calendar,
-  Users,
-  Crown,
-  Zap,
-  TrendingUp
+  Crown
 } from 'lucide-react';
 import { 
   formatearPrecio, 
-  TIPOS_PRECIO,
-  renderEstrellas
+  TIPOS_PRECIO
 } from '../../../types/product';
-import { useAuth } from '@/contexts/AuthContext';
 import { 
   doc, 
-  setDoc, 
-  deleteDoc, 
-  getDoc, 
   updateDoc, 
-  increment,
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy
+  increment
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import FavoriteButton from '@/components/ui/FavoriteButton';
 
 export default function ProductCard({ 
   product, 
@@ -57,14 +39,7 @@ export default function ProductCard({
   showStoreInfo = true,
   onClick = null
 }) {
-  const { user } = useAuth();
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
-  const [isLiked, setIsLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [showComments, setShowComments] = useState(false);
-  const [comments, setComments] = useState([]);
-  const [loadingComments, setLoadingComments] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
 
   if (!product) return null;
@@ -72,68 +47,12 @@ export default function ProductCard({
   const images = product.imagenes || [];
   const hasMultipleImages = images.length > 1;
 
-  useEffect(() => {
-    if (user && product.id) {
-      checkIfLiked();
-    }
-    setLikesCount(product.interacciones?.favoritos || 0);
-  }, [user, product.id]);
-
-  const checkIfLiked = async () => {
-    if (!user) return;
-    try {
-      const favoritoRef = doc(db, 'favoritos', `${user.uid}_${product.id}`);
-      const favoritoDoc = await getDoc(favoritoRef);
-      setIsLiked(favoritoDoc.exists());
-    } catch (error) {
-      console.error('Error verificando favorito:', error);
-    }
-  };
-
   const nextImage = () => {
     setCurrentImageIndex((prev) => (prev + 1) % images.length);
   };
 
   const prevImage = () => {
     setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
-  };
-
-  const handleLike = async (e) => {
-    e.stopPropagation();
-    if (!user) {
-      alert('Debes iniciar sesión para marcar favoritos');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const favoritoRef = doc(db, 'favoritos', `${user.uid}_${product.id}`);
-      const productRef = doc(db, 'productos', product.id);
-
-      if (isLiked) {
-        await deleteDoc(favoritoRef);
-        await updateDoc(productRef, {
-          'interacciones.favoritos': increment(-1)
-        });
-        setIsLiked(false);
-        setLikesCount(prev => Math.max(0, prev - 1));
-      } else {
-        await setDoc(favoritoRef, {
-          usuarioId: user.uid,
-          productoId: product.id,
-          fechaCreacion: new Date()
-        });
-        await updateDoc(productRef, {
-          'interacciones.favoritos': increment(1)
-        });
-        setIsLiked(true);
-        setLikesCount(prev => prev + 1);
-      }
-    } catch (error) {
-      console.error('Error actualizando favorito:', error);
-    } finally {
-      setLoading(false);
-    }
   };
 
   const handleWhatsAppContact = (e) => {
@@ -244,18 +163,13 @@ export default function ProductCard({
             </div>
           )}
 
-          <div className="absolute top-2 right-2 flex flex-col space-y-1">
-            <button
-              onClick={handleLike}
-              disabled={loading}
-              className={`p-1.5 rounded-full backdrop-blur-sm transition-all ${
-                isLiked 
-                  ? 'bg-red-500 text-white' 
-                  : 'bg-white bg-opacity-90 text-gray-700 hover:bg-opacity-100'
-              }`}
-            >
-              <Heart className="w-3 h-3" fill={isLiked ? 'currentColor' : 'none'} />
-            </button>
+          {/* BOTONES DE ACCIÓN - Con nuevo FavoriteButton */}
+          <div className="absolute top-2 right-2 flex flex-col space-y-1 z-10">
+            <FavoriteButton 
+              itemId={product.id} 
+              itemType="product"
+              size="sm"
+            />
             <button
               onClick={handleShare}
               className="p-1.5 bg-white bg-opacity-90 text-gray-700 rounded-full hover:bg-opacity-100 transition-all backdrop-blur-sm"
@@ -461,18 +375,13 @@ export default function ProductCard({
             </div>
           )}
 
-          <div className="absolute top-3 right-3 flex flex-col space-y-2">
-            <button
-              onClick={handleLike}
-              disabled={loading}
-              className={`p-2 rounded-full backdrop-blur-sm transition-all ${
-                isLiked 
-                  ? 'bg-red-500 text-white shadow-lg' 
-                  : 'bg-white bg-opacity-90 text-gray-700 hover:bg-opacity-100'
-              } disabled:opacity-50`}
-            >
-              <Heart className="w-4 h-4" fill={isLiked ? 'currentColor' : 'none'} />
-            </button>
+          {/* BOTONES DE ACCIÓN - Con nuevo FavoriteButton */}
+          <div className="absolute top-3 right-3 flex flex-col space-y-2 z-10">
+            <FavoriteButton 
+              itemId={product.id} 
+              itemType="product"
+              size="md"
+            />
             <button
               onClick={handleShare}
               className="p-2 bg-white bg-opacity-90 text-gray-700 rounded-full hover:bg-opacity-100 transition-all backdrop-blur-sm"

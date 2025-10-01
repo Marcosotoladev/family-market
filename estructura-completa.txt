@@ -178,11 +178,13 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── userHelpers.js
 |   |   └── hooks
 |   |   |   └── useCloudinary.js
+|   |   |   └── useFavorites.js
 |   |   |   └── useNotifications.js
 |   |   └── products
 |   |   |   └── productUtils.js
 |   |   └── services
 |   |   |   └── adminService.js
+|   |   |   └── favoritesService.js
 |   |   |   └── notificationService.js
 |   |   |   └── serviceUtils.js
 |   |   └── storeConfigUtils.js
