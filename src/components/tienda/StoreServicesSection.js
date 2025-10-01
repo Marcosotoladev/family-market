@@ -35,7 +35,7 @@ export default function StoreServicesSection({
   searchQuery = '',
   showFilters = true,
   maxServices = null,
-  variant = 'grid' // 'grid' | 'list'
+  variant = 'grid'
 }) {
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +43,6 @@ export default function StoreServicesSection({
   const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(true);
   
-  // Filtros
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   const [selectedCategory, setSelectedCategory] = useState('');
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
@@ -52,7 +51,6 @@ export default function StoreServicesSection({
   const [viewMode, setViewMode] = useState(variant);
   const [showFiltersPanel, setShowFiltersPanel] = useState(false);
 
-  // Configuración de paginación
   const SERVICES_PER_PAGE = maxServices || 12;
 
   useEffect(() => {
@@ -68,7 +66,6 @@ export default function StoreServicesSection({
   }, [searchQuery]);
 
   useEffect(() => {
-    // Buscar cuando cambie la query local con debounce
     const timer = setTimeout(() => {
       if (localSearchQuery !== searchQuery) {
         loadServices(true);
@@ -99,18 +96,15 @@ export default function StoreServicesSection({
         where('estado', '==', 'disponible')
       );
 
-      // Filtro por categoría
       if (selectedCategory) {
         q = query(q, where('categoria', '==', selectedCategory));
       }
 
-      // Ordenamiento
       const orderField = sortBy === 'precio' ? 'precio' : 
                         sortBy === 'titulo' ? 'titulo' : 'fechaCreacion';
       
       q = query(q, orderBy(orderField, sortOrder));
 
-      // Paginación
       if (!reset && lastVisible) {
         q = query(q, startAfter(lastVisible));
       }
@@ -125,10 +119,8 @@ export default function StoreServicesSection({
         ...doc.data()
       }));
 
-      // Filtros adicionales que no se pueden hacer en Firestore
       let filteredServices = newServices;
 
-      // Filtro por búsqueda de texto
       if (localSearchQuery) {
         const searchLower = localSearchQuery.toLowerCase();
         filteredServices = filteredServices.filter(service =>
@@ -140,7 +132,6 @@ export default function StoreServicesSection({
         );
       }
 
-      // Filtro por rango de precio
       if (priceRange.min || priceRange.max) {
         filteredServices = filteredServices.filter(service => {
           if (service.tipoPrecio !== 'fijo') return true;
@@ -157,7 +148,6 @@ export default function StoreServicesSection({
         setServices(prev => [...prev, ...filteredServices]);
       }
 
-      // Actualizar paginación
       const lastDoc = querySnapshot.docs[querySnapshot.docs.length - 1];
       setLastVisible(lastDoc);
       setHasMore(querySnapshot.docs.length === SERVICES_PER_PAGE);
@@ -171,7 +161,6 @@ export default function StoreServicesSection({
   };
 
   const handleServiceClick = async (service) => {
-    // Incrementar contador de vistas
     try {
       const serviceRef = doc(db, 'servicios', service.id);
       await updateDoc(serviceRef, {
@@ -211,22 +200,15 @@ export default function StoreServicesSection({
   return (
     <section id="servicios" className="py-8 lg:py-12 bg-white dark:bg-gray-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
         <div className="text-center mb-8">
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
             Nuestros Servicios
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
-            Descubre nuestros servicios profesionales
-          </p>
         </div>
 
-        {/* Filtros y búsqueda */}
         {showFilters && (
           <div className="bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 p-4 mb-8">
-            {/* Barra superior de filtros */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
-              {/* Búsqueda */}
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -238,7 +220,6 @@ export default function StoreServicesSection({
                 />
               </div>
 
-              {/* Controles de vista */}
               <div className="flex items-center space-x-4">
                 <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
                   <button
@@ -274,11 +255,9 @@ export default function StoreServicesSection({
               </div>
             </div>
 
-            {/* Panel de filtros expandible */}
             {showFiltersPanel && (
               <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  {/* Categoría */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Categoría
@@ -295,7 +274,6 @@ export default function StoreServicesSection({
                     </select>
                   </div>
 
-                  {/* Precio mínimo */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Precio mínimo
@@ -311,7 +289,6 @@ export default function StoreServicesSection({
                     />
                   </div>
 
-                  {/* Precio máximo */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Precio máximo
@@ -327,7 +304,6 @@ export default function StoreServicesSection({
                     />
                   </div>
 
-                  {/* Ordenar */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Ordenar por
@@ -353,7 +329,6 @@ export default function StoreServicesSection({
                   </div>
                 </div>
 
-                {/* Botón limpiar filtros */}
                 {hasActiveFilters && (
                   <div className="mt-4 flex justify-end">
                     <button
@@ -369,7 +344,6 @@ export default function StoreServicesSection({
           </div>
         )}
 
-        {/* Resultados */}
         <div className="mb-6">
           <p className="text-sm text-gray-600 dark:text-gray-400">
             {services.length > 0 
@@ -379,7 +353,6 @@ export default function StoreServicesSection({
           </p>
         </div>
 
-        {/* Grid de servicios */}
         {services.length === 0 ? (
           <div className="text-center py-12">
             <Briefcase className="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
@@ -405,7 +378,7 @@ export default function StoreServicesSection({
           <>
             <div className={
               viewMode === 'grid' 
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+                ? 'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 sm:gap-6'
                 : 'space-y-4'
             }>
               {services.map((service) => (
@@ -413,48 +386,43 @@ export default function StoreServicesSection({
                   key={service.id}
                   service={service}
                   storeData={storeData}
-                  variant={viewMode}
+                  variant={viewMode === 'grid' ? 'featured-compact' : viewMode}
                   onClick={() => handleServiceClick(service)}
                 />
               ))}
             </div>
 
-            {/* Botón Ver todos o Cargar más */}
-            {maxServices ? (
-              // Si hay límite (vista previa), mostrar botón "Ver todos"
-              services.length >= maxServices && (
-                <div className="text-center mt-8">
-                  <a
-                    href={`/tienda/${storeData.storeSlug}/servicios`}
-                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-md hover:shadow-lg"
-                  >
-                    Ver todos los servicios
-                  </a>
-                </div>
-              )
-            ) : (
-              // Si no hay límite, mostrar botón "Cargar más"
-              hasMore && (
-                <div className="text-center mt-8">
-                  <button
-                    onClick={() => loadServices(false)}
-                    disabled={loadingMore}
-                    className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-                  >
-                    {loadingMore ? (
-                      <>
-                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                        Cargando...
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDown className="w-4 h-4 mr-2" />
-                        Cargar más servicios
-                      </>
-                    )}
-                  </button>
-                </div>
-              )
+            {maxServices && services.length >= maxServices && (
+              <div className="text-center mt-8">
+                <a
+                  href={`/tienda/${storeData.storeSlug}/servicios`}
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium shadow-md hover:shadow-lg"
+                >
+                  Ver todos los servicios
+                </a>
+              </div>
+            )}
+
+            {!maxServices && hasMore && (
+              <div className="text-center mt-8">
+                <button
+                  onClick={() => loadServices(false)}
+                  disabled={loadingMore}
+                  className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                >
+                  {loadingMore ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Cargando...
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown className="w-4 h-4 mr-2" />
+                      Cargar más servicios
+                    </>
+                  )}
+                </button>
+              </div>
             )}
           </>
         )}

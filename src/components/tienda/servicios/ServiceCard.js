@@ -58,7 +58,7 @@ import { db } from '@/lib/firebase/config';
 export default function ServiceCard({ 
   service, 
   storeData,
-  variant = 'grid', // 'grid' | 'list' | 'featured' | 'featured-compact'
+  variant = 'grid',
   showContactInfo = true,
   showStoreInfo = true,
   onClick = null
@@ -71,13 +71,13 @@ export default function ServiceCard({
   const [showComments, setShowComments] = useState(false);
   const [comments, setComments] = useState([]);
   const [loadingComments, setLoadingComments] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
 
   if (!service) return null;
 
   const images = service.imagenes || [];
   const hasMultipleImages = images.length > 1;
 
-  // Verificar si está en favoritos al cargar
   useEffect(() => {
     if (user && service.id) {
       checkIfLiked();
@@ -95,8 +95,6 @@ export default function ServiceCard({
       console.error('Error verificando favorito:', error);
     }
   };
-
-  // ... (resto de funciones helper como loadComments, nextImage, prevImage, etc. - igual al código original)
 
   const loadComments = async () => {
     if (comments.length > 0) return;
@@ -260,6 +258,11 @@ export default function ServiceCard({
     setShowComments(!showComments);
   };
 
+  const toggleDetails = (e) => {
+    e.stopPropagation();
+    setShowDetails(!showDetails);
+  };
+
   const getModalidadIcon = (modalidad) => {
     switch (modalidad) {
       case MODALIDAD_SERVICIO.PRESENCIAL:
@@ -302,16 +305,12 @@ export default function ServiceCard({
     return stars;
   };
 
-  // Variante FEATURED COMPACT - Optimizada para grid de 5 columnas
+  // Variante FEATURED COMPACT con desplegable
   if (variant === 'featured-compact') {
     return (
       <div 
-        className={`relative bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-blue-200 dark:border-blue-700 ${
-          onClick ? 'cursor-pointer hover:scale-[1.02]' : ''
-        }`}
-        onClick={onClick}
+        className="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-blue-200 dark:border-blue-700"
       >
-        {/* Badge compacto */}
         <div className="absolute top-0 left-0 right-0 z-20">
           <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-2 py-1 text-center">
             <div className="flex items-center justify-center space-x-1">
@@ -321,8 +320,10 @@ export default function ServiceCard({
           </div>
         </div>
 
-        {/* Imagen compacta */}
-        <div className="relative h-40 overflow-hidden mt-6">
+        <div 
+          className={`relative h-40 overflow-hidden mt-6 ${onClick ? 'cursor-pointer' : ''}`}
+          onClick={onClick}
+        >
           {images.length > 0 ? (
             <>
               <img
@@ -353,7 +354,6 @@ export default function ServiceCard({
             </div>
           )}
 
-          {/* Botones de acción compactos */}
           <div className="absolute top-2 right-2 flex flex-col space-y-1">
             <button
               onClick={handleLike}
@@ -373,24 +373,16 @@ export default function ServiceCard({
               <Share2 className="w-3 h-3" />
             </button>
           </div>
-
-          {/* Badge de modalidad */}
-{/*           <div className="absolute top-2 left-2">
-            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-500 text-white shadow-md">
-              {getModalidadIcon(service.modalidad)}
-              <span className="ml-1">{formatearModalidad(service.modalidad)}</span>
-            </span>
-          </div> */}
         </div>
 
-        {/* Contenido compacto */}
         <div className="p-3">
-          {/* Título compacto */}
-          <h3 className="font-semibold text-sm text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight">
+          <h3 
+            className={`font-semibold text-sm text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight ${onClick ? 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400' : ''}`}
+            onClick={onClick}
+          >
             {service.titulo}
           </h3>
 
-          {/* Precio compacto */}
           <div className="mb-3">
             <div className="flex items-baseline space-x-1">
               <span className="text-lg font-bold text-blue-600 dark:text-blue-400">
@@ -399,351 +391,149 @@ export default function ServiceCard({
             </div>
           </div>
 
-          {/* Información del servicio compacta */}
-          <div className="space-y-1 mb-3">
-            {service.duracion && (
-              <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                <Clock className="w-3 h-3 mr-1" />
-                <span>{formatearDuracion(service.duracion, service.duracionPersonalizada)}</span>
-              </div>
+          <button
+            onClick={toggleDetails}
+            className="w-full flex items-center justify-between px-2 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors mb-2"
+          >
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              {showDetails ? 'Ocultar detalles' : 'Ver más detalles'}
+            </span>
+            {showDetails ? (
+              <ChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
             )}
-            
-            {service.gestionCupos === 'limitado' && service.cuposDisponibles !== null && (
-              <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                <Users className="w-3 h-3 mr-1" />
-                <span>{service.cuposDisponibles} cupos</span>
-              </div>
-            )}
-          </div>
+          </button>
 
-          {/* Valoraciones compactas */}
-          <div className="flex items-center justify-between mb-3 text-xs">
-            <div className="flex items-center space-x-1">
-              {[1, 2, 3, 4, 5].map((starNumber) => {
-                const rating = service.valoraciones?.promedio || 0;
-                const isFilled = starNumber <= Math.floor(rating);
-                
-                return (
-                  <Star
-                    key={starNumber}
-                    className={`w-3 h-3 ${
-                      isFilled 
-                        ? 'text-yellow-400 fill-current' 
-                        : 'text-gray-300 dark:text-gray-600'
-                    }`}
-                  />
-                );
-              })}
-              <span className="text-gray-500 ml-1">
-                ({service.valoraciones?.total || 0})
-              </span>
-            </div>
-          </div>
-
-          {/* Tienda compacta */}
-          {showStoreInfo && (
-            <div className="flex items-center justify-between mb-3 text-xs">
-              <div className="flex items-center space-x-1 min-w-0 flex-1">
-                <Store className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                <span className="text-gray-600 dark:text-gray-400 truncate">
-                  {service.tiendaInfo?.nombre || storeData?.businessName}
-                </span>
-              </div>
-              <button
-                onClick={handleViewStore}
-                className="text-blue-600 hover:text-blue-700 flex-shrink-0 ml-1"
-              >
-                <ExternalLink className="w-3 h-3" />
-              </button>
-            </div>
-          )}
-
-          {/* Botones de contacto compactos */}
-          {showContactInfo && (
-            <div className="space-y-2">
-              {/* WhatsApp compacto */}
-              {(service.contacto?.whatsapp || storeData?.phone) && (
-                <button
-                  onClick={handleWhatsAppContact}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center space-x-1"
-                >
-                  <MessageCircle className="w-3 h-3" />
-                  <span>WhatsApp</span>
-                </button>
+          <div 
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              showDetails ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+            }`}
+          >
+            <div className="space-y-2 pt-1">
+              {service.descripcion && (
+                <div>
+                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-3">
+                    {service.descripcion}
+                  </p>
+                </div>
               )}
-              
-              {/* Botones secundarios en fila */}
-              <div className="grid grid-cols-2 gap-1">
-                {(service.contacto?.telefono || storeData?.phone) && (
-                  <button
-                    onClick={handlePhoneContact}
-                    className="px-2 py-1.5 border border-blue-300 text-blue-700 dark:text-blue-300 rounded text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-center space-x-1"
-                  >
-                    <Phone className="w-3 h-3" />
-                    <span>Llamar</span>
-                  </button>
+
+              <div className="space-y-1">
+                {service.duracion && (
+                  <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                    <Clock className="w-3 h-3 mr-1" />
+                    <span>{formatearDuracion(service.duracion, service.duracionPersonalizada)}</span>
+                  </div>
                 )}
                 
-                {(service.contacto?.email || storeData?.email) && (
-                  <button
-                    onClick={handleEmailContact}
-                    className="px-2 py-1.5 border border-blue-300 text-blue-700 dark:text-blue-300 rounded text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-center space-x-1"
-                  >
-                    <Mail className="w-3 h-3" />
-                    <span>Email</span>
-                  </button>
+                {service.gestionCupos === 'limitado' && service.cuposDisponibles !== null && (
+                  <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                    <Users className="w-3 h-3 mr-1" />
+                    <span>{service.cuposDisponibles} cupos</span>
+                  </div>
+                )}
+
+                {service.modalidad && (
+                  <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
+                    {getModalidadIcon(service.modalidad)}
+                    <span className="ml-1">{formatearModalidad(service.modalidad)}</span>
+                  </div>
                 )}
               </div>
-            </div>
-          )}
-        </div>
-      </div>
-    );
-  }
 
-  // Variante FEATURED - Para casos donde necesites la versión grande
-  if (variant === 'featured') {
-    return (
-      <div 
-        className={`relative bg-gradient-to-br from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-2xl shadow-2xl hover:shadow-3xl transition-all duration-500 overflow-hidden border-2 border-blue-200 dark:border-blue-700 ${
-          onClick ? 'cursor-pointer hover:scale-[1.02] hover:-translate-y-1' : ''
-        }`}
-        onClick={onClick}
-      >
-        {/* Header destacado */}
-        <div className="absolute top-0 left-0 right-0 z-20">
-          <div className="bg-gradient-to-r from-blue-500 to-purple-500 text-white px-4 py-2 text-center relative overflow-hidden">
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer"></div>
-            <div className="relative flex items-center justify-center space-x-2">
-              <Crown className="w-4 h-4 text-yellow-200" />
-              <span className="text-sm font-bold tracking-wider">SERVICIO DESTACADO</span>
-              <TrendingUp className="w-4 h-4 text-yellow-200" />
-            </div>
-          </div>
-        </div>
-
-        {/* Imagen grande */}
-        <div className="relative h-80 overflow-hidden mt-12">
-          {images.length > 0 ? (
-            <>
-              <img
-                src={images[currentImageIndex] || images[0]}
-                alt={service.titulo}
-                className="w-full h-full object-cover transition-transform duration-300"
-              />
-              {hasMultipleImages && (
-                <>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); prevImage(); }}
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all"
-                  >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={(e) => { e.stopPropagation(); nextImage(); }}
-                    className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-3 rounded-full hover:bg-opacity-70 transition-all"
-                  >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
-                  
-                  {/* Indicadores */}
-                  <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                    {images.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(index); }}
-                        className={`w-4 h-4 rounded-full transition-all ${
-                          index === currentImageIndex 
-                            ? 'bg-white' 
-                            : 'bg-white bg-opacity-50 hover:bg-opacity-75'
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center space-x-1">
+                  {[1, 2, 3, 4, 5].map((starNumber) => {
+                    const rating = service.valoraciones?.promedio || 0;
+                    const isFilled = starNumber <= Math.floor(rating);
+                    
+                    return (
+                      <Star
+                        key={starNumber}
+                        className={`w-3 h-3 ${
+                          isFilled 
+                            ? 'text-yellow-400 fill-current' 
+                            : 'text-gray-300 dark:text-gray-600'
                         }`}
                       />
-                    ))}
+                    );
+                  })}
+                  <span className="text-gray-500 ml-1">
+                    ({service.valoraciones?.total || 0})
+                  </span>
+                </div>
+              </div>
+
+              {showStoreInfo && (
+                <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-lg p-2">
+                  <div className="flex items-center space-x-1 min-w-0 flex-1">
+                    <Store className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                    <span className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                      {service.tiendaInfo?.nombre || storeData?.businessName}
+                    </span>
                   </div>
-                </>
+                  <button
+                    onClick={handleViewStore}
+                    className="text-blue-600 hover:text-blue-700 flex-shrink-0 ml-1"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </button>
+                </div>
               )}
-            </>
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-100 to-gray-200 dark:from-gray-700 dark:to-gray-800 flex items-center justify-center">
-              <Briefcase className="w-24 h-24 text-gray-400" />
-            </div>
-          )}
 
-          {/* Botones de acción grandes */}
-          <div className="absolute top-4 right-4 flex flex-col space-y-2">
-            <button
-              onClick={handleLike}
-              disabled={loading}
-              className={`p-3 rounded-full backdrop-blur-sm transition-all ${
-                isLiked 
-                  ? 'bg-red-500 text-white shadow-lg' 
-                  : 'bg-white bg-opacity-90 text-gray-700 hover:bg-opacity-100'
-              } disabled:opacity-50`}
-            >
-              <Heart className="w-5 h-5" fill={isLiked ? 'currentColor' : 'none'} />
-            </button>
-            <button
-              onClick={handleShare}
-              className="p-3 bg-white bg-opacity-90 text-gray-700 rounded-full hover:bg-opacity-100 transition-all backdrop-blur-sm"
-            >
-              <Share2 className="w-5 h-5" />
-            </button>
-          </div>
-
-          {/* Badge de modalidad grande */}
-{/*           <div className="absolute top-4 left-4">
-            <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-blue-500 text-white shadow-lg">
-              {getModalidadIcon(service.modalidad)}
-              <span className="ml-2">{formatearModalidad(service.modalidad)}</span>
-            </span>
-          </div> */}
-        </div>
-
-        {/* Contenido completo */}
-        <div className="p-6">
-          <h3 className="font-bold text-2xl text-gray-900 dark:text-white mb-3 line-clamp-2 leading-tight">
-            {service.titulo}
-          </h3>
-          
-          <p className="text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 leading-relaxed">
-            {service.descripcion}
-          </p>
-
-          {/* Precio grande */}
-          <div className="mb-6">
-            <div className="flex items-baseline space-x-2">
-              <span className="text-3xl font-bold text-blue-600 dark:text-blue-400">
-                {formatearPrecioServicio(service.precio, service.tipoPrecio, service.moneda)}
-              </span>
-            </div>
-          </div>
-
-          {/* Información del servicio completa */}
-          <div className="grid grid-cols-2 gap-4 mb-6">
-            {service.duracion && (
-              <div className="flex items-center text-gray-600 dark:text-gray-400">
-                <Clock className="w-5 h-5 mr-2" />
-                <span>{formatearDuracion(service.duracion, service.duracionPersonalizada)}</span>
-              </div>
-            )}
-            
-            {service.gestionCupos === 'limitado' && service.cuposDisponibles !== null && (
-              <div className="flex items-center text-gray-600 dark:text-gray-400">
-                <Users className="w-5 h-5 mr-2" />
-                <span>{service.cuposDisponibles} cupos disponibles</span>
-              </div>
-            )}
-            
-            {service.ubicacion && (
-              <div className="flex items-center text-gray-600 dark:text-gray-400 col-span-2">
-                <MapPin className="w-5 h-5 mr-2 flex-shrink-0" />
-                <span className="truncate">{service.ubicacion}</span>
-              </div>
-            )}
-          </div>
-
-          {/* Valoraciones */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-1">
-                {[1, 2, 3, 4, 5].map((starNumber) => {
-                  const rating = service.valoraciones?.promedio || 0;
-                  const isFilled = starNumber <= Math.floor(rating);
+              {showContactInfo && (
+                <div className="space-y-1.5 mt-2">
+                  {(service.contacto?.whatsapp || storeData?.phone) && (
+                    <button
+                      onClick={handleWhatsAppContact}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center space-x-1"
+                    >
+                      <MessageCircle className="w-3 h-3" />
+                      <span>WhatsApp</span>
+                    </button>
+                  )}
                   
-                  return (
-                    <Star
-                      key={starNumber}
-                      className={`w-5 h-5 ${
-                        isFilled 
-                          ? 'text-yellow-400 fill-current' 
-                          : 'text-gray-300 dark:text-gray-600'
-                      }`}
-                    />
-                  );
-                })}
-              </div>
-              <span className="text-gray-600 dark:text-gray-400 font-medium">
-                {service.valoraciones?.total > 0 
-                  ? `${(service.valoraciones.promedio || 0).toFixed(1)} (${service.valoraciones.total})`
-                  : 'Sin valoraciones'
-                }
-              </span>
+                  <div className="grid grid-cols-2 gap-1">
+                    {(service.contacto?.telefono || storeData?.phone) && (
+                      <button
+                        onClick={handlePhoneContact}
+                        className="px-2 py-1.5 border border-blue-300 text-blue-700 dark:text-blue-300 rounded text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-center space-x-1"
+                      >
+                        <Phone className="w-3 h-3" />
+                        <span>Llamar</span>
+                      </button>
+                    )}
+                    
+                    {(service.contacto?.email || storeData?.email) && (
+                      <button
+                        onClick={handleEmailContact}
+                        className="px-2 py-1.5 border border-blue-300 text-blue-700 dark:text-blue-300 rounded text-xs hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors flex items-center justify-center space-x-1"
+                      >
+                        <Mail className="w-3 h-3" />
+                        <span>Email</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
-
-          {/* Información de la tienda */}
-          {showStoreInfo && (
-            <div className="flex items-center justify-between mb-6 p-4 bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600">
-              <div className="flex items-center space-x-3">
-                <Store className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                <span className="font-medium text-gray-700 dark:text-gray-300">
-                  {service.tiendaInfo?.nombre || storeData?.businessName || storeData?.familyName}
-                </span>
-              </div>
-              <button
-                onClick={handleViewStore}
-                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                title="Ver tienda"
-              >
-                <ExternalLink className="w-5 h-5" />
-              </button>
-            </div>
-          )}
-
-          {/* Botones de contacto grandes */}
-          {showContactInfo && (
-            <div className="space-y-3">
-              {/* WhatsApp principal */}
-              {(service.contacto?.whatsapp || storeData?.phone) && (
-                <button
-                  onClick={handleWhatsAppContact}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white px-6 py-4 rounded-lg font-medium transition-colors flex items-center justify-center space-x-3 shadow-lg hover:shadow-xl"
-                >
-                  <MessageCircle className="w-6 h-6" />
-                  <span>Contactar por WhatsApp</span>
-                </button>
-              )}
-              
-              {/* Botones secundarios */}
-              <div className="grid grid-cols-2 gap-3">
-                {(service.contacto?.telefono || storeData?.phone) && (
-                  <button
-                    onClick={handlePhoneContact}
-                    className="px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <Phone className="w-5 h-5" />
-                    <span>Llamar</span>
-                  </button>
-                )}
-                
-                {(service.contacto?.email || storeData?.email) && (
-                  <button
-                    onClick={handleEmailContact}
-                    className="px-4 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <Mail className="w-5 h-5" />
-                    <span>Email</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
         </div>
       </div>
     );
   }
 
-  // Variante Grid (código existente - mantengo el original)
+  // Variante Grid con desplegable
   if (variant === 'grid') {
     return (
       <div 
-        className={`bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700 ${
-          onClick ? 'cursor-pointer hover:scale-[1.02]' : ''
-        }`}
-        onClick={onClick}
+        className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700"
       >
-        {/* Carousel de Imágenes */}
-        <div className="relative h-64 overflow-hidden">
+        <div 
+          className={`relative h-64 overflow-hidden ${onClick ? 'cursor-pointer' : ''}`}
+          onClick={onClick}
+        >
           {images.length > 0 ? (
             <>
               <img
@@ -765,21 +555,6 @@ export default function ServiceCard({
                   >
                     <ChevronRight className="w-4 h-4" />
                   </button>
-                  
-                  {/* Indicadores de imagen */}
-                  <div className="absolute bottom-3 left-1/2 transform -translate-x-1/2 flex space-x-2">
-                    {images.map((_, index) => (
-                      <button
-                        key={index}
-                        onClick={(e) => { e.stopPropagation(); setCurrentImageIndex(index); }}
-                        className={`w-3 h-3 rounded-full transition-all ${
-                          index === currentImageIndex 
-                            ? 'bg-white' 
-                            : 'bg-white bg-opacity-50 hover:bg-opacity-75'
-                        }`}
-                      />
-                    ))}
-                  </div>
                 </>
               )}
             </>
@@ -789,7 +564,6 @@ export default function ServiceCard({
             </div>
           )}
 
-          {/* Botones de acción en la esquina superior derecha */}
           <div className="absolute top-3 right-3 flex flex-col space-y-2">
             <button
               onClick={handleLike}
@@ -809,43 +583,16 @@ export default function ServiceCard({
               <Share2 className="w-4 h-4" />
             </button>
           </div>
-
-          {/* Badge de modalidad */}
-{/*           <div className="absolute top-3 left-3">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-500 text-white shadow-md">
-              {getModalidadIcon(service.modalidad)}
-              <span className="ml-1">{formatearModalidad(service.modalidad)}</span>
-            </span>
-          </div> */}
-
-          {/* Badge de estado si NO está disponible */}
-          {service.estado && service.estado !== 'disponible' && (
-            <div className="absolute top-12 left-3">
-              <span className={`px-3 py-1 text-white text-xs font-medium rounded-full shadow-md ${
-                service.estado === 'agotado' ? 'bg-red-500' :
-                service.estado === 'pausado' ? 'bg-yellow-500' :
-                service.estado === 'inactivo' ? 'bg-gray-500' : 'bg-gray-500'
-              }`}>
-                {service.estado === 'agotado' ? 'Sin cupos' : 
-                 service.estado.charAt(0).toUpperCase() + service.estado.slice(1)}
-              </span>
-            </div>
-          )}
         </div>
 
-        {/* Contenido */}
         <div className="p-5">
-          {/* Título */}
-          <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight">
+          <h3 
+            className={`font-bold text-lg text-gray-900 dark:text-white mb-3 line-clamp-2 leading-tight ${onClick ? 'cursor-pointer hover:text-blue-600 dark:hover:text-blue-400' : ''}`}
+            onClick={onClick}
+          >
             {service.titulo}
           </h3>
-          
-          {/* Descripción */}
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4 line-clamp-3 leading-relaxed">
-            {service.descripcion}
-          </p>
 
-          {/* Precio */}
           <div className="mb-4">
             <div className="flex items-baseline space-x-2">
               <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
@@ -854,304 +601,211 @@ export default function ServiceCard({
             </div>
           </div>
 
-          {/* Información del servicio */}
-          <div className="space-y-2 mb-4">
-            {/* Duración */}
-            {service.duracion && (
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <Clock className="w-4 h-4 mr-2" />
-                <span>{formatearDuracion(service.duracion, service.duracionPersonalizada)}</span>
-              </div>
+          <button
+            onClick={toggleDetails}
+            className="w-full flex items-center justify-between px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors mb-3"
+          >
+            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              {showDetails ? 'Ocultar detalles' : 'Ver más detalles'}
+            </span>
+            {showDetails ? (
+              <ChevronUp className="w-5 h-5 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <ChevronDown className="w-5 h-5 text-gray-600 dark:text-gray-400" />
             )}
-            
-            {/* Cupos disponibles */}
-            {service.gestionCupos === 'limitado' && service.cuposDisponibles !== null && (
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <Users className="w-4 h-4 mr-2" />
-                <span>{service.cuposDisponibles} cupos disponibles</span>
-              </div>
-            )}
-            
-            {/* Ubicación */}
-            {service.ubicacion && (
-              <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
-                <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
-                <span className="truncate">{service.ubicacion}</span>
-              </div>
-            )}
-          </div>
+          </button>
 
-          {/* Disponibilidad */}
-          {(service.diasDisponibles?.length > 0 || service.horarios?.length > 0) && (
-            <div className="mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Disponibilidad:</h4>
-              
-              {service.diasDisponibles?.length > 0 && (
-                <div className="flex items-center text-xs text-gray-600 dark:text-gray-400 mb-1">
-                  <Calendar className="w-3 h-3 mr-1" />
-                  <span>{formatearDiasDisponibles(service.diasDisponibles)}</span>
+          <div 
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              showDetails ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'
+            }`}
+          >
+            <div className="space-y-4 pt-2">
+              {service.descripcion && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Descripción
+                  </h4>
+                  <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
+                    {service.descripcion}
+                  </p>
                 </div>
               )}
-              
-              {service.horarios?.length > 0 && (
-                <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                  <Clock className="w-3 h-3 mr-1" />
-                  <span>{formatearHorarios(service.horarios, service.horarioPersonalizado)}</span>
-                </div>
-              )}
-            </div>
-          )}
 
-          {/* Palabras clave */}
-          {service.palabrasClave && service.palabrasClave.length > 0 && (
-            <div className="mb-4">
-              <div className="flex flex-wrap gap-1">
-                {service.palabrasClave.slice(0, 3).map((keyword, index) => (
-                  <span
-                    key={index}
-                    className="inline-block px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-md"
-                  >
-                    #{keyword}
-                  </span>
-                ))}
-                {service.palabrasClave.length > 3 && (
-                  <span className="inline-block px-2 py-1 text-xs bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400 rounded-md">
-                    +{service.palabrasClave.length - 3}
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Valoraciones */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1">
-                {[1, 2, 3, 4, 5].map((starNumber) => {
-                  const rating = service.valoraciones?.promedio || 0;
-                  const isFilled = starNumber <= Math.floor(rating);
-                  const isHalf = starNumber === Math.floor(rating) + 1 && rating % 1 !== 0;
-                  
-                  return (
-                    <Star
-                      key={starNumber}
-                      className={`w-4 h-4 ${
-                        isFilled 
-                          ? 'text-yellow-400 fill-current' 
-                          : isHalf 
-                          ? 'text-yellow-400 fill-current opacity-50' 
-                          : 'text-gray-300 dark:text-gray-600'
-                      }`}
-                    />
-                  );
-                })}
-              </div>
-              <span className="text-sm text-gray-600 dark:text-gray-400 font-medium">
-                {service.valoraciones?.total > 0 
-                  ? `${(service.valoraciones.promedio || 0).toFixed(1)} (${service.valoraciones.total})`
-                  : 'Sin valoraciones'
-                }
-              </span>
-            </div>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                const serviceIdentifier = service.id;
-                const storeSlug = service.tiendaInfo?.slug || storeData?.storeSlug;
-                
-                if (!serviceIdentifier || !storeSlug) {
-                  alert('Error: Faltan datos del servicio o tienda');
-                  return;
-                }
-                
-                const url = `https://familymarket.vercel.app/tienda/${storeSlug}/servicio/${serviceIdentifier}`;
-                window.location.href = url;
-              }}
-              className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 text-sm font-medium transition-colors cursor-pointer"
-            >
-              Valorar
-            </button>
-          </div>
-
-          {/* Información de la tienda */}
-          {showStoreInfo && (
-            <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <div className="flex items-center space-x-2">
-                <Store className="w-4 h-4 text-gray-500 dark:text-gray-400" />
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300 truncate">
-                  {service.tiendaInfo?.nombre || storeData?.businessName || storeData?.familyName}
-                </span>
-              </div>
-              <button
-                onClick={handleViewStore}
-                className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300 transition-colors"
-                title="Ver tienda"
-              >
-                <ExternalLink className="w-4 h-4" />
-              </button>
-            </div>
-          )}
-
-          {/* Estadísticas de interacción */}
-          {((service.interacciones?.vistas > 0 || service.totalVistas > 0) || 
-            likesCount > 0 || 
-            (service.interacciones?.comentarios > 0)) && (
-            <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mb-4">
-              <div className="flex items-center space-x-4">
-                {(service.interacciones?.vistas > 0 || service.totalVistas > 0) && (
-                  <span className="flex items-center space-x-1">
-                    <Eye className="w-3 h-3" />
-                    <span>{service.interacciones?.vistas || service.totalVistas || 0}</span>
-                  </span>
-                )}
-                {likesCount > 0 && (
-                  <span className="flex items-center space-x-1">
-                    <Heart className="w-3 h-3" />
-                    <span>{likesCount}</span>
-                  </span>
-                )}
-                {service.interacciones?.comentarios > 0 && (
-                  <span className="flex items-center space-x-1">
-                    <MessageSquare className="w-3 h-3" />
-                    <span>{service.interacciones?.comentarios}</span>
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Sección de comentarios expandible */}
-          {service.interacciones?.comentarios > 0 && (
-            <div className="mb-4">
-              <button
-                onClick={handleToggleComments}
-                className="flex items-center justify-between w-full p-3 bg-gray-50 dark:bg-gray-700 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-600 transition-colors"
-              >
-                <div className="flex items-center space-x-2">
-                  <MessageSquare className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-                  <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                    Ver comentarios ({service.interacciones.comentarios})
-                  </span>
-                </div>
-                {showComments ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-              </button>
-
-              {showComments && (
-                <div className="mt-3 space-y-3">
-                  {loadingComments ? (
-                    <div className="text-center py-4">
-                      <div className="w-6 h-6 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+              <div>
+                <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                  Información del servicio
+                </h4>
+                <div className="space-y-2">
+                  {service.duracion && (
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      <Clock className="w-4 h-4 mr-2" />
+                      <span>{formatearDuracion(service.duracion, service.duracionPersonalizada)}</span>
                     </div>
-                  ) : comments.length > 0 ? (
-                    comments.slice(0, 3).map((comment) => (
-                      <div key={comment.id} className="flex items-start space-x-3 p-3 bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <div className="flex-shrink-0">
-                          {comment.usuario?.avatar ? (
-                            <img
-                              src={comment.usuario.avatar}
-                              alt={comment.usuario.nombre}
-                              className="w-8 h-8 rounded-full object-cover"
-                            />
-                          ) : (
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-blue-600 rounded-full flex items-center justify-center text-white font-semibold text-xs">
-                              {comment.usuario?.nombre ? comment.usuario.nombre.charAt(0).toUpperCase() : 'U'}
-                            </div>
-                          )}
-                        </div>
-                        
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center justify-between mb-1">
-                            <h6 className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                              {comment.usuario?.nombre || 'Usuario'}
-                            </h6>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
-                              {comment.fechaCreacion?.toDate?.()?.toLocaleDateString('es-ES', {
-                                month: 'short',
-                                day: 'numeric'
-                              }) || ''}
-                            </span>
-                          </div>
-                          
-                          {comment.valoracion > 0 && (
-                            <div className="flex items-center mb-1">
-                              {renderStars(comment.valoracion).slice(0, comment.valoracion)}
-                            </div>
-                          )}
-                          
-                          <p className="text-sm text-gray-700 dark:text-gray-300 line-clamp-2">
-                            {comment.contenido}
-                          </p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-gray-500 dark:text-gray-400 text-center py-4">
-                      No hay comentarios disponibles
-                    </p>
                   )}
                   
-                  {comments.length > 3 && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const serviceIdentifier = service.id;
-                        const storeSlug = service.tiendaInfo?.slug || storeData?.storeSlug;
-                        const url = `https://familymarket.vercel.app/tienda/${storeSlug}/servicio/${serviceIdentifier}`;
-                        window.location.href = url;
-                      }}
-                      className="w-full text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 text-center py-2 cursor-pointer"
-                    >
-                      Ver todos los comentarios
-                    </button>
+                  {service.gestionCupos === 'limitado' && service.cuposDisponibles !== null && (
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      <Users className="w-4 h-4 mr-2" />
+                      <span>{service.cuposDisponibles} cupos disponibles</span>
+                    </div>
                   )}
+                  
+                  {service.ubicacion && (
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      <MapPin className="w-4 h-4 mr-2 flex-shrink-0" />
+                      <span className="truncate">{service.ubicacion}</span>
+                    </div>
+                  )}
+
+                  {service.modalidad && (
+                    <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                      {getModalidadIcon(service.modalidad)}
+                      <span className="ml-2">{formatearModalidad(service.modalidad)}</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {(service.diasDisponibles?.length > 0 || service.horarios?.length > 0) && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Disponibilidad
+                  </h4>
+                  <div className="bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3 space-y-2">
+                    {service.diasDisponibles?.length > 0 && (
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        <span>{formatearDiasDisponibles(service.diasDisponibles)}</span>
+                      </div>
+                    )}
+                    
+                    {service.horarios?.length > 0 && (
+                      <div className="flex items-center text-sm text-gray-600 dark:text-gray-400">
+                        <Clock className="w-4 h-4 mr-2" />
+                        <span>{formatearHorarios(service.horarios, service.horarioPersonalizado)}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {service.palabrasClave && service.palabrasClave.length > 0 && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Etiquetas
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {service.palabrasClave.map((keyword, index) => (
+                      <span
+                        key={index}
+                        className="inline-block px-3 py-1 text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded-full"
+                      >
+                        #{keyword}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {service.valoraciones && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Valoraciones
+                  </h4>
+                  <div className="flex items-center space-x-2">
+                    <div className="flex items-center">
+                      {[1, 2, 3, 4, 5].map((starNumber) => {
+                        const rating = service.valoraciones?.promedio || 0;
+                        const isFilled = starNumber <= Math.floor(rating);
+                        
+                        return (
+                          <Star
+                            key={starNumber}
+                            className={`w-4 h-4 ${
+                              isFilled 
+                                ? 'text-yellow-400 fill-current' 
+                                : 'text-gray-300 dark:text-gray-600'
+                            }`}
+                          />
+                        );
+                      })}
+                    </div>
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      {service.valoraciones?.promedio?.toFixed(1) || '0.0'} ({service.valoraciones?.total || 0} reseñas)
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {showStoreInfo && (service.tiendaInfo?.nombre || storeData?.businessName) && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Proveedor del servicio
+                  </h4>
+                  <div className="flex items-center justify-between bg-gray-50 dark:bg-gray-700/50 rounded-lg p-3">
+                    <div className="flex items-center space-x-2">
+                      <Store className="w-4 h-4 text-gray-400" />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {service.tiendaInfo?.nombre || storeData?.businessName}
+                      </span>
+                    </div>
+                    <button
+                      onClick={handleViewStore}
+                      className="text-blue-600 hover:text-blue-700 dark:text-blue-400 dark:hover:text-blue-300"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {showContactInfo && (
+                <div>
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
+                    Contactar proveedor
+                  </h4>
+                  <div className="space-y-2">
+                    {(service.contacto?.whatsapp || storeData?.phone) && (
+                      <button
+                        onClick={handleWhatsAppContact}
+                        className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 shadow-md hover:shadow-lg"
+                      >
+                        <MessageCircle className="w-5 h-5" />
+                        <span>Contactar por WhatsApp</span>
+                      </button>
+                    )}
+                    
+                    <div className="grid grid-cols-2 gap-2">
+                      {(service.contacto?.telefono || storeData?.phone) && (
+                        <button
+                          onClick={handlePhoneContact}
+                          className="px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
+                        >
+                          <Phone className="w-4 h-4" />
+                          <span>Llamar</span>
+                        </button>
+                      )}
+                      
+                      {(service.contacto?.email || storeData?.email) && (
+                        <button
+                          onClick={handleEmailContact}
+                          className="px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
+                        >
+                          <Mail className="w-4 h-4" />
+                          <span>Email</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
-          )}
-
-          {/* Botones de contacto */}
-          {showContactInfo && (
-            <div className="space-y-2">
-              {/* WhatsApp principal */}
-              {(service.contacto?.whatsapp || storeData?.phone) && (
-                <button
-                  onClick={handleWhatsAppContact}
-                  className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 shadow-md hover:shadow-lg"
-                >
-                  <MessageCircle className="w-5 h-5" />
-                  <span>Contactar por WhatsApp</span>
-                </button>
-              )}
-              
-              {/* Botones secundarios */}
-              <div className="flex space-x-2">
-                {(service.contacto?.telefono || storeData?.phone) && (
-                  <button
-                    onClick={handlePhoneContact}
-                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <Phone className="w-4 h-4" />
-                    <span>Llamar</span>
-                  </button>
-                )}
-                
-                {(service.contacto?.email || storeData?.email) && (
-                  <button
-                    onClick={handleEmailContact}
-                    className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
-                  >
-                    <Mail className="w-4 h-4" />
-                    <span>Email</span>
-                  </button>
-                )}
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
     );
   }
 
-  // Otras variantes pueden mantenerse igual o simplificarse
   return null;
 }

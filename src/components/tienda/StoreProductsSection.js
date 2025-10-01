@@ -2,36 +2,36 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  orderBy, 
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  orderBy,
   limit,
   startAfter,
   doc,
   updateDoc,
-  increment 
+  increment
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import ProductCard from './productos/ProductCard';
 import { CATEGORIAS_PRODUCTOS } from '@/types/categories';
 import { ESTADOS_PRODUCTO } from '@/types/product';
-import { 
-  Search, 
-  Filter, 
-  Grid3X3, 
-  List, 
+import {
+  Search,
+  Filter,
+  Grid3X3,
+  List,
   ChevronDown,
   Package,
   Loader2,
   SlidersHorizontal
 } from 'lucide-react';
 
-export default function StoreProductsSection({ 
-  storeId, 
-  storeData, 
+export default function StoreProductsSection({
+  storeId,
+  storeData,
   storeConfig,
   searchQuery = '',
   showFilters = true,
@@ -43,7 +43,7 @@ export default function StoreProductsSection({
   const [loadingMore, setLoadingMore] = useState(false);
   const [lastVisible, setLastVisible] = useState(null);
   const [hasMore, setHasMore] = useState(true);
-  
+
   // Filtros
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery);
   const [selectedCategory, setSelectedCategory] = useState('');
@@ -85,7 +85,7 @@ export default function StoreProductsSection({
     console.log('🔍 Consultando colección: productos');
     console.log('🔍 Filtro usuarioId ==', storeId);
     console.log('🔍 Filtro estado ==', ESTADOS_PRODUCTO.DISPONIBLE);
-    
+
     try {
       if (reset) {
         setLoading(true);
@@ -109,10 +109,10 @@ export default function StoreProductsSection({
       }
 
       // Ordenamiento
-      const orderField = sortBy === 'precio' ? 'precio' : 
-                        sortBy === 'ventas' ? 'totalVentas' :
-                        sortBy === 'titulo' ? 'titulo' : 'fechaCreacion';
-      
+      const orderField = sortBy === 'precio' ? 'precio' :
+        sortBy === 'ventas' ? 'totalVentas' :
+          sortBy === 'titulo' ? 'titulo' : 'fechaCreacion';
+
       q = query(q, orderBy(orderField, sortOrder));
 
       // Paginación
@@ -141,10 +141,10 @@ export default function StoreProductsSection({
         filteredProducts = filteredProducts.filter(product =>
           product.titulo.toLowerCase().includes(searchLower) ||
           product.descripcion.toLowerCase().includes(searchLower) ||
-          product.palabrasClave?.some(keyword => 
+          product.palabrasClave?.some(keyword =>
             keyword.toLowerCase().includes(searchLower)
           ) ||
-          product.etiquetas?.some(tag => 
+          product.etiquetas?.some(tag =>
             tag.toLowerCase().includes(searchLower)
           )
         );
@@ -228,9 +228,6 @@ export default function StoreProductsSection({
           <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
             Nuestros Productos
           </h2>
-          <p className="text-lg text-gray-600 dark:text-gray-400 mb-6">
-            Descubre nuestra selección de productos artesanales
-          </p>
         </div>
 
         {/* Filtros y búsqueda */}
@@ -255,19 +252,19 @@ export default function StoreProductsSection({
                 <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 ${viewMode === 'grid' 
-                      ? 'bg-orange-600 text-white' 
+                    className={`p-2 ${viewMode === 'grid'
+                      ? 'bg-orange-600 text-white'
                       : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
-                    } transition-colors`}
+                      } transition-colors`}
                   >
                     <Grid3X3 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 ${viewMode === 'list' 
-                      ? 'bg-orange-600 text-white' 
+                    className={`p-2 ${viewMode === 'list'
+                      ? 'bg-orange-600 text-white'
                       : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
-                    } transition-colors`}
+                      } transition-colors`}
                   >
                     <List className="w-4 h-4" />
                   </button>
@@ -385,7 +382,7 @@ export default function StoreProductsSection({
         {/* Resultados */}
         <div className="mb-6">
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            {products.length > 0 
+            {products.length > 0
               ? `Mostrando ${products.length} producto${products.length !== 1 ? 's' : ''}${hasActiveFilters ? ' (filtrado)' : ''}`
               : 'No se encontraron productos'
             }
@@ -400,8 +397,8 @@ export default function StoreProductsSection({
               No se encontraron productos
             </h3>
             <p className="text-gray-500 dark:text-gray-400 mb-4">
-              {hasActiveFilters 
-                ? 'Intenta ajustar los filtros de búsqueda' 
+              {hasActiveFilters
+                ? 'Intenta ajustar los filtros de búsqueda'
                 : 'Esta tienda aún no ha publicado productos'
               }
             </p>
@@ -417,8 +414,8 @@ export default function StoreProductsSection({
         ) : (
           <>
             <div className={
-              viewMode === 'grid' 
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
+              viewMode === 'grid'
+                ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6'
                 : 'space-y-4'
             }>
               {products.map((product) => (
@@ -426,7 +423,7 @@ export default function StoreProductsSection({
                   key={product.id}
                   product={product}
                   storeData={storeData}
-                  variant={viewMode}
+                  variant={viewMode === 'grid' ? 'featured-compact' : viewMode}  // ← Usa featured-compact para grid
                   onClick={() => handleProductClick(product)}
                 />
               ))}
