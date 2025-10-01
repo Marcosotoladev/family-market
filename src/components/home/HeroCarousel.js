@@ -28,7 +28,7 @@ export default function HeroCarousel() {
       image: 'https://tomatulugar.com/wp-content/uploads/2025/08/VivirElEvangelio.jpg',
       color: ''
     },
-    
+
 
     {
       id: 1,
@@ -79,7 +79,7 @@ export default function HeroCarousel() {
   }
 
   return (
-    <section className="relative w-full h-40 sm:h-44 md:h-52 lg:h-60 xl:h-72 overflow-hidden bg-gray-900 dark:bg-gray-950 rounded-lg sm:rounded-xl lg:rounded-2xl mx-2 sm:mx-4 lg:mx-0">
+    <section className="relative w-full h-40 sm:h-44 md:h-52 lg:h-60 xl:h-72 overflow-hidden bg-gray-900 dark:bg-gray-950 rounded-lg sm:rounded-xl lg:rounded-2xl">
       {/* Slides */}
       <div className="relative w-full h-full">
         {slides.map((slide, index) => (
@@ -98,10 +98,10 @@ export default function HeroCarousel() {
               className="absolute inset-0 bg-cover bg-center bg-no-repeat"
               style={{ backgroundImage: `url(${slide.image})` }}
             />
-            
+
             {/* Overlay gradiente */}
             <div className={`absolute inset-0 bg-gradient-to-r ${slide.color} opacity-40`} />
-            
+
             {/* Contenido */}
             <div className="relative h-full flex items-center">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 md:px-6 lg:px-8 w-full">
@@ -112,7 +112,7 @@ export default function HeroCarousel() {
                   <p className="text-sm sm:text-base md:text-lg lg:text-xl mb-3 sm:mb-4 md:mb-6 opacity-90 leading-relaxed">
                     {slide.description}
                   </p>
-                  
+
                   {/* Información del evento */}
                   <div className="flex flex-col gap-2 sm:gap-3 md:gap-4">
                     <div className="flex items-center gap-2 text-xs sm:text-sm md:text-base">
