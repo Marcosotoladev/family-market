@@ -1,6 +1,5 @@
 find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -not -path "./public/images*" | sort | sed 's/[^/]*\//|   /g; s/|   \([^|]\)/└── \1/' > estructura-completa.txt
 
-
 .
 └── .env.local
 └── estructura-completa.txt
@@ -151,6 +150,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── StoreTestimonialsSection.js
 |   |   └── ui
 |   |   |   └── CustomColorPicker.js
+|   |   |   └── FavoriteButton.js
 |   |   |   └── ImageUpload.js
 |   |   |   └── NotificationManager.js
 |   |   |   └── ProductCard.js
