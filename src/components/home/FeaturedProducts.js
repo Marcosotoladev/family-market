@@ -52,9 +52,9 @@ export default function FeaturedProducts() {
       );
 
       const querySnapshot = await getDocs(q);
-      const products = [];
 
-      for (const docSnapshot of querySnapshot.docs) {
+      // ✅ OPTIMIZACIÓN: Hacer todas las consultas de usuarios en paralelo
+      const productsPromises = querySnapshot.docs.map(async (docSnapshot) => {
         const productData = { id: docSnapshot.id, ...docSnapshot.data() };
 
         try {
@@ -78,8 +78,11 @@ export default function FeaturedProducts() {
           };
         }
 
-        products.push(productData);
-      }
+        return productData;
+      });
+
+      // Ejecutar todas las promesas en paralelo
+      const products = await Promise.all(productsPromises);
 
       setFeaturedProducts(products);
     } catch (error) {
@@ -339,4 +342,3 @@ export default function FeaturedProducts() {
     </section>
   );
 }
-
