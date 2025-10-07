@@ -12,7 +12,8 @@ import {
   deleteDoc, 
   doc,
   orderBy,
-  serverTimestamp 
+  serverTimestamp,
+  getDoc // Agregar para obtener datos del usuario
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
@@ -26,14 +27,38 @@ import { Plus, ArrowLeft, Package, X } from 'lucide-react';
 
 export default function ProductManager({ storeId, storeData }) {
   const { user } = useAuth();
-  const [view, setView] = useState('list'); // 'list' | 'form' | 'view'
+  const [view, setView] = useState('list');
   const [products, setProducts] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [showFeaturedModal, setShowFeaturedModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Cargar productos
+  // ✅ Función para obtener tiendaInfo del usuario
+  const getTiendaInfo = async (usuarioId) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', usuarioId));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        return {
+          nombre: userData.businessName || userData.familyName || `${userData.firstName} ${userData.lastName}`.trim(),
+          slug: userData.storeSlug,
+          email: userData.email,
+          phone: userData.phone,
+        };
+      }
+    } catch (error) {
+      console.error('Error cargando datos de tienda:', error);
+    }
+    
+    return {
+      nombre: 'Tienda Family Market',
+      slug: '',
+      email: '',
+      phone: ''
+    };
+  };
+
   useEffect(() => {
     if (storeId) {
       loadProducts();
@@ -79,17 +104,14 @@ export default function ProductManager({ storeId, storeData }) {
     setView('view');
   };
 
-  // Manejar destacar producto
   const handleFeatureProduct = (product) => {
     setSelectedProduct(product);
     setShowFeaturedModal(true);
   };
 
-  // Callback después de pago exitoso
   const handleFeatureSuccess = async () => {
     setShowFeaturedModal(false);
     setSelectedProduct(null);
-    // Recargar productos para mostrar el estado actualizado
     await loadProducts();
   };
 
@@ -100,31 +122,34 @@ export default function ProductManager({ storeId, storeData }) {
       // Auto-completar datos desde storeData
       const productDataCompleto = autoCompletarDatosProducto(productData, storeData);
       
+      // ✅ CRÍTICO: Obtener y guardar tiendaInfo
+      const tiendaInfo = await getTiendaInfo(storeId);
+      
       if (selectedProduct) {
         // Actualizar producto existente
         const productRef = doc(db, 'productos', selectedProduct.id);
         await updateDoc(productRef, {
           ...productDataCompleto,
+          tiendaInfo, // ✅ Guardar tiendaInfo
           fechaActualizacion: serverTimestamp()
         });
         
-        // Actualizar en estado local
         setProducts(prev => prev.map(p => 
           p.id === selectedProduct.id 
-            ? { ...p, ...productDataCompleto, fechaActualizacion: new Date().toISOString() }
+            ? { ...p, ...productDataCompleto, tiendaInfo, fechaActualizacion: new Date().toISOString() }
             : p
         ));
       } else {
         // Crear nuevo producto
         const newProduct = {
           ...productDataCompleto,
-          usuarioId: storeId, // Campo requerido por las reglas de Firestore
-          tiendaId: storeId, // Para mantener compatibilidad
+          usuarioId: storeId,
+          tiendaId: storeId,
+          tiendaInfo, // ✅ Guardar tiendaInfo desde el inicio
           fechaCreacion: serverTimestamp(),
           fechaActualizacion: serverTimestamp(),
           totalVentas: 0,
           totalVistas: 0,
-          // Inicializar nuevas funcionalidades
           valoraciones: {
             promedio: 0,
             total: 0,
@@ -136,7 +161,6 @@ export default function ProductManager({ storeId, storeData }) {
             compartidas: 0,
             comentarios: 0
           },
-          // Inicializar campos de destacado
           featured: false,
           featuredUntil: null,
           featuredPaymentId: null,
@@ -147,7 +171,6 @@ export default function ProductManager({ storeId, storeData }) {
         
         const docRef = await addDoc(collection(db, 'productos'), newProduct);
         
-        // Agregar al estado local
         setProducts(prev => [{
           id: docRef.id,
           ...newProduct,
@@ -210,7 +233,6 @@ export default function ProductManager({ storeId, storeData }) {
       fechaActualizacion: undefined,
       totalVentas: 0,
       totalVistas: 0,
-      // Resetear campos de destacado
       featured: false,
       featuredUntil: null,
       featuredPaymentId: null,
@@ -227,7 +249,6 @@ export default function ProductManager({ storeId, storeData }) {
     setSelectedProduct(null);
   };
 
-  // Verificar permisos
   if (!user || storeId !== user.uid) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
