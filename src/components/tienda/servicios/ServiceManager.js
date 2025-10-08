@@ -12,7 +12,8 @@ import {
   deleteDoc, 
   doc,
   orderBy,
-  serverTimestamp 
+  serverTimestamp,
+  getDoc // ✅ Agregado para obtener tiendaInfo
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,14 +26,38 @@ import { Plus, ArrowLeft, Briefcase, X } from 'lucide-react';
 
 export default function ServiceManager({ storeId, storeData }) {
   const { user } = useAuth();
-  const [view, setView] = useState('list'); // 'list' | 'form' | 'view'
+  const [view, setView] = useState('list');
   const [services, setServices] = useState([]);
   const [selectedService, setSelectedService] = useState(null);
   const [showFeaturedModal, setShowFeaturedModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Cargar servicios
+  // ✅ Función para obtener tiendaInfo del usuario
+  const getTiendaInfo = async (usuarioId) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', usuarioId));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        return {
+          nombre: userData.businessName || userData.familyName || `${userData.firstName} ${userData.lastName}`.trim(),
+          slug: userData.storeSlug,
+          email: userData.email,
+          phone: userData.phone,
+        };
+      }
+    } catch (error) {
+      console.error('Error cargando datos de tienda:', error);
+    }
+    
+    return {
+      nombre: 'Tienda Family Market',
+      slug: '',
+      email: '',
+      phone: ''
+    };
+  };
+
   useEffect(() => {
     if (storeId) {
       loadServices();
@@ -78,17 +103,14 @@ export default function ServiceManager({ storeId, storeData }) {
     setView('view');
   };
 
-  // Manejar destacar servicio
   const handleFeatureService = (service) => {
     setSelectedService(service);
     setShowFeaturedModal(true);
   };
 
-  // Callback después de pago exitoso
   const handleFeatureSuccess = async () => {
     setShowFeaturedModal(false);
     setSelectedService(null);
-    // Recargar servicios para mostrar el estado actualizado
     await loadServices();
   };
 
@@ -99,31 +121,34 @@ export default function ServiceManager({ storeId, storeData }) {
       // Auto-completar datos desde storeData
       const serviceDataCompleto = autoCompletarDatosServicio(serviceData, storeData);
       
+      // ✅ CRÍTICO: Obtener y guardar tiendaInfo
+      const tiendaInfo = await getTiendaInfo(storeId);
+      
       if (selectedService) {
         // Actualizar servicio existente
         const serviceRef = doc(db, 'servicios', selectedService.id);
         await updateDoc(serviceRef, {
           ...serviceDataCompleto,
+          tiendaInfo, // ✅ Guardar tiendaInfo
           fechaActualizacion: serverTimestamp()
         });
         
-        // Actualizar en estado local
         setServices(prev => prev.map(s => 
           s.id === selectedService.id 
-            ? { ...s, ...serviceDataCompleto, fechaActualizacion: new Date().toISOString() }
+            ? { ...s, ...serviceDataCompleto, tiendaInfo, fechaActualizacion: new Date().toISOString() }
             : s
         ));
       } else {
         // Crear nuevo servicio
         const newService = {
           ...serviceDataCompleto,
-          usuarioId: storeId, // Campo requerido por las reglas de Firestore
-          tiendaId: storeId, // Para mantener compatibilidad
+          usuarioId: storeId,
+          tiendaId: storeId,
+          tiendaInfo, // ✅ Guardar tiendaInfo desde el inicio
           fechaCreacion: serverTimestamp(),
           fechaActualizacion: serverTimestamp(),
           totalReservas: 0,
           totalVistas: 0,
-          // Inicializar nuevas funcionalidades
           valoraciones: {
             promedio: 0,
             total: 0,
@@ -135,7 +160,6 @@ export default function ServiceManager({ storeId, storeData }) {
             compartidas: 0,
             comentarios: 0
           },
-          // Inicializar campos de destacado
           featured: false,
           featuredUntil: null,
           featuredPaymentId: null,
@@ -146,7 +170,6 @@ export default function ServiceManager({ storeId, storeData }) {
         
         const docRef = await addDoc(collection(db, 'servicios'), newService);
         
-        // Agregar al estado local
         setServices(prev => [{
           id: docRef.id,
           ...newService,
@@ -209,7 +232,6 @@ export default function ServiceManager({ storeId, storeData }) {
       fechaActualizacion: undefined,
       totalReservas: 0,
       totalVistas: 0,
-      // Resetear campos de destacado
       featured: false,
       featuredUntil: null,
       featuredPaymentId: null,
@@ -226,7 +248,6 @@ export default function ServiceManager({ storeId, storeData }) {
     setSelectedService(null);
   };
 
-  // Verificar permisos
   if (!user || storeId !== user.uid) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -247,7 +268,6 @@ export default function ServiceManager({ storeId, storeData }) {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {view === 'list' && (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <div>
@@ -269,7 +289,6 @@ export default function ServiceManager({ storeId, storeData }) {
             </div>
           </div>
 
-          {/* Lista de servicios */}
           <ServiceList
             services={services}
             onEdit={handleEditService}
@@ -298,7 +317,6 @@ export default function ServiceManager({ storeId, storeData }) {
 
       {view === 'view' && selectedService && (
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header */}
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <button
@@ -332,7 +350,6 @@ export default function ServiceManager({ storeId, storeData }) {
             </div>
           </div>
 
-          {/* Vista previa del servicio */}
           <div className="bg-white dark:bg-gray-800 rounded-lg p-8">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               Vista Previa del Servicio
@@ -363,13 +380,10 @@ export default function ServiceManager({ storeId, storeData }) {
                 />
               </div>
             </div>
-
-
           </div>
         </div>
       )}
 
-      {/* Modal de destacar servicio */}
       {showFeaturedModal && selectedService && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">

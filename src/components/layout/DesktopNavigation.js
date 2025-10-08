@@ -2,7 +2,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation' 
-import { ChevronDown, ChevronRight, Package, Briefcase, Store, Heart, Grid3X3, House } from 'lucide-react'
+import { ChevronDown, ChevronRight, Package, Briefcase, Store, Heart, Grid3X3, House, User } from 'lucide-react'
 import { CATEGORIAS_PRODUCTOS, CATEGORIAS_SERVICIOS, CATEGORIAS_EMPLEO } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
@@ -10,13 +10,13 @@ import Link from 'next/link'
 export default function DesktopNavigation() {
   // TODOS LOS HOOKS PRIMERO - SIEMPRE EN EL MISMO ORDEN
   const pathname = usePathname()
-  const { isAuthenticated, loading } = useAuth()
+  const { isAuthenticated, loading, user } = useAuth()
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [activeCategory, setActiveCategory] = useState(null)
   const [showSubcategories, setShowSubcategories] = useState(false)
   const dropdownRef = useRef(null)
 
-  // useEffect también debe estar con los hooks
+  // useEffect para cerrar menús al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -65,7 +65,7 @@ export default function DesktopNavigation() {
   }
 
   const navItems = [
-        {
+    {
       id: 'home',
       label: 'Inicio',
       icon: House,
@@ -73,7 +73,6 @@ export default function DesktopNavigation() {
       hasDropdown: false,
       categories: getProductCategories()
     },
-
     {
       id: 'products',
       label: 'Productos',
@@ -310,23 +309,39 @@ export default function DesktopNavigation() {
             })}
           </div>
 
-          {/* CTA Desktop - SOLO para usuarios NO autenticados */}
-          {!isAuthenticated && !loading && (
-            <div className="flex items-center gap-4">
-              <Link 
-                href='/register'
-                className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors font-medium"
+          {/* CTA Desktop */}
+          <div className="flex items-center gap-4">
+            {!isAuthenticated && !loading && (
+              <>
+                <Link 
+                  href='/register'
+                  className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors font-medium"
+                >
+                  ¿Eres nuevo?
+                </Link>
+                <Link 
+                  href='/register'
+                  className="border-2 border-primary-500 text-primary-500 hover:text-white bg-transparent hover:bg-primary-500 font-medium px-6 py-2 rounded-lg transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                >
+                  Crear tienda
+                </Link>
+              </>
+            )}
+            
+            {isAuthenticated && (
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
               >
-                ¿Eres nuevo?
+                <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                </div>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Mi cuenta
+                </span>
               </Link>
-              <Link 
-                href='/register'
-                className="border-2 border-primary-500 text-primary-500 hover:text-white bg-transparent hover:bg-primary-500 font-medium px-6 py-2 rounded-lg transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
-              >
-                Crear tienda
-              </Link>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </nav>
