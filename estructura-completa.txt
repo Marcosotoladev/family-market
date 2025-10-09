@@ -33,10 +33,14 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── send-notification
 |   |   |   |   └── route.js
 |   |   └── dashboard
+|   |   |   └── favorites
+|   |   |   |   └── page.js
 |   |   |   └── messaging
 |   |   |   |   └── page.js
 |   |   |   └── page.js
 |   |   |   └── profile
+|   |   |   |   └── page.js
+|   |   |   └── reviews
 |   |   |   |   └── page.js
 |   |   |   └── store
 |   |   |   |   └── page.js
@@ -89,7 +93,6 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   └── dashboard
 |   |   |   └── ActionCardsGrid.js
 |   |   |   └── CommentsSection.js
-|   |   |   └── DashboardHeader.js
 |   |   |   └── FavoritesSection.js
 |   |   |   └── MessagingManagementSection.js
 |   |   |   └── QuickStatsSection.js
@@ -110,8 +113,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── DesktopNavigation.js
 |   |   |   └── Footer.js
 |   |   |   └── Header.js
-|   |   |   └── MobileDashboardNavigation.js
 |   |   |   └── MobileNavigation.js
+|   |   |   └── ProfileNavBadges.js
 |   |   |   └── StoreNavBadges.js
 |   |   └── profile
 |   |   |   └── AccountSettingsSection.js

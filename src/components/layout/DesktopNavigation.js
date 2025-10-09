@@ -1,10 +1,10 @@
 // src/components/layout/DesktopNavigation.js
 'use client'
 import { useState, useEffect, useRef } from 'react'
-import { usePathname } from 'next/navigation' 
-import { 
-  ChevronDown, ChevronRight, Package, Briefcase, Store, Heart, 
-  Grid3X3, House, User, Settings, MessageSquare, Users, 
+import { usePathname } from 'next/navigation'
+import {
+  ChevronDown, ChevronRight, Package, Briefcase, Store, Heart,
+  Grid3X3, House, User, Settings, MessageSquare, Users,
   ShoppingBag, Star, LogOut, LayoutDashboard
 } from 'lucide-react'
 import { CATEGORIAS_PRODUCTOS, CATEGORIAS_SERVICIOS, CATEGORIAS_EMPLEO } from '@/types'
@@ -16,7 +16,7 @@ export default function DesktopNavigation() {
   // TODOS LOS HOOKS PRIMERO - SIEMPRE EN EL MISMO ORDEN
   const pathname = usePathname()
   const router = useRouter()
-  const { isAuthenticated, loading, user, userData, logout } = useAuth()
+  const { isAuthenticated, loading, user, userData, signOut } = useAuth()
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [activeCategory, setActiveCategory] = useState(null)
   const [showSubcategories, setShowSubcategories] = useState(false)
@@ -200,14 +200,14 @@ export default function DesktopNavigation() {
   }
 
   // Si es admin, agregar opciones de admin
-  const finalUserMenuItems = userData?.role === 'admin' 
+  const finalUserMenuItems = userData?.role === 'admin'
     ? [...userMenuItems, adminMenuItems]
     : userMenuItems
 
   // Manejar logout
   const handleLogout = async () => {
     try {
-      await logout()
+      await signOut()
       setShowUserMenu(false)
       router.push('/')
     } catch (error) {
@@ -215,10 +215,11 @@ export default function DesktopNavigation() {
     }
   }
 
+
   // Manejar click en items del nav
   const handleNavClick = (itemId) => {
     const item = navItems.find(item => item.id === itemId)
-    
+
     if (item?.hasDropdown) {
       setActiveDropdown(activeDropdown === itemId ? null : itemId)
       setActiveCategory(null)
@@ -231,10 +232,10 @@ export default function DesktopNavigation() {
   // Manejar click en categorías
   const handleCategoryClick = (category, subcategoria = null, forceNavigate = false) => {
     if (subcategoria) {
-      console.log('Navegando a:', { 
+      console.log('Navegando a:', {
         type: category.type || 'productos',
-        category: category.id, 
-        subcategoria 
+        category: category.id,
+        subcategoria
       })
       setActiveDropdown(null)
       setActiveCategory(null)
@@ -243,7 +244,7 @@ export default function DesktopNavigation() {
     }
 
     if (forceNavigate) {
-      console.log('Navegando a:', { 
+      console.log('Navegando a:', {
         type: category.type || 'productos',
         category: category.id
       })
@@ -267,7 +268,7 @@ export default function DesktopNavigation() {
       return
     }
 
-    console.log('Navegando a:', { 
+    console.log('Navegando a:', {
       type: category.type || 'productos',
       category: category.id
     })
@@ -303,15 +304,15 @@ export default function DesktopNavigation() {
             {navItems.map((item) => {
               const Icon = item.icon
               const isActive = activeDropdown === item.id
-              
+
               return (
                 <div key={item.id} className="relative">
                   <button
                     onClick={() => handleNavClick(item.id)}
                     className={`
                       flex items-center gap-2 py-4 px-2 text-m font-medium transition-all duration-200 relative cursor-pointer
-                      ${isActive 
-                        ? 'text-primary-600' 
+                      ${isActive
+                        ? 'text-primary-600'
                         : 'text-gray-700 dark:text-gray-300 hover:text-primary-600'
                       }
                     `}
@@ -324,7 +325,7 @@ export default function DesktopNavigation() {
                         ${isActive ? 'rotate-180' : ''}
                       `} />
                     )}
-                    
+
                     {/* Underline hover effect */}
                     <div className={`
                       absolute bottom-0 left-0 right-0 h-0.5 bg-primary-500 transition-all duration-300
@@ -339,14 +340,14 @@ export default function DesktopNavigation() {
                         <h3 className="font-semibold text-gray-800 dark:text-gray-200 text-base">
                           {item.label}
                         </h3>
-                        <button 
+                        <button
                           onClick={() => handleCategoryClick({ id: 'todos', nombre: `Todos los ${item.label}` }, null, true)}
                           className="text-xs text-primary-600 hover:text-primary-700 font-medium cursor-pointer"
                         >
                           Ver todos
                         </button>
                       </div>
-                      
+
                       <div className="space-y-2">
                         {item.categories?.slice(0, 8).map((category) => (
                           <div key={category.id}>
@@ -369,16 +370,16 @@ export default function DesktopNavigation() {
                                   )}
                                 </div>
                               </div>
-                              
+
                               {category.subcategoriasCount > 0 && (
                                 <ChevronRight className="w-4 h-4 text-gray-400" />
                               )}
                             </button>
                           </div>
                         ))}
-                        
+
                         {item.categories?.length > 8 && (
-                          <button 
+                          <button
                             onClick={() => handleCategoryClick({ id: 'todas', nombre: 'Todas las categorías' }, null, true)}
                             className="w-full text-center py-3 text-sm text-primary-600 dark:text-primary-400 hover:text-primary-700 dark:hover:text-primary-300 font-medium border-t border-gray-100 dark:border-gray-700 mt-4 pt-4 cursor-pointer"
                           >
@@ -396,14 +397,14 @@ export default function DesktopNavigation() {
                         <h4 className="font-semibold text-gray-800 dark:text-gray-200 text-sm">
                           {activeCategory.nombre}
                         </h4>
-                        <button 
+                        <button
                           onClick={() => handleCategoryClick(activeCategory, null, true)}
                           className="text-xs text-primary-600 hover:text-primary-700 font-medium cursor-pointer"
                         >
                           Ver todos
                         </button>
                       </div>
-                      
+
                       <div className="space-y-2 max-h-80 overflow-y-auto">
                         {Object.entries(activeCategory.subcategorias).map(([key, value]) => (
                           <button
@@ -429,13 +430,13 @@ export default function DesktopNavigation() {
           <div className="flex items-center gap-4">
             {!isAuthenticated && !loading && (
               <>
-                <Link 
+                <Link
                   href='/register'
                   className="text-sm text-gray-600 dark:text-gray-400 hover:text-primary-600 transition-colors font-medium"
                 >
                   ¿Eres nuevo?
                 </Link>
-                <Link 
+                <Link
                   href='/register'
                   className="border-2 border-primary-500 text-primary-500 hover:text-white bg-transparent hover:bg-primary-500 font-medium px-6 py-2 rounded-lg transition-all duration-200 hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
                 >
@@ -443,7 +444,7 @@ export default function DesktopNavigation() {
                 </Link>
               </>
             )}
-            
+
             {isAuthenticated && (
               <div className="relative" ref={userMenuRef}>
                 <button

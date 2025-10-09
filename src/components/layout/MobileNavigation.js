@@ -3,9 +3,9 @@
 'use client'
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { 
-  Home, Heart, Grid3X3, X, Package, Briefcase, ChevronLeft, 
-  ChevronRight, User, LogOut, Store, ShoppingBag, Star, 
+import {
+  Home, Heart, Grid3X3, X, Package, Briefcase, ChevronLeft,
+  ChevronRight, User, LogOut, Store, ShoppingBag, Star,
   MessageSquare, Users, LayoutDashboard, Settings
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
@@ -14,7 +14,7 @@ import Link from 'next/link'
 
 export default function MobileNavigation() {
   // TODOS LOS HOOKS PRIMERO - SIEMPRE EN EL MISMO ORDEN
-  const { isAuthenticated, userData, logout } = useAuth()
+  const { isAuthenticated, loading, user, userData, signOut } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const [activeTab, setActiveTab] = useState('home')
@@ -66,7 +66,7 @@ export default function MobileNavigation() {
       description: 'Compra y vende productos'
     },
     {
-      title: 'Servicios', 
+      title: 'Servicios',
       categories: Object.values(CATEGORIAS_SERVICIOS || {}),
       type: 'servicios',
       icon: Grid3X3,
@@ -172,7 +172,7 @@ export default function MobileNavigation() {
   }
 
   // Si es admin, agregar opciones de admin
-  const finalUserMenuSections = isAdmin 
+  const finalUserMenuSections = isAdmin
     ? [...userMenuSections, adminMenuSection]
     : userMenuSections
 
@@ -253,15 +253,17 @@ export default function MobileNavigation() {
     setShowSubcategories(false)
   }
 
-  const handleLogout = async () => {
-    try {
-      await logout()
-      setShowUserModal(false)
-      router.push('/')
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error)
-    }
+const handleLogout = async () => {
+  try {
+    await signOut()
+    setShowUserModal(false) // 👈 corrección aquí
+    router.push('/')
+  } catch (error) {
+    console.error('Error al cerrar sesión:', error)
   }
+}
+
+
 
   const handleUserMenuNavigation = (href) => {
     router.push(href)
@@ -332,7 +334,7 @@ export default function MobileNavigation() {
           {selectedMainCategory.categories.map((category) => {
             const hasSubcategories = category.subcategorias && Object.keys(category.subcategorias).length > 0
             const subcategoriesCount = hasSubcategories ? Object.keys(category.subcategorias).length : 0
-            
+
             return (
               <button
                 key={category.id}
@@ -366,7 +368,7 @@ export default function MobileNavigation() {
       <div className="space-y-4">
         {categoryGroups.map((group) => {
           const IconComponent = group.icon
-          
+
           return (
             <button
               key={group.type}
@@ -376,7 +378,7 @@ export default function MobileNavigation() {
               <div className="w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-xl flex items-center justify-center flex-shrink-0 group-hover:bg-primary-200 dark:group-hover:bg-primary-800/50">
                 <IconComponent className="w-6 h-6 text-primary-600 dark:text-primary-400" />
               </div>
-              
+
               <div className="flex-1 min-w-0">
                 <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-base mb-1 group-hover:text-primary-700 dark:group-hover:text-primary-400">
                   {group.title}
@@ -514,7 +516,7 @@ export default function MobileNavigation() {
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = activeTab === item.id
-            
+
             return (
               <button
                 key={item.id}
@@ -522,8 +524,8 @@ export default function MobileNavigation() {
                 className={`
                   relative flex flex-col items-center justify-center py-2 rounded-xl min-w-0 flex-1
                   transition-all duration-200 ease-out cursor-pointer
-                  ${isActive 
-                    ? 'text-primary-600 dark:text-primary-400' 
+                  ${isActive
+                    ? 'text-primary-600 dark:text-primary-400'
                     : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300'
                   }
                 `}

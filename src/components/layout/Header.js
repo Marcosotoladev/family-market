@@ -17,7 +17,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
   const { theme, setTheme } = useTheme()
-  const { isAuthenticated, userData, loading, logout } = useAuth()
+const { isAuthenticated, loading, user, userData, signOut } = useAuth()
   const userMenuRef = useRef(null)
 
   const router = useRouter()
@@ -72,15 +72,16 @@ export default function Header() {
     }
   }
 
-  const handleLogout = async () => {
-    try {
-      await logout()
-      setShowUserMenu(false)
-      router.push('/')
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error)
-    }
+const handleLogout = async () => {
+  try {
+    await signOut()
+    setShowUserMenu(false)
+    router.push('/')
+  } catch (error) {
+    console.error('Error al cerrar sesión:', error)
   }
+}
+
 
   const handleNavigation = (href) => {
     setShowUserMenu(false)
