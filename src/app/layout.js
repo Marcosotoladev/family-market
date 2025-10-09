@@ -9,7 +9,6 @@ import { usePathname } from 'next/navigation'
 import Header from '../components/layout/Header'
 import DesktopNavigation from '../components/layout/DesktopNavigation'
 import MobileNavigation from '../components/layout/MobileNavigation'
-import MobileDashboardNavigation from '../components/layout/MobileDashboardNavigation'
 import Footer from '@/components/layout/Footer'
 
 const inter = Inter({ subsets: ['latin'] })
@@ -54,22 +53,18 @@ export default function RootLayout({ children }) {
                 {/* Header */}
                 <Header />
                 
-                {/* Navegación Desktop - Con su propio container */}
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                  <DesktopNavigation />
-                </div>
+                {/* Navegación Desktop */}
+                <DesktopNavigation />
               
                 {/* Contenido principal */}
                 <main className="pb-20 lg:pb-8">
-                  <div className="max-w-7xl lg:px-8">
-                    {children}
-                  </div>
+                  {children}
                 </main>
                 
-                {/* Navegación Mobile - Ambas versiones */}
+                {/* Navegación Mobile - Funciona tanto para páginas normales como dashboard */}
                 <MobileNavigation />
-                <MobileDashboardNavigation />
 
+                {/* Footer */}
                 <Footer />
               </div>
             )}

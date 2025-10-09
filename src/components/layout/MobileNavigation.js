@@ -3,14 +3,18 @@
 'use client'
 import { useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
-import { Home, Heart, Grid3X3, X, Package, Briefcase, ChevronLeft, ChevronRight, User, LogOut } from 'lucide-react'
+import { 
+  Home, Heart, Grid3X3, X, Package, Briefcase, ChevronLeft, 
+  ChevronRight, User, LogOut, Store, ShoppingBag, Star, 
+  MessageSquare, Users, LayoutDashboard, Settings
+} from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { CATEGORIAS_PRODUCTOS, CATEGORIAS_SERVICIOS, CATEGORIAS_EMPLEO } from '@/types'
 import Link from 'next/link'
 
 export default function MobileNavigation() {
   // TODOS LOS HOOKS PRIMERO - SIEMPRE EN EL MISMO ORDEN
-  const { isAuthenticated, userData, signOut } = useAuth() // ← CORREGIDO: signOut en lugar de logout
+  const { isAuthenticated, userData, logout } = useAuth()
   const router = useRouter()
   const pathname = usePathname()
   const [activeTab, setActiveTab] = useState('home')
@@ -22,9 +26,7 @@ export default function MobileNavigation() {
 
   // DESPUÉS DE LOS HOOKS, LAS CONDICIONES
   const isDashboardRoute = pathname?.startsWith('/dashboard')
-  if (isDashboardRoute) {
-    return null
-  }
+  const isAdmin = userData?.role === 'admin'
 
   const navItems = [
     {
@@ -39,6 +41,12 @@ export default function MobileNavigation() {
       icon: Grid3X3,
       href: '/categorias',
       hasModal: true
+    },
+    {
+      id: 'stores',
+      label: 'Tiendas',
+      icon: Store,
+      href: '/tiendas'
     },
     {
       id: 'user',
@@ -73,6 +81,101 @@ export default function MobileNavigation() {
     }
   ]
 
+  // Opciones del menú de usuario
+  const userMenuSections = [
+    {
+      section: 'Dashboard',
+      items: [
+        {
+          id: 'dashboard',
+          label: 'Mi Cuenta',
+          icon: LayoutDashboard,
+          href: '/dashboard',
+          description: 'Vista general',
+          color: 'purple'
+        }
+      ]
+    },
+    {
+      section: 'Personal',
+      items: [
+        {
+          id: 'profile',
+          label: 'Perfil',
+          icon: User,
+          href: '/dashboard/profile',
+          description: 'Información personal',
+          color: 'blue'
+        },
+        {
+          id: 'favorites',
+          label: 'Favoritos',
+          icon: Heart,
+          href: '/dashboard/favorites',
+          description: 'Productos guardados',
+          color: 'pink'
+        },
+        {
+          id: 'reviews',
+          label: 'Reseñas',
+          icon: Star,
+          href: '/dashboard/reviews',
+          description: 'Tus comentarios',
+          color: 'yellow'
+        }
+      ]
+    },
+    {
+      section: 'Tienda',
+      items: [
+        {
+          id: 'store',
+          label: 'Mi Tienda',
+          icon: Store,
+          href: '/dashboard/store',
+          description: 'Gestiona tu negocio',
+          color: 'orange'
+        },
+        {
+          id: 'products',
+          label: 'Productos',
+          icon: ShoppingBag,
+          href: '/dashboard/store/products',
+          description: 'Administrar productos',
+          color: 'green'
+        }
+      ]
+    }
+  ]
+
+  // Opciones adicionales para admin
+  const adminMenuSection = {
+    section: 'Administración',
+    items: [
+      {
+        id: 'users',
+        label: 'Usuarios',
+        icon: Users,
+        href: '/dashboard/users',
+        description: 'Gestionar usuarios',
+        color: 'indigo'
+      },
+      {
+        id: 'messaging',
+        label: 'Mensajería',
+        icon: MessageSquare,
+        href: '/dashboard/messaging',
+        description: 'Notificaciones masivas',
+        color: 'cyan'
+      }
+    ]
+  }
+
+  // Si es admin, agregar opciones de admin
+  const finalUserMenuSections = isAdmin 
+    ? [...userMenuSections, adminMenuSection]
+    : userMenuSections
+
   const handleTabClick = (itemId) => {
     if (itemId === 'categories') {
       setShowCategoriesModal(true)
@@ -84,6 +187,12 @@ export default function MobileNavigation() {
 
     if (itemId === 'user' && isAuthenticated) {
       setShowUserModal(true)
+      return
+    }
+
+    if (itemId === 'stores') {
+      router.push('/tiendas')
+      setActiveTab(itemId)
       return
     }
 
@@ -111,7 +220,6 @@ export default function MobileNavigation() {
       setSelectedCategory(category)
       setShowSubcategories(true)
     } else {
-      // Navegar directamente si no tiene subcategorías
       handleNavigate(selectedMainCategory.type, category.id, null)
     }
   }
@@ -126,7 +234,6 @@ export default function MobileNavigation() {
     setSelectedMainCategory(null)
     setSelectedCategory(null)
     setShowSubcategories(false)
-    // Aquí irá la lógica de navegación
   }
 
   const handleBackToMain = () => {
@@ -146,15 +253,19 @@ export default function MobileNavigation() {
     setShowSubcategories(false)
   }
 
-  // ← CORREGIDO: Usa signOut en lugar de logout
   const handleLogout = async () => {
     try {
-      await signOut()
+      await logout()
       setShowUserModal(false)
       router.push('/')
     } catch (error) {
       console.error('Error al cerrar sesión:', error)
     }
+  }
+
+  const handleUserMenuNavigation = (href) => {
+    router.push(href)
+    setShowUserModal(false)
   }
 
   const getSubcategoryName = (subcategoriaKey) => {
@@ -164,9 +275,19 @@ export default function MobileNavigation() {
       .join(' ')
   }
 
-  const renderModalContent = () => {
+  // Obtener iniciales del usuario
+  const getUserInitials = () => {
+    if (userData?.firstName && userData?.lastName) {
+      return `${userData.firstName.charAt(0)}${userData.lastName.charAt(0)}`.toUpperCase()
+    }
+    if (userData?.email) {
+      return userData.email.charAt(0).toUpperCase()
+    }
+    return 'U'
+  }
+
+  const renderCategoriesModalContent = () => {
     if (showSubcategories && selectedCategory) {
-      // Vista de subcategorías
       return (
         <div className="grid grid-cols-1 gap-3">
           {Object.entries(selectedCategory.subcategorias).map(([key, value]) => (
@@ -189,10 +310,8 @@ export default function MobileNavigation() {
     }
 
     if (selectedMainCategory) {
-      // Vista de categorías dentro de un grupo principal
       return (
         <div className="grid grid-cols-1 gap-3">
-          {/* Opción "Ver todos" para el grupo principal */}
           <button
             onClick={() => handleNavigate(selectedMainCategory.type, null, null)}
             className="flex items-center gap-3 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-all duration-200 text-left w-full group mb-4 cursor-pointer"
@@ -243,7 +362,6 @@ export default function MobileNavigation() {
       )
     }
 
-    // Vista principal - grupos de categorías principales
     return (
       <div className="space-y-4">
         {categoryGroups.map((group) => {
@@ -283,54 +401,80 @@ export default function MobileNavigation() {
 
   const renderUserModalContent = () => {
     return (
-      <div className="space-y-3">
-        {/* Información del usuario */}
-        <div className="flex items-center gap-3 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800">
-          <div className="w-12 h-12 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0">
-            <User className="w-6 h-6 text-white" />
-          </div>
-          <div className="min-w-0 flex-1">
-            <h4 className="font-semibold text-primary-700 dark:text-primary-300 text-sm leading-tight">
-              {userData?.firstName} {userData?.lastName}
-            </h4>
-            <p className="text-xs text-primary-600 dark:text-primary-400 truncate">
-              {userData?.email}
-            </p>
+      <div className="space-y-4">
+        {/* Header del usuario */}
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-2xl p-4 shadow-lg">
+          <div className="flex items-center gap-3">
+            <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-xl font-bold text-white">
+                {getUserInitials()}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-semibold text-white text-base leading-tight">
+                {userData?.firstName} {userData?.lastName}
+              </h4>
+              <p className="text-sm text-white/80 truncate">
+                {userData?.email}
+              </p>
+              {isAdmin && (
+                <span className="inline-block mt-1 px-2 py-0.5 bg-white/20 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+                  Administrador
+                </span>
+              )}
+            </div>
           </div>
         </div>
 
-        {/* Opciones */}
-        <Link
-          href="/dashboard"
-          onClick={() => setShowUserModal(false)}
-          className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left w-full group cursor-pointer"
-        >
-          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary-200 dark:group-hover:bg-primary-800/50">
-            <User className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+        {/* Secciones del menú */}
+        {finalUserMenuSections.map((section, idx) => (
+          <div key={idx}>
+            <div className="px-2 py-2">
+              <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                {section.section}
+              </p>
+            </div>
+            <div className="space-y-2">
+              {section.items.map((item) => {
+                const Icon = item.icon
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleUserMenuNavigation(item.href)}
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left group"
+                  >
+                    <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/40 transition-colors">
+                      <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h4 className="font-medium text-gray-900 dark:text-white text-sm leading-tight group-hover:text-primary-700 dark:group-hover:text-primary-400">
+                        {item.label}
+                      </h4>
+                      <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                        {item.description}
+                      </p>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary-500 flex-shrink-0" />
+                  </button>
+                )
+              })}
+            </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight group-hover:text-primary-700 dark:group-hover:text-primary-400">
-              Mi Cuenta
-            </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Gestiona tu perfil y tienda
-            </p>
-          </div>
-          <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
-        </Link>
+        ))}
 
+        {/* Cerrar sesión */}
         <button
           onClick={handleLogout}
-          className="flex items-center gap-3 p-4 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 text-left w-full group cursor-pointer"
+          className="w-full flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 text-left group border border-red-200 dark:border-red-800"
         >
-          <div className="w-10 h-10 bg-gray-100 dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-red-200 dark:group-hover:bg-red-800/50">
-            <LogOut className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-red-600 dark:group-hover:text-red-400" />
+          <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-red-200 dark:group-hover:bg-red-900/60 transition-colors">
+            <LogOut className="w-5 h-5 text-red-600 dark:text-red-400" />
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight group-hover:text-red-700 dark:group-hover:text-red-400">
+            <h4 className="font-medium text-red-700 dark:text-red-400 text-sm leading-tight">
               Cerrar Sesión
             </h4>
-            <p className="text-xs text-gray-500 dark:text-gray-400">
+            <p className="text-xs text-red-600 dark:text-red-500">
               Salir de tu cuenta
             </p>
           </div>
@@ -355,7 +499,8 @@ export default function MobileNavigation() {
   return (
     <>
       {/* Navegación móvil fija */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-700 shadow-lg">
+        {/* Indicador de pestaña activa */}
         {activeTab !== 'categories' && activeTab !== 'user' && (
           <div className="absolute top-0 left-0 h-0.5 bg-primary-500 transition-all duration-300 ease-out"
             style={{
@@ -365,7 +510,7 @@ export default function MobileNavigation() {
           />
         )}
 
-        <div className="flex items-center justify-around py-3 px-4">
+        <div className="flex items-center justify-around py-2.5 safe-area-inset-bottom">
           {navItems.map((item) => {
             const Icon = item.icon
             const isActive = activeTab === item.id
@@ -375,7 +520,7 @@ export default function MobileNavigation() {
                 key={item.id}
                 onClick={() => handleTabClick(item.id)}
                 className={`
-                  relative flex flex-col items-center justify-center py-2 px-4 rounded-xl min-w-0 flex-1
+                  relative flex flex-col items-center justify-center py-2 rounded-xl min-w-0 flex-1
                   transition-all duration-200 ease-out cursor-pointer
                   ${isActive 
                     ? 'text-primary-600 dark:text-primary-400' 
@@ -396,7 +541,7 @@ export default function MobileNavigation() {
                 </div>
 
                 <span className={`
-                  text-xs font-medium transition-all duration-200 z-10 relative
+                  text-xs font-medium transition-all duration-200 z-10 relative truncate max-w-full
                   ${isActive ? 'font-semibold' : ''}
                 `}>
                   {item.label}
@@ -409,17 +554,17 @@ export default function MobileNavigation() {
 
       {/* Modal de Categorías o Usuario */}
       {(showCategoriesModal || showUserModal) && (
-        <div className="lg:hidden fixed inset-0 z-[60] bg-black bg-opacity-50" onClick={handleCloseModal}>
-          <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85vh] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="lg:hidden fixed inset-0 z-[60] bg-black/50 dark:bg-black/70" onClick={handleCloseModal}>
+          <div className="fixed bottom-0 left-0 right-0 bg-white dark:bg-gray-900 rounded-t-3xl max-h-[85vh] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
             {/* Header del modal */}
             <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 sticky top-0 z-10">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center ">
                 {(selectedMainCategory || showSubcategories) && !showUserModal && (
                   <button
                     onClick={handleBackToMain}
                     className="p-1.5 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
                   >
-                    <ChevronLeft className="w-5 h-5 text-gray-500" />
+                    <ChevronLeft className="w-5 h-5 text-gray-500 dark:text-gray-400" />
                   </button>
                 )}
                 <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
@@ -430,17 +575,17 @@ export default function MobileNavigation() {
                 onClick={handleCloseModal}
                 className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors cursor-pointer"
               >
-                <X className="w-5 h-5 text-gray-500" />
+                <X className="w-5 h-5 text-gray-500 dark:text-gray-400" />
               </button>
             </div>
 
             {/* Contenido scrolleable */}
             <div className="overflow-y-auto max-h-[calc(85vh-80px)] p-4 pb-8">
-              {showUserModal ? renderUserModalContent() : renderModalContent()}
+              {showUserModal ? renderUserModalContent() : renderCategoriesModalContent()}
             </div>
 
             {/* Safe area para dispositivos con notch */}
-            <div className="h-safe-area-inset-bottom min-h-[16px]" />
+            <div className="safe-area-inset-bottom min-h-4" />
           </div>
         </div>
       )}

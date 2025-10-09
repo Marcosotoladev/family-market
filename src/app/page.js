@@ -13,7 +13,7 @@ export default function HomePage() {
   return (
     <>
       {/* Hero Carousel - Eventos de la iglesia */}
-      <section className="pt-2 pb-4 lg:pt-2 lg:pb-4">
+      <section className="px-4 sm:px-6 lg:px-8 pt-2 pb-4 lg:pt-2 lg:pb-4">
         <HeroCarousel />
       </section>
 
@@ -38,7 +38,7 @@ export default function HomePage() {
       </section>
 
       {/* Sección de Categorías Populares */}
-      <section className="pb-2 lg:pb-4">
+      <section className="px-4 sm:px-6 lg:px-8 pt-2 pb-4 lg:pt-2 lg:pb-4">
         <CategoriesSection />
       </section>
 

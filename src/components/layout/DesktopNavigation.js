@@ -2,19 +2,27 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { usePathname } from 'next/navigation' 
-import { ChevronDown, ChevronRight, Package, Briefcase, Store, Heart, Grid3X3, House, User } from 'lucide-react'
+import { 
+  ChevronDown, ChevronRight, Package, Briefcase, Store, Heart, 
+  Grid3X3, House, User, Settings, MessageSquare, Users, 
+  ShoppingBag, Star, LogOut, LayoutDashboard
+} from 'lucide-react'
 import { CATEGORIAS_PRODUCTOS, CATEGORIAS_SERVICIOS, CATEGORIAS_EMPLEO } from '@/types'
 import { useAuth } from '@/contexts/AuthContext'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 export default function DesktopNavigation() {
   // TODOS LOS HOOKS PRIMERO - SIEMPRE EN EL MISMO ORDEN
   const pathname = usePathname()
-  const { isAuthenticated, loading, user } = useAuth()
+  const router = useRouter()
+  const { isAuthenticated, loading, user, userData, logout } = useAuth()
   const [activeDropdown, setActiveDropdown] = useState(null)
   const [activeCategory, setActiveCategory] = useState(null)
   const [showSubcategories, setShowSubcategories] = useState(false)
+  const [showUserMenu, setShowUserMenu] = useState(false)
   const dropdownRef = useRef(null)
+  const userMenuRef = useRef(null)
 
   // useEffect para cerrar menús al hacer click fuera
   useEffect(() => {
@@ -23,6 +31,9 @@ export default function DesktopNavigation() {
         setActiveDropdown(null)
         setActiveCategory(null)
         setShowSubcategories(false)
+      }
+      if (userMenuRef.current && !userMenuRef.current.contains(event.target)) {
+        setShowUserMenu(false)
       }
     }
 
@@ -106,18 +117,113 @@ export default function DesktopNavigation() {
     }
   ]
 
+  // Opciones del menú de usuario
+  const userMenuItems = [
+    {
+      section: 'Dashboard',
+      items: [
+        {
+          id: 'dashboard',
+          label: 'Mi Cuenta',
+          icon: LayoutDashboard,
+          href: '/dashboard',
+          description: 'Vista general'
+        }
+      ]
+    },
+    {
+      section: 'Personal',
+      items: [
+        {
+          id: 'profile',
+          label: 'Perfil',
+          icon: User,
+          href: '/dashboard/profile',
+          description: 'Información personal'
+        },
+        {
+          id: 'favorites',
+          label: 'Favoritos',
+          icon: Heart,
+          href: '/dashboard/favorites',
+          description: 'Tus productos guardados'
+        },
+        {
+          id: 'reviews',
+          label: 'Reseñas',
+          icon: Star,
+          href: '/dashboard/reviews',
+          description: 'Tus comentarios'
+        }
+      ]
+    },
+    {
+      section: 'Tienda',
+      items: [
+        {
+          id: 'store',
+          label: 'Mi Tienda',
+          icon: Store,
+          href: '/dashboard/store',
+          description: 'Gestiona tu negocio'
+        },
+        {
+          id: 'products',
+          label: 'Productos',
+          icon: ShoppingBag,
+          href: '/dashboard/store/products',
+          description: 'Administrar productos'
+        }
+      ]
+    }
+  ]
+
+  // Opciones adicionales para admin
+  const adminMenuItems = {
+    section: 'Administración',
+    items: [
+      {
+        id: 'users',
+        label: 'Usuarios',
+        icon: Users,
+        href: '/dashboard/users',
+        description: 'Gestionar usuarios'
+      },
+      {
+        id: 'messaging',
+        label: 'Mensajería',
+        icon: MessageSquare,
+        href: '/dashboard/messaging',
+        description: 'Notificaciones masivas'
+      }
+    ]
+  }
+
+  // Si es admin, agregar opciones de admin
+  const finalUserMenuItems = userData?.role === 'admin' 
+    ? [...userMenuItems, adminMenuItems]
+    : userMenuItems
+
+  // Manejar logout
+  const handleLogout = async () => {
+    try {
+      await logout()
+      setShowUserMenu(false)
+      router.push('/')
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
+  }
+
   // Manejar click en items del nav
   const handleNavClick = (itemId) => {
     const item = navItems.find(item => item.id === itemId)
     
     if (item?.hasDropdown) {
-      // Si ya está activo, lo cerramos; si no, lo abrimos
       setActiveDropdown(activeDropdown === itemId ? null : itemId)
       setActiveCategory(null)
       setShowSubcategories(false)
     } else {
-      // Para items sin dropdown, navegar directamente
-      console.log('Navegando a:', item.href)
       setActiveDropdown(null)
     }
   }
@@ -171,11 +277,21 @@ export default function DesktopNavigation() {
   }
 
   const getSubcategoryName = (subcategoriaKey) => {
-    // Convertir snake_case a formato legible
     return subcategoriaKey
       .split('_')
       .map(word => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ')
+  }
+
+  // Obtener iniciales del usuario
+  const getUserInitials = () => {
+    if (userData?.firstName && userData?.lastName) {
+      return `${userData.firstName.charAt(0)}${userData.lastName.charAt(0)}`.toUpperCase()
+    }
+    if (user?.email) {
+      return user.email.charAt(0).toUpperCase()
+    }
+    return 'U'
   }
 
   return (
@@ -329,17 +445,107 @@ export default function DesktopNavigation() {
             )}
             
             {isAuthenticated && (
-              <Link
-                href="/dashboard"
-                className="flex items-center gap-2 px-4 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-              >
-                <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-full flex items-center justify-center">
-                  <User className="w-4 h-4 text-primary-600 dark:text-primary-400" />
-                </div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Mi cuenta
-                </span>
-              </Link>
+              <div className="relative" ref={userMenuRef}>
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors group"
+                >
+                  <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-600 rounded-full flex items-center justify-center shadow-sm">
+                    <span className="text-sm font-semibold text-white">
+                      {getUserInitials()}
+                    </span>
+                  </div>
+                  <div className="text-left hidden xl:block">
+                    <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                      {userData?.firstName || 'Usuario'}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {userData?.role === 'admin' ? 'Administrador' : 'Mi cuenta'}
+                    </p>
+                  </div>
+                  <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${showUserMenu ? 'rotate-180' : ''}`} />
+                </button>
+
+                {/* Dropdown del usuario */}
+                {showUserMenu && (
+                  <div className="absolute right-0 top-full mt-2 w-80 bg-white dark:bg-gray-800 rounded-lg shadow-xl border border-gray-200 dark:border-gray-700 z-50 overflow-hidden">
+                    {/* Header del menú */}
+                    <div className="bg-gradient-to-r from-primary-500 to-primary-600 p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                          <span className="text-lg font-bold text-white">
+                            {getUserInitials()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-white">
+                            {userData?.firstName} {userData?.lastName}
+                          </p>
+                          <p className="text-xs text-white/80">
+                            {user?.email}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Opciones del menú */}
+                    <div className="py-2 max-h-96 overflow-y-auto">
+                      {finalUserMenuItems.map((section, idx) => (
+                        <div key={idx} className={idx > 0 ? 'border-t border-gray-100 dark:border-gray-700' : ''}>
+                          <div className="px-4 py-2">
+                            <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                              {section.section}
+                            </p>
+                          </div>
+                          {section.items.map((item) => {
+                            const Icon = item.icon
+                            return (
+                              <Link
+                                key={item.id}
+                                href={item.href}
+                                onClick={() => setShowUserMenu(false)}
+                                className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors group"
+                              >
+                                <div className="w-9 h-9 bg-primary-50 dark:bg-primary-900/20 rounded-lg flex items-center justify-center group-hover:bg-primary-100 dark:group-hover:bg-primary-900/40 transition-colors">
+                                  <Icon className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-gray-900 dark:text-white">
+                                    {item.label}
+                                  </p>
+                                  <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                                    {item.description}
+                                  </p>
+                                </div>
+                              </Link>
+                            )
+                          })}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Footer con logout */}
+                    <div className="border-t border-gray-100 dark:border-gray-700 p-2">
+                      <button
+                        onClick={handleLogout}
+                        className="flex items-center gap-3 w-full px-4 py-3 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors group rounded-lg"
+                      >
+                        <div className="w-9 h-9 bg-red-50 dark:bg-red-900/20 rounded-lg flex items-center justify-center group-hover:bg-red-100 dark:group-hover:bg-red-900/40 transition-colors">
+                          <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-red-600 dark:text-red-400">
+                            Cerrar sesión
+                          </p>
+                          <p className="text-xs text-red-500 dark:text-red-500">
+                            Salir de tu cuenta
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
           </div>
         </div>
