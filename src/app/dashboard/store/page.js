@@ -5,14 +5,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import DashboardTopNavigation from '@/components/layout/DashboardTopNavigation';
-import StoreSidebar from '@/components/store/StoreSidebar';
+import StoreNavBadges from '@/components/layout/StoreNavBadges';
 import BusinessInfoSection from '@/components/store/BusinessInfoSection';
 import StoreLogoSection from '@/components/store/StoreLogoSection';
 import StoreConfigSection from '@/components/store/StoreConfigSection';
 import ToastContainer from '@/components/ui/ToastContainer';
 import useToast from '@/hooks/useToast';
-import { Store } from 'lucide-react';
-import StoreNavBadges from '@/components/layout/StoreNavBadges';
+import { Store, ChevronLeft } from 'lucide-react';
 
 export default function StorePage() {
   const { isAuthenticated, userData, user, loading } = useAuth();
@@ -89,28 +88,67 @@ export default function StorePage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <DashboardTopNavigation />
-      <StoreNavBadges />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+      
+      {/* Header de la tienda */}
+      <div 
+        className="relative"
+        style={{ 
+          background: `linear-gradient(135deg, ${userData?.storeConfig?.primaryColor || '#3B82F6'}, ${userData?.storeConfig?.secondaryColor || '#8B5CF6'})` 
+        }}
+      >
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          {/* Botón volver */}
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="flex items-center text-white/80 hover:text-white mb-4 transition-colors text-sm group"
+          >
+            <ChevronLeft className="w-4 h-4 mr-1 group-hover:-translate-x-1 transition-transform" />
+            Volver a Mi Cuenta
+          </button>
 
-          {/* Sidebar */}
-          <div className="lg:col-span-1">
-            <StoreSidebar
-              activeSection={activeSection}
-              setActiveSection={setActiveSection}
-              logoState={logoState}
-            />
-          </div>
-
-          {/* Contenido principal */}
-          <div className="lg:col-span-3">
-            {/* Sección activa */}
-            {renderActiveSection()}
+          <div className="flex items-center space-x-4">
+            {/* Logo de la tienda */}
+            <div className="relative">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden border-2 border-white/30">
+                {userData?.storeLogo ? (
+                  <img
+                    src={userData.storeLogo}
+                    alt="Logo de la tienda"
+                    className="w-full h-full object-contain p-2"
+                  />
+                ) : (
+                  <Store className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
+                )}
+              </div>
+            </div>
+            
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-white truncate">
+                {userData?.businessName || 'Mi Tienda'}
+              </h1>
+              <p className="text-white/80 text-sm sm:text-base">
+                {userData?.city || 'Ubicación no especificada'}
+              </p>
+              <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-2 bg-white/20 text-white border border-white/30">
+                Tema: {userData?.storeConfig?.theme || 'Classic'}
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Toast Container - Siempre visible */}
+      {/* Badges de navegación */}
+      <StoreNavBadges 
+        activeSection={activeSection}
+        setActiveSection={setActiveSection}
+      />
+
+      {/* Contenido principal */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {renderActiveSection()}
+      </div>
+
+      {/* Toast Container */}
       <ToastContainer toasts={toasts} onHideToast={hideToast} />
     </div>
   );
