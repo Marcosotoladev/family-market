@@ -2,69 +2,67 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  orderBy
+import { 
+  collection, 
+  query, 
+  where, 
+  getDocs, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc,
+  orderBy,
+  serverTimestamp,
+  getDoc
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  TIPOS_PUBLICACION
-} from '@/types/employment';
-import {
-  createEmployment,
-  updateEmployment,
-  deleteEmployment
-} from '@/lib/helpers/employmentHelpers';
+import { TIPOS_PUBLICACION } from '@/types/employment';
 import OfertaEmpleoForm from './OfertaEmpleoForm';
 import BusquedaEmpleoForm from './BusquedaEmpleoForm';
 import ServicioProfesionalForm from './ServicioProfesionalForm';
+import EmploymentList from './EmploymentList';
 import OfertaEmpleoCard from './OfertaEmpleoCard';
 import BusquedaEmpleoCard from './BusquedaEmpleoCard';
 import ServicioProfesionalCard from './ServicioProfesionalCard';
-import {
-  Plus,
-  ArrowLeft,
-  Briefcase,
-  User as UserIcon,
-  Wrench,
-  Package,
-  Filter,
-  Search,
-  Edit,
-  Trash2,
-  Eye,
-  X
-} from 'lucide-react';
+import FeaturedEmploymentButton from './FeaturedEmploymentButton';
+import { Plus, ArrowLeft, Briefcase, X } from 'lucide-react';
 
-export default function EmploymentManager({ storeId, storeData, userData }) {
+export default function EmploymentManager({ storeId, storeData }) {
   const { user } = useAuth();
   const [view, setView] = useState('list');
   const [tipoPublicacion, setTipoPublicacion] = useState(null);
   const [publicaciones, setPublicaciones] = useState([]);
   const [selectedPublicacion, setSelectedPublicacion] = useState(null);
-  const [editingPublicacion, setEditingPublicacion] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterType, setFilterType] = useState('all');
-  const [showPreview, setShowPreview] = useState(false);
+  const [showFeaturedModal, setShowFeaturedModal] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSaving, setIsSaving] = useState(false);
 
-  // 🔍 LOG 1: Verificar usuario y datos iniciales
-  useEffect(() => {
-    console.log('🚀 EmploymentManager montado:', {
-      usuario: {
-        uid: user?.uid,
-        email: user?.email
-      },
-      storeId: storeId,
-      userData: userData
-    });
-  }, [user, storeId, userData]);
+  // ✅ Función para obtener tiendaInfo del usuario
+  const getTiendaInfo = async (usuarioId) => {
+    try {
+      const userDoc = await getDoc(doc(db, 'users', usuarioId));
+      if (userDoc.exists()) {
+        const userData = userDoc.data();
+        return {
+          nombre: userData.businessName || userData.familyName || `${userData.firstName} ${userData.lastName}`.trim(),
+          slug: userData.storeSlug,
+          email: userData.email,
+          phone: userData.phone,
+        };
+      }
+    } catch (error) {
+      console.error('Error cargando datos de tienda:', error);
+    }
+    
+    return {
+      nombre: 'Tienda Family Market',
+      slug: '',
+      email: '',
+      phone: ''
+    };
+  };
 
-  // Cargar publicaciones
   useEffect(() => {
     if (storeId) {
       loadPublicaciones();
@@ -73,463 +71,339 @@ export default function EmploymentManager({ storeId, storeData, userData }) {
 
   const loadPublicaciones = async () => {
     try {
-      setLoading(true);
+      setIsLoading(true);
       const empleosRef = collection(db, 'empleos');
       const q = query(
-        empleosRef,
+        empleosRef, 
         where('usuarioId', '==', storeId),
         orderBy('fechaCreacion', 'desc')
       );
-
+      
       const querySnapshot = await getDocs(q);
       const publicacionesData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-
+      
       setPublicaciones(publicacionesData);
     } catch (error) {
       console.error('Error cargando publicaciones:', error);
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   const handleCreateNew = (tipo) => {
     setTipoPublicacion(tipo);
-    setEditingPublicacion(null);
+    setSelectedPublicacion(null);
     setView('form');
   };
 
-  const handleEdit = (publicacion) => {
+  const handleEditPublicacion = (publicacion) => {
     setTipoPublicacion(publicacion.tipoPublicacion);
-    setEditingPublicacion(publicacion);
+    setSelectedPublicacion(publicacion);
     setView('form');
   };
 
-  const handleView = (publicacion) => {
+  const handleViewPublicacion = (publicacion) => {
     setSelectedPublicacion(publicacion);
-    setShowPreview(true);
+    setView('view');
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm('¿Estás seguro de eliminar esta publicación?')) return;
-
-    try {
-      await deleteEmployment(id);
-      setPublicaciones(prev => prev.filter(p => p.id !== id));
-    } catch (error) {
-      console.error('Error eliminando:', error);
-      alert('Error al eliminar la publicación');
-    }
+  const handleFeaturePublicacion = (publicacion) => {
+    setSelectedPublicacion(publicacion);
+    setShowFeaturedModal(true);
   };
 
-  const handleSave = async (formData) => {
+  const handleFeatureSuccess = async () => {
+    setShowFeaturedModal(false);
+    setSelectedPublicacion(null);
+    await loadPublicaciones();
+  };
+
+  const handleSavePublicacion = async (publicacionData) => {
     try {
-      setLoading(true);
+      setIsSaving(true);
       
-      // 🔍 LOG 2: Ver datos del formulario
-      console.log('📝 FormData recibido:', formData);
-      console.log('🔑 StoreId actual:', storeId);
-      console.log('📌 Tipo de publicación:', tipoPublicacion);
+      // ✅ CRÍTICO: Obtener y guardar tiendaInfo
+      const tiendaInfo = await getTiendaInfo(storeId);
       
-      if (editingPublicacion) {
+      if (selectedPublicacion) {
         // Actualizar publicación existente
-        await updateEmployment(editingPublicacion.id, {
-          ...formData,
-          fechaModificacion: new Date().toISOString()
+        const publicacionRef = doc(db, 'empleos', selectedPublicacion.id);
+        await updateDoc(publicacionRef, {
+          ...publicacionData,
+          tiendaInfo,
+          fechaActualizacion: serverTimestamp()
         });
         
-        setPublicaciones(prev =>
-          prev.map(p => p.id === editingPublicacion.id 
-            ? { ...p, ...formData, fechaModificacion: new Date().toISOString() }
+        setPublicaciones(prev => prev.map(p => 
+          p.id === selectedPublicacion.id 
+            ? { ...p, ...publicacionData, tiendaInfo, fechaActualizacion: new Date().toISOString() }
             : p
-          )
-        );
+        ));
       } else {
-        // Crear nueva publicación - ESTRUCTURA SIMPLIFICADA
-        const nuevaPublicacion = {
-          // Campos OBLIGATORIOS según Firestore Rules
-          titulo: formData.titulo || '',
-          tipoPublicacion: tipoPublicacion,
+        // Crear nueva publicación
+        const newPublicacion = {
+          ...publicacionData,
           usuarioId: storeId,
-          
-          // Campos adicionales
-          descripcion: formData.descripcion || '',
-          empresa: formData.empresa || '',
-          ubicacion: formData.ubicacion || '',
-          salario: formData.salario || null,
-          
-          // Campos opcionales específicos por tipo
-          ...(tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO && {
-            tipoContrato: formData.tipoContrato || '',
-            modalidad: formData.modalidad || '',
-            experiencia: formData.experiencia || '',
-            requisitos: formData.requisitos || [],
-            beneficios: formData.beneficios || []
-          }),
-          
-          ...(tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO && {
-            disponibilidad: formData.disponibilidad || '',
-            habilidades: formData.habilidades || [],
-            experienciaAnios: formData.experienciaAnios || 0,
-            curriculum: formData.curriculum || null
-          }),
-          
-          ...(tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL && {
-            especialidad: formData.especialidad || '',
-            tarifa: formData.tarifa || null,
-            disponibilidadHoraria: formData.disponibilidadHoraria || '',
-            certificaciones: formData.certificaciones || []
-          }),
-          
-          // Contacto
-          email: formData.email || userData?.email || '',
-          telefono: formData.telefono || userData?.phone || '',
-          whatsapp: formData.whatsapp || userData?.whatsapp || '',
-          
-          // Metadata
+          tiendaId: storeId,
+          tipoPublicacion: tipoPublicacion,
+          tiendaInfo,
+          fechaCreacion: serverTimestamp(),
+          fechaActualizacion: serverTimestamp(),
           estado: 'activo',
-          fechaCreacion: new Date().toISOString(),
-          fechaModificacion: new Date().toISOString(),
-          vistas: 0
+          vistas: 0,
+          interacciones: {
+            vistas: 0,
+            favoritos: 0,
+            compartidas: 0,
+            consultas: 0
+          },
+          featured: false,
+          featuredUntil: null,
+          featuredPaymentId: null,
+          featuredAmount: null,
+          fechaDestacado: null
         };
         
-        console.log('✅ Publicación lista para guardar:', nuevaPublicacion);
-        console.log('🔍 Verificar campos requeridos:', {
-          titulo: nuevaPublicacion.titulo,
-          tipoPublicacion: nuevaPublicacion.tipoPublicacion,
-          usuarioId: nuevaPublicacion.usuarioId
-        });
+        const docRef = await addDoc(collection(db, 'empleos'), newPublicacion);
         
-        const nuevoId = await createEmployment(nuevaPublicacion);
-        setPublicaciones(prev => [...prev, { id: nuevoId, ...nuevaPublicacion }]);
+        setPublicaciones(prev => [{
+          id: docRef.id,
+          ...newPublicacion,
+          fechaCreacion: new Date().toISOString(),
+          fechaActualizacion: new Date().toISOString()
+        }, ...prev]);
       }
-
+      
       setView('list');
-      setEditingPublicacion(null);
+      setSelectedPublicacion(null);
       setTipoPublicacion(null);
     } catch (error) {
       console.error('Error guardando publicación:', error);
-      alert('Error al guardar. Revisa la consola para más detalles.');
+      alert('Error al guardar la publicación. Intenta nuevamente.');
     } finally {
-      setLoading(false);
+      setIsSaving(false);
     }
   };
 
-  const handleCancel = () => {
+  const handleDeletePublicacion = async (publicacionId) => {
+    if (!confirm('¿Estás seguro de que quieres eliminar esta publicación?')) {
+      return;
+    }
+    
+    try {
+      await deleteDoc(doc(db, 'empleos', publicacionId));
+      setPublicaciones(prev => prev.filter(p => p.id !== publicacionId));
+    } catch (error) {
+      console.error('Error eliminando publicación:', error);
+      alert('Error al eliminar la publicación. Intenta nuevamente.');
+    }
+  };
+
+  const handleToggleStatus = async (publicacion) => {
+    try {
+      const newStatus = publicacion.estado === 'activo' ? 'pausado' : 'activo';
+      const publicacionRef = doc(db, 'empleos', publicacion.id);
+      
+      await updateDoc(publicacionRef, {
+        estado: newStatus,
+        fechaActualizacion: serverTimestamp()
+      });
+      
+      setPublicaciones(prev => prev.map(p => 
+        p.id === publicacion.id 
+          ? { ...p, estado: newStatus, fechaActualizacion: new Date().toISOString() }
+          : p
+      ));
+    } catch (error) {
+      console.error('Error cambiando estado:', error);
+      alert('Error al cambiar el estado. Intenta nuevamente.');
+    }
+  };
+
+  const handleDuplicatePublicacion = (publicacion) => {
+    const duplicatedPublicacion = {
+      ...publicacion,
+      titulo: `${publicacion.titulo} (Copia)`,
+      id: undefined,
+      fechaCreacion: undefined,
+      fechaActualizacion: undefined,
+      vistas: 0,
+      featured: false,
+      featuredUntil: null,
+      featuredPaymentId: null,
+      featuredAmount: null,
+      fechaDestacado: null
+    };
+    
+    setTipoPublicacion(publicacion.tipoPublicacion);
+    setSelectedPublicacion(duplicatedPublicacion);
+    setView('form');
+  };
+
+  const handleBackToList = () => {
     setView('list');
-    setEditingPublicacion(null);
+    setSelectedPublicacion(null);
     setTipoPublicacion(null);
   };
 
-  // Filtrar publicaciones
-  const publicacionesFiltradas = publicaciones.filter(pub => {
-    const matchType = filterType === 'all' || pub.tipoPublicacion === filterType;
-    const matchSearch = !searchQuery || 
-      pub.titulo?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      pub.descripcion?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchType && matchSearch;
-  });
-
-  // Agrupar por tipo
-  const ofertas = publicacionesFiltradas.filter(p => p.tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO);
-  const busquedas = publicacionesFiltradas.filter(p => p.tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO);
-  const servicios = publicacionesFiltradas.filter(p => p.tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL);
+  if (!user || storeId !== user.uid) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-center">
+          <Briefcase className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
+            Acceso no autorizado
+          </h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            No tienes permisos para gestionar estas publicaciones
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {view === 'list' && (
-        <>
-          {/* Botones crear */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+                  Gestión de Empleos
+                </h1>
+                <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
+                  Administra tus publicaciones de empleo
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Botones de crear nuevas publicaciones */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <button
               onClick={() => handleCreateNew(TIPOS_PUBLICACION.OFERTA_EMPLEO)}
-              className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
             >
               <Briefcase className="w-5 h-5" />
-              <span className="font-medium">Nueva Oferta de Empleo</span>
+              <span>Nueva Oferta de Empleo</span>
             </button>
 
             <button
               onClick={() => handleCreateNew(TIPOS_PUBLICACION.BUSQUEDA_EMPLEO)}
-              className="flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+              className="flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
             >
-              <UserIcon className="w-5 h-5" />
-              <span className="font-medium">Busco Empleo</span>
+              <Plus className="w-5 h-5" />
+              <span>Busco Empleo</span>
             </button>
 
             <button
               onClick={() => handleCreateNew(TIPOS_PUBLICACION.SERVICIO_PROFESIONAL)}
-              className="flex items-center justify-center gap-3 px-6 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              className="flex items-center justify-center gap-3 px-6 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
             >
-              <Wrench className="w-5 h-5" />
-              <span className="font-medium">Servicio Profesional</span>
+              <Plus className="w-5 h-5" />
+              <span>Servicio Profesional</span>
             </button>
           </div>
 
-          {/* Filtros */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar publicaciones..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                />
-              </div>
-
-              <div className="flex items-center gap-2">
-                <Filter className="w-5 h-5 text-gray-400" />
-                <select
-                  value={filterType}
-                  onChange={(e) => setFilterType(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                >
-                  <option value="all">Todas</option>
-                  <option value={TIPOS_PUBLICACION.OFERTA_EMPLEO}>Ofertas</option>
-                  <option value={TIPOS_PUBLICACION.BUSQUEDA_EMPLEO}>Búsquedas</option>
-                  <option value={TIPOS_PUBLICACION.SERVICIO_PROFESIONAL}>Servicios</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          {/* Estadísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-white dark:bg-gray-800 rounded-lg p-4 shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">Total</p>
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">{publicaciones.length}</p>
-                </div>
-                <Package className="w-8 h-8 text-gray-400" />
-              </div>
-            </div>
-
-            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-blue-600 dark:text-blue-400">Ofertas</p>
-                  <p className="text-2xl font-bold text-blue-700 dark:text-blue-300">{ofertas.length}</p>
-                </div>
-                <Briefcase className="w-8 h-8 text-blue-400" />
-              </div>
-            </div>
-
-            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-green-600 dark:text-green-400">Búsquedas</p>
-                  <p className="text-2xl font-bold text-green-700 dark:text-green-300">{busquedas.length}</p>
-                </div>
-                <UserIcon className="w-8 h-8 text-green-400" />
-              </div>
-            </div>
-
-            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 shadow">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-purple-600 dark:text-purple-400">Servicios</p>
-                  <p className="text-2xl font-bold text-purple-700 dark:text-purple-300">{servicios.length}</p>
-                </div>
-                <Wrench className="w-8 h-8 text-purple-400" />
-              </div>
-            </div>
-          </div>
-
-          {/* Lista de publicaciones */}
-          {loading ? (
-            <div className="flex justify-center py-12">
-              <div className="w-12 h-12 border-4 border-orange-600 border-t-transparent rounded-full animate-spin"></div>
-            </div>
-          ) : publicacionesFiltradas.length === 0 ? (
-            <div className="text-center py-12 bg-white dark:bg-gray-800 rounded-lg shadow">
-              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-                No hay publicaciones
-              </h3>
-              <p className="text-gray-600 dark:text-gray-400">
-                Crea tu primera publicación usando los botones de arriba
-              </p>
-            </div>
-          ) : (
-            <div className="space-y-8">
-              {/* Ofertas */}
-              {ofertas.length > 0 && (filterType === 'all' || filterType === TIPOS_PUBLICACION.OFERTA_EMPLEO) && (
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <Briefcase className="w-6 h-6 mr-2 text-blue-600" />
-                    Ofertas de Empleo ({ofertas.length})
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {ofertas.map(oferta => (
-                      <div key={oferta.id} className="relative">
-                        <OfertaEmpleoCard
-                          oferta={oferta}
-                          storeData={storeData}
-                          variant="grid"
-                          showContactInfo={false}
-                          onClick={() => handleView(oferta)}
-                        />
-                        <div className="absolute top-2 right-2 flex gap-2">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleEdit(oferta); }}
-                            className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-lg"
-                            title="Editar"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(oferta.id); }}
-                            className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-lg"
-                            title="Eliminar"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Búsquedas */}
-              {busquedas.length > 0 && (filterType === 'all' || filterType === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO) && (
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <UserIcon className="w-6 h-6 mr-2 text-green-600" />
-                    Búsquedas de Empleo ({busquedas.length})
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {busquedas.map(busqueda => (
-                      <div key={busqueda.id} className="relative">
-                        <BusquedaEmpleoCard
-                          busqueda={busqueda}
-                          variant="grid"
-                          showContactInfo={false}
-                          onClick={() => handleView(busqueda)}
-                        />
-                        <div className="absolute top-2 right-2 flex gap-2">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleEdit(busqueda); }}
-                            className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-lg"
-                            title="Editar"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(busqueda.id); }}
-                            className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-lg"
-                            title="Eliminar"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Servicios */}
-              {servicios.length > 0 && (filterType === 'all' || filterType === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL) && (
-                <div>
-                  <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4 flex items-center">
-                    <Wrench className="w-6 h-6 mr-2 text-purple-600" />
-                    Servicios Profesionales ({servicios.length})
-                  </h2>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {servicios.map(servicio => (
-                      <div key={servicio.id} className="relative">
-                        <ServicioProfesionalCard
-                          servicio={servicio}
-                          storeData={storeData}
-                          variant="grid"
-                          showContactInfo={false}
-                          onClick={() => handleView(servicio)}
-                        />
-                        <div className="absolute top-2 right-2 flex gap-2">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleEdit(servicio); }}
-                            className="p-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 shadow-lg"
-                            title="Editar"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={(e) => { e.stopPropagation(); handleDelete(servicio.id); }}
-                            className="p-2 bg-red-600 text-white rounded-full hover:bg-red-700 shadow-lg"
-                            title="Eliminar"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </>
+          <EmploymentList
+            publicaciones={publicaciones}
+            onEdit={handleEditPublicacion}
+            onDelete={handleDeletePublicacion}
+            onToggleStatus={handleToggleStatus}
+            onDuplicate={handleDuplicatePublicacion}
+            onView={handleViewPublicacion}
+            onCreateNew={handleCreateNew}
+            onFeature={handleFeaturePublicacion}
+            isLoading={isLoading}
+          />
+        </div>
       )}
 
       {view === 'form' && (
-        <>
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           {tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO && (
             <OfertaEmpleoForm
-              oferta={editingPublicacion}
-              onSave={handleSave}
-              onCancel={handleCancel}
-              isLoading={loading}
+              oferta={selectedPublicacion}
+              storeId={storeId}
+              onSave={handleSavePublicacion}
+              onCancel={handleBackToList}
+              isLoading={isSaving}
             />
           )}
 
           {tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO && (
             <BusquedaEmpleoForm
-              busqueda={editingPublicacion}
-              onSave={handleSave}
-              onCancel={handleCancel}
-              isLoading={loading}
+              busqueda={selectedPublicacion}
+              storeId={storeId}
+              onSave={handleSavePublicacion}
+              onCancel={handleBackToList}
+              isLoading={isSaving}
             />
           )}
 
           {tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL && (
             <ServicioProfesionalForm
-              servicio={editingPublicacion}
-              onSave={handleSave}
-              onCancel={handleCancel}
-              isLoading={loading}
+              servicio={selectedPublicacion}
+              storeId={storeId}
+              onSave={handleSavePublicacion}
+              onCancel={handleBackToList}
+              isLoading={isSaving}
             />
           )}
-        </>
+        </div>
       )}
 
-      {/* Preview Modal */}
-      {showPreview && selectedPublicacion && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="sticky top-0 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 p-4 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-gray-900 dark:text-white">Vista Previa</h2>
+      {view === 'view' && selectedPublicacion && (
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
               <button
-                onClick={() => setShowPreview(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                onClick={handleBackToList}
+                className="inline-flex items-center px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white transition-colors"
               >
-                <X className="w-6 h-6" />
+                <ArrowLeft className="w-5 h-5 mr-2" />
+                Volver a la lista
               </button>
+              
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => handleEditPublicacion(selectedPublicacion)}
+                  className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                >
+                  Editar
+                </button>
+                <button
+                  onClick={() => handleDuplicatePublicacion(selectedPublicacion)}
+                  className="px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                >
+                  Duplicar
+                </button>
+                <button
+                  onClick={() => handleFeaturePublicacion(selectedPublicacion)}
+                  className="px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-colors"
+                >
+                  Destacar
+                </button>
+              </div>
             </div>
+          </div>
+
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-8">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
+              Vista Previa de la Publicación
+            </h2>
             
-            <div className="p-6">
+            <div className="grid grid-cols-1 gap-8">
               {selectedPublicacion.tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO && (
                 <OfertaEmpleoCard
                   oferta={selectedPublicacion}
                   storeData={storeData}
                   variant="grid"
-                  showContactInfo={true}
+                  showContactInfo={false}
                 />
               )}
 
@@ -537,7 +411,7 @@ export default function EmploymentManager({ storeId, storeData, userData }) {
                 <BusquedaEmpleoCard
                   busqueda={selectedPublicacion}
                   variant="grid"
-                  showContactInfo={true}
+                  showContactInfo={false}
                 />
               )}
 
@@ -546,9 +420,45 @@ export default function EmploymentManager({ storeId, storeData, userData }) {
                   servicio={selectedPublicacion}
                   storeData={storeData}
                   variant="grid"
-                  showContactInfo={true}
+                  showContactInfo={false}
                 />
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showFeaturedModal && selectedPublicacion && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white">
+                  Destacar Publicación
+                </h2>
+                <button
+                  onClick={() => setShowFeaturedModal(false)}
+                  className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  <X className="w-6 h-6" />
+                </button>
+              </div>
+              
+              <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+                <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
+                  {selectedPublicacion.titulo}
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Esta publicación aparecerá en la sección destacada del home
+                </p>
+              </div>
+
+              <FeaturedEmploymentButton
+                publicacion={selectedPublicacion}
+                user={user}
+                onSuccess={handleFeatureSuccess}
+                onClose={() => setShowFeaturedModal(false)}
+              />
             </div>
           </div>
         </div>

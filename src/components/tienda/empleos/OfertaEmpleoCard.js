@@ -47,7 +47,7 @@ export default function OfertaEmpleoCard({
   const handleWhatsAppContact = (e) => {
     e.stopPropagation();
     const phone = oferta.contacto?.whatsapp || storeData?.phone || '';
-    const message = `Hola! Me interesa la oferta de empleo: ${oferta.titulo}`;
+    const message = `Hola! Me interesa postularme para: ${oferta.titulo}`;
     const url = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
   };
@@ -66,242 +66,123 @@ export default function OfertaEmpleoCard({
     window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_self');
   };
 
+  const handleShare = async (e) => {
+    e.stopPropagation();
+    const ofertaUrl = `${window.location.origin}/empleos/${oferta.id}`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: oferta.titulo,
+          text: oferta.descripcion,
+          url: ofertaUrl,
+        });
+      } catch (err) {
+        console.log('Error sharing:', err);
+      }
+    } else {
+      navigator.clipboard.writeText(ofertaUrl);
+      alert('Enlace copiado al portapapeles');
+    }
+  };
+
   const toggleDetails = (e) => {
     e.stopPropagation();
     setShowDetails(!showDetails);
   };
 
-  const tipoEmpleo = Object.values(TIPOS_EMPLEO).find(t => t.id === oferta.tipoEmpleo);
-  const modalidad = Object.values(MODALIDADES_TRABAJO).find(m => m.id === oferta.modalidad);
-  const experiencia = Object.values(NIVELES_EXPERIENCIA).find(e => e.id === oferta.experienciaRequerida);
+  // Formatear ubicación
+  const formatearUbicacion = (ubicacion) => {
+    if (!ubicacion) return '';
+    if (typeof ubicacion === 'string') return ubicacion;
+    return [
+      ubicacion.direccion,
+      ubicacion.ciudad,
+      ubicacion.provincia,
+      ubicacion.pais
+    ].filter(Boolean).join(', ');
+  };
 
-  // Variante FEATURED COMPACT
-  if (variant === 'featured-compact') {
-    return (
-      <div className="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-orange-200 dark:border-orange-700">
-        <div className="absolute top-0 left-0 right-0 z-20">
-          <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-2 py-1 text-center">
-            <div className="flex items-center justify-center space-x-1">
-              <Crown className="w-3 h-3" />
-              <span className="text-xs font-bold">DESTACADO</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 mt-6">
-          <div className="flex justify-between items-start mb-3">
-            <div className="flex-1">
-              <h3
-                className={`font-bold text-base text-gray-900 dark:text-white mb-1 line-clamp-2 ${onClick ? 'cursor-pointer hover:text-orange-600 dark:hover:text-orange-400' : ''}`}
-                onClick={onClick}
-              >
-                {oferta.titulo}
-              </h3>
-              {showStoreInfo && (
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  {oferta.tiendaInfo?.nombre || storeData?.businessName}
-                </p>
-              )}
-            </div>
-
-            <div className="ml-2">
-              <FavoriteButton
-                itemId={oferta.id}
-                itemType="empleo"
-                size="sm"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2 mb-3">
-            {oferta.salario && (
-              <div className="flex items-center text-sm">
-                <DollarSign className="w-4 h-4 text-green-600 dark:text-green-400 mr-1.5 flex-shrink-0" />
-                <span className="font-semibold text-green-700 dark:text-green-400">
-                  {formatearSalario(oferta.salario)}
-                </span>
-              </div>
-            )}
-
-            {tipoEmpleo && (
-              <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                <Briefcase className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" />
-                <span>{tipoEmpleo.nombre}</span>
-              </div>
-            )}
-
-            {modalidad && (
-              <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                <span className="mr-1.5">{modalidad.icono}</span>
-                <span>{modalidad.nombre}</span>
-              </div>
-            )}
-
-            {oferta.ubicacion?.ciudad && (
-              <div className="flex items-center text-xs text-gray-600 dark:text-gray-400">
-                <MapPin className="w-3.5 h-3.5 mr-1.5 flex-shrink-0" />
-                <span>{oferta.ubicacion.ciudad}</span>
-              </div>
-            )}
-          </div>
-
-          <button
-            onClick={toggleDetails}
-            className="w-full flex items-center justify-between px-2 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors mb-2"
-          >
-            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
-              {showDetails ? 'Ocultar detalles' : 'Ver más detalles'}
-            </span>
-            {showDetails ? (
-              <ChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            ) : (
-              <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
-            )}
-          </button>
-
-          <div
-            className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              showDetails ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
-            }`}
-          >
-            <div className="space-y-3 pt-2">
-              {oferta.descripcion && (
-                <div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-3">
-                    {oferta.descripcion}
-                  </p>
-                </div>
-              )}
-
-              {experiencia && (
-                <div>
-                  <div className="flex items-center text-xs text-gray-700 dark:text-gray-300 mb-1">
-                    <Award className="w-3.5 h-3.5 mr-1.5" />
-                    <span className="font-medium">Experiencia:</span>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 ml-5">
-                    {experiencia.nombre}
-                  </p>
-                </div>
-              )}
-
-              {oferta.horario?.dias?.length > 0 && (
-                <div>
-                  <div className="flex items-center text-xs text-gray-700 dark:text-gray-300 mb-1">
-                    <Calendar className="w-3.5 h-3.5 mr-1.5" />
-                    <span className="font-medium">Horario:</span>
-                  </div>
-                  <p className="text-xs text-gray-600 dark:text-gray-400 ml-5">
-                    {formatearDias(oferta.horario.dias)}
-                  </p>
-                </div>
-              )}
-
-              {showContactInfo && (
-                <div className="space-y-1.5 mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-                  {oferta.contacto?.whatsapp && (
-                    <button
-                      onClick={handleWhatsAppContact}
-                      className="w-full bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center space-x-1"
-                    >
-                      <MessageCircle className="w-3 h-3" />
-                      <span>Postularme por WhatsApp</span>
-                    </button>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-1">
-                    {oferta.contacto?.telefono && (
-                      <button
-                        onClick={handlePhoneContact}
-                        className="px-2 py-1.5 border border-orange-300 text-orange-700 dark:text-orange-300 rounded text-xs hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors flex items-center justify-center space-x-1"
-                      >
-                        <Phone className="w-3 h-3" />
-                        <span>Llamar</span>
-                      </button>
-                    )}
-
-                    {oferta.contacto?.email && (
-                      <button
-                        onClick={handleEmailContact}
-                        className="px-2 py-1.5 border border-orange-300 text-orange-700 dark:text-orange-300 rounded text-xs hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors flex items-center justify-center space-x-1"
-                      >
-                        <Mail className="w-3 h-3" />
-                        <span>Email</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Variante GRID
+  // Variante Grid (principal)
   if (variant === 'grid') {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
-        <div className="p-6">
-          <div className="flex justify-between items-start mb-4">
-            <div className="flex-1">
-              <h3
-                className={`font-bold text-xl text-gray-900 dark:text-white mb-2 line-clamp-2 ${onClick ? 'cursor-pointer hover:text-orange-600 dark:hover:text-orange-400' : ''}`}
-                onClick={onClick}
-              >
-                {oferta.titulo}
-              </h3>
-              {showStoreInfo && (
-                <div className="flex items-center space-x-2 text-gray-600 dark:text-gray-400">
-                  <Briefcase className="w-4 h-4" />
-                  <span className="text-sm">{oferta.tiendaInfo?.nombre || storeData?.businessName}</span>
-                </div>
-              )}
+        {/* Header con ícono y acciones */}
+        <div 
+          className={`relative bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/30 dark:to-blue-800/30 p-6 ${onClick ? 'cursor-pointer' : ''}`}
+          onClick={onClick}
+        >
+          <div className="flex items-start justify-between">
+            <div className="flex items-start gap-3 flex-1">
+              <div className="flex-shrink-0 w-14 h-14 rounded-xl bg-blue-600 flex items-center justify-center shadow-lg">
+                <Briefcase className="w-7 h-7 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-bold text-lg text-gray-900 dark:text-white mb-1 line-clamp-2 leading-tight">
+                  {oferta.titulo}
+                </h3>
+                {oferta.empresa && (
+                  <p className="text-sm text-gray-700 dark:text-gray-300 font-medium">
+                    {oferta.empresa}
+                  </p>
+                )}
+              </div>
             </div>
 
-            <div className="ml-4">
+            {/* Botones de acción */}
+            <div className="flex flex-col space-y-2 ml-3">
               <FavoriteButton
                 itemId={oferta.id}
                 itemType="empleo"
                 size="md"
               />
+              <button
+                onClick={handleShare}
+                className="p-2 bg-white bg-opacity-90 text-gray-700 rounded-full hover:bg-opacity-100 transition-all backdrop-blur-sm shadow-md"
+                title="Compartir"
+              >
+                <Share2 className="w-4 h-4" />
+              </button>
             </div>
           </div>
+        </div>
 
-          <div className="space-y-3 mb-4">
-            {oferta.salario && (
-              <div className="flex items-center">
-                <DollarSign className="w-5 h-5 text-green-600 dark:text-green-400 mr-2" />
-                <span className="text-lg font-bold text-green-700 dark:text-green-400">
-                  {formatearSalario(oferta.salario)}
+        {/* Contenido principal */}
+        <div className="p-5">
+          {/* Info rápida con badges */}
+          <div className="flex flex-wrap gap-2 mb-4">
+            {oferta.tipoEmpleo && (
+              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded-lg text-sm font-medium">
+                <Clock className="w-4 h-4" />
+                {TIPOS_EMPLEO[oferta.tipoEmpleo]}
+              </span>
+            )}
+            {oferta.modalidad && (
+              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200 rounded-lg text-sm font-medium">
+                <MapPin className="w-4 h-4" />
+                {MODALIDADES_TRABAJO[oferta.modalidad]}
+              </span>
+            )}
+            {oferta.nivelExperiencia && (
+              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 rounded-lg text-sm font-medium">
+                <Award className="w-4 h-4" />
+                {NIVELES_EXPERIENCIA[oferta.nivelExperiencia]}
+              </span>
+            )}
+          </div>
+
+          {/* Salario destacado */}
+          {(oferta.salario?.minimo || oferta.salario?.maximo) && (
+            <div className="mb-4">
+              <div className="flex items-baseline space-x-2">
+                <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
+                  {formatearSalario(oferta.salario.minimo, oferta.salario.maximo)}
                 </span>
               </div>
-            )}
-
-            <div className="flex flex-wrap gap-2">
-              {tipoEmpleo && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200">
-                  <Briefcase className="w-3.5 h-3.5 mr-1.5" />
-                  {tipoEmpleo.nombre}
-                </span>
-              )}
-
-              {modalidad && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200">
-                  {modalidad.icono} {modalidad.nombre}
-                </span>
-              )}
-
-              {oferta.ubicacion?.ciudad && (
-                <span className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
-                  <MapPin className="w-3.5 h-3.5 mr-1.5" />
-                  {oferta.ubicacion.ciudad}
-                </span>
-              )}
             </div>
-          </div>
+          )}
 
+          {/* Botón desplegable de detalles */}
           <button
             onClick={toggleDetails}
             className="w-full flex items-center justify-between px-4 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors mb-3"
@@ -316,16 +197,18 @@ export default function OfertaEmpleoCard({
             )}
           </button>
 
-          <div
+          {/* Detalles desplegables */}
+          <div 
             className={`overflow-hidden transition-all duration-300 ease-in-out ${
               showDetails ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
             }`}
           >
             <div className="space-y-4 pt-2">
+              {/* Descripción */}
               {oferta.descripcion && (
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Descripción del puesto
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+                    Descripción
                   </h4>
                   <p className="text-sm text-gray-600 dark:text-gray-400 leading-relaxed">
                     {oferta.descripcion}
@@ -333,28 +216,30 @@ export default function OfertaEmpleoCard({
                 </div>
               )}
 
-              {experiencia && (
+              {/* Ubicación */}
+              {oferta.ubicacion && (
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                    <Award className="w-4 h-4 mr-1.5" />
-                    Experiencia requerida
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    Ubicación
                   </h4>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
-                    {experiencia.nombre} - {experiencia.descripcion}
-                  </p>
+                  <div className="flex items-center space-x-2 text-sm text-gray-600 dark:text-gray-400">
+                    <MapPin className="w-4 h-4" />
+                    <span>{formatearUbicacion(oferta.ubicacion)}</span>
+                  </div>
                 </div>
               )}
 
-              {oferta.requisitos && oferta.requisitos.length > 0 && (
+              {/* Requisitos */}
+              {oferta.requisitos?.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                    <Users className="w-4 h-4 mr-1.5" />
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                    <Users className="w-4 h-4" />
                     Requisitos
                   </h4>
                   <ul className="space-y-1">
                     {oferta.requisitos.map((req, index) => (
-                      <li key={index} className="text-sm text-gray-600 dark:text-gray-400 flex items-start">
-                        <span className="text-orange-600 mr-2">•</span>
+                      <li key={index} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
+                        <span className="text-blue-600 mt-1">•</span>
                         <span>{req}</span>
                       </li>
                     ))}
@@ -362,80 +247,43 @@ export default function OfertaEmpleoCard({
                 </div>
               )}
 
-              {oferta.habilidades && oferta.habilidades.length > 0 && (
+              {/* Beneficios */}
+              {oferta.beneficios?.length > 0 && (
                 <div>
-                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Habilidades deseadas
+                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
+                    <Crown className="w-4 h-4" />
+                    Beneficios
                   </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {oferta.habilidades.map((hab, index) => (
-                      <span
-                        key={index}
-                        className="px-2 py-1 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded text-xs"
-                      >
-                        {hab}
-                      </span>
+                  <ul className="space-y-1">
+                    {oferta.beneficios.map((ben, index) => (
+                      <li key={index} className="text-sm text-gray-600 dark:text-gray-400 flex items-start gap-2">
+                        <span className="text-green-600 mt-1">•</span>
+                        <span>{ben}</span>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               )}
 
-              {oferta.horario && (oferta.horario.dias?.length > 0 || oferta.horario.turnos?.length > 0) && (
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center">
-                    <Clock className="w-4 h-4 mr-1.5" />
-                    Horario
-                  </h4>
-                  <div className="space-y-1 text-sm text-gray-600 dark:text-gray-400">
-                    {oferta.horario.dias?.length > 0 && (
-                      <p>Días: {formatearDias(oferta.horario.dias)}</p>
-                    )}
-                    {oferta.horario.turnos?.length > 0 && (
-                      <p>Turnos: {formatearHorarios(oferta.horario.turnos)}</p>
-                    )}
-                    {oferta.horario.flexible && (
-                      <p className="text-green-600 dark:text-green-400">Horario flexible</p>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {oferta.salario?.beneficios && oferta.salario.beneficios.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-                    Beneficios adicionales
-                  </h4>
-                  <div className="flex flex-wrap gap-2">
-                    {oferta.salario.beneficios.map((ben, index) => (
-                      <span
-                        key={index}
-                        className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 rounded-full text-xs"
-                      >
-                        {ben}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
+              {/* Información de contacto */}
               {showContactInfo && (
-                <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                <div>
                   <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
-                    ¿Te interesa? Postúlate ahora
+                    Contactar empleador
                   </h4>
                   <div className="space-y-2">
-                    {oferta.contacto?.whatsapp && (
+                    {(oferta.contacto?.whatsapp || storeData?.phone) && (
                       <button
                         onClick={handleWhatsAppContact}
                         className="w-full bg-green-500 hover:bg-green-600 text-white px-4 py-3 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 shadow-md hover:shadow-lg"
                       >
                         <MessageCircle className="w-5 h-5" />
-                        <span>Postularme por WhatsApp</span>
+                        <span>Contactar por WhatsApp</span>
                       </button>
                     )}
-
+                    
                     <div className="grid grid-cols-2 gap-2">
-                      {oferta.contacto?.telefono && (
+                      {(oferta.contacto?.telefono || storeData?.phone) && (
                         <button
                           onClick={handlePhoneContact}
                           className="px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
@@ -444,8 +292,8 @@ export default function OfertaEmpleoCard({
                           <span>Llamar</span>
                         </button>
                       )}
-
-                      {oferta.contacto?.email && (
+                      
+                      {(oferta.contacto?.email || storeData?.email) && (
                         <button
                           onClick={handleEmailContact}
                           className="px-3 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center justify-center space-x-2"
@@ -460,6 +308,16 @@ export default function OfertaEmpleoCard({
               )}
             </div>
           </div>
+
+          {/* Fecha de publicación */}
+          {oferta.fechaCreacion && (
+            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+              <Calendar className="w-3 h-3" />
+              <span>
+                Publicado: {new Date(oferta.fechaCreacion.seconds * 1000).toLocaleDateString('es-AR')}
+              </span>
+            </div>
+          )}
         </div>
       </div>
     );
