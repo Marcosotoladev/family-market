@@ -17,16 +17,7 @@ export default function DashboardTopNavigation() {
   const [showMobileMenu, setShowMobileMenu] = useState(false)
   const dropdownRef = useRef(null)
 
-  // Solo mostrar en rutas del dashboard
-  const isDashboardRoute = pathname?.startsWith('/dashboard')
-  
-  if (!isAuthenticated || !isDashboardRoute) {
-    return null
-  }
-
-  const isAdmin = userData?.role === 'admin'
-  const storeUrl = userData?.storeSlug
-
+  // ✅ HOOKS SIEMPRE DEBEN IR ANTES DE CUALQUIER RETURN
   // Cerrar menú móvil al hacer click fuera
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -41,6 +32,17 @@ export default function DashboardTopNavigation() {
 
     return () => document.removeEventListener('mousedown', handleClickOutside)
   }, [showMobileMenu])
+
+  // ✅ AHORA SÍ PODEMOS HACER EL EARLY RETURN
+  // Solo mostrar en rutas del dashboard
+  const isDashboardRoute = pathname?.startsWith('/dashboard')
+  
+  if (!isAuthenticated || !isDashboardRoute) {
+    return null
+  }
+
+  const isAdmin = userData?.role === 'admin'
+  const storeUrl = userData?.storeSlug
 
   const isActive = (href) => {
     if (href === '/dashboard') return pathname === '/dashboard'

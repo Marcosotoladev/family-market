@@ -29,6 +29,11 @@ const collectionMap = {
     items: 'empleos',
     favorites: 'favoritos_empleos',
     itemIdField: 'empleoId'
+  },
+  empleo: {  // ← AGREGADO: soporte para 'empleo' (español)
+    items: 'empleos',
+    favorites: 'favoritos_empleos',
+    itemIdField: 'empleoId'
   }
 };
 
@@ -39,6 +44,9 @@ export const getUserFavorites = async (userId) => {
 
     // Obtener favoritos de cada tipo
     for (const [itemType, config] of Object.entries(collectionMap)) {
+      // Evitar duplicados (job y empleo son lo mismo)
+      if (itemType === 'empleo') continue;
+      
       const favoritesRef = collection(db, config.favorites);
       const q = query(
         favoritesRef,
@@ -66,9 +74,9 @@ export const getUserFavorites = async (userId) => {
           itemData = {
             title: rawData.titulo || rawData.nombre || 'Sin título',
             description: rawData.descripcion || '',
-            price: rawData.precio || null,
-            image: rawData.imagen || rawData.imagenes?.[0] || null,
-            location: rawData.ubicacion || rawData.localidad || 'N/A',
+            price: rawData.precio || rawData.salario?.minimo || null,
+            image: rawData.imagen || rawData.imagenes?.[0] || rawData.foto || null,
+            location: rawData.ubicacion?.ciudad || rawData.ubicacion || rawData.localidad || 'N/A',
             userId: rawData.usuarioId
           };
           
