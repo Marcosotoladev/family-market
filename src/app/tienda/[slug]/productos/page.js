@@ -8,7 +8,7 @@ import { db } from '@/lib/firebase/config';
 import { getPublicStoreConfig } from '@/lib/storeConfigUtils';
 import StoreLayout from '@/components/tienda/StoreLayout';
 import StoreProductsSection from '@/components/tienda/StoreProductsSection';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import { ArrowLeft, Loader2, Package } from 'lucide-react';
 import Link from 'next/link';
 
 export default function ProductosPage() {
@@ -145,8 +145,9 @@ export default function ProductosPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Nuestros Productos
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                <Package className="w-8 h-8 text-orange-600" />
+                Productos
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
                 Descubre nuestra selección completa de productos artesanales

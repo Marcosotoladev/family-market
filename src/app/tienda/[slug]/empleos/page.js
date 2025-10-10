@@ -7,8 +7,8 @@ import { collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { getPublicStoreConfig } from '@/lib/storeConfigUtils';
 import StoreLayout from '@/components/tienda/StoreLayout';
-import StoreJobsSection from '@/components/tienda/StoreJobsSection';
-import { ArrowLeft, Loader2 } from 'lucide-react';
+import PublicStoreEmploymentSection from '@/components/tienda/PublicStoreEmploymentSection';
+import { ArrowLeft, Loader2, Briefcase } from 'lucide-react';
 import Link from 'next/link';
 
 export default function EmpleosPage() {
@@ -145,11 +145,12 @@ export default function EmpleosPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-                Oportunidades de Empleo
+              <h1 className="text-3xl font-bold text-gray-900 dark:text-white flex items-center gap-3">
+                <Briefcase className="w-8 h-8 text-orange-600" />
+                Empleos
               </h1>
               <p className="text-lg text-gray-600 dark:text-gray-400 mt-2">
-                Ofertas de trabajo, búsquedas laborales y servicios profesionales
+                Descubre las oportunidades laborales y servicios profesionales disponibles
               </p>
             </div>
             
@@ -165,13 +166,16 @@ export default function EmpleosPage() {
       </div>
 
       {/* Sección de empleos completa */}
-      <StoreJobsSection
-        storeId={storeData.id}
-        storeData={storeData}
-        searchQuery={searchQuery}
-        showFilters={true}
-        variant="grid"
-      />
+      <div className="bg-gray-50 dark:bg-gray-900 py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <PublicStoreEmploymentSection
+            storeId={storeData.id}
+            storeData={storeData}
+            showAll={true}
+            searchQuery={searchQuery}
+          />
+        </div>
+      </div>
     </StoreLayout>
   );
 }

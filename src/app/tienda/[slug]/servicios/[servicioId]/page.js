@@ -1,4 +1,4 @@
-// src/app/tienda/[slug]/empleos/[empleoId]/page.js
+// src/app/tienda/[slug]/servicios/[servicioId]/page.js
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,28 +7,25 @@ import { doc, getDoc, collection, query, where, getDocs, updateDoc, increment } 
 import { db } from '@/lib/firebase/config';
 import { getPublicStoreConfig } from '@/lib/storeConfigUtils';
 import StoreLayout from '@/components/tienda/StoreLayout';
-import { TIPOS_PUBLICACION } from '@/types/employment';
-import OfertaEmpleoCard from '@/components/tienda/empleos/OfertaEmpleoCard';
-import BusquedaEmpleoCard from '@/components/tienda/empleos/BusquedaEmpleoCard';
-import ServicioProfesionalCard from '@/components/tienda/empleos/ServicioProfesionalCard';
+import ServiceCard from '@/components/tienda/servicios/ServiceCard';
 import { Loader2, AlertCircle, ArrowLeft, Share2, Eye } from 'lucide-react';
 import Link from 'next/link';
 
-export default function EmpleoDetailPage() {
+export default function ServicioDetailPage() {
   const params = useParams();
-  const { slug, empleoId } = params;
+  const { slug, servicioId } = params;
 
   const [storeData, setStoreData] = useState(null);
   const [storeConfig, setStoreConfig] = useState(null);
-  const [empleoData, setEmpleoData] = useState(null);
+  const [servicioData, setServicioData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    if (slug && empleoId) {
+    if (slug && servicioId) {
       loadData();
     }
-  }, [slug, empleoId]);
+  }, [slug, servicioId]);
 
   const loadData = async () => {
     try {
@@ -59,36 +56,36 @@ export default function EmpleoDetailPage() {
       // Cargar configuración de la tienda
       const config = await getPublicStoreConfig(userData.id);
 
-      // Cargar datos del empleo
-      const empleoDoc = await getDoc(doc(db, 'empleos', empleoId));
+      // Cargar datos del servicio
+      const servicioDoc = await getDoc(doc(db, 'servicios', servicioId));
       
-      if (!empleoDoc.exists()) {
-        setError('Empleo no encontrado');
+      if (!servicioDoc.exists()) {
+        setError('Servicio no encontrado');
         return;
       }
 
-      const empleo = {
-        id: empleoDoc.id,
-        ...empleoDoc.data()
+      const servicio = {
+        id: servicioDoc.id,
+        ...servicioDoc.data()
       };
 
-      // Verificar que el empleo pertenece a esta tienda
-      if (empleo.usuarioId !== userData.id) {
-        setError('Este empleo no pertenece a esta tienda');
+      // Verificar que el servicio pertenece a esta tienda
+      if (servicio.usuarioId !== userData.id) {
+        setError('Este servicio no pertenece a esta tienda');
         return;
       }
 
       // Incrementar contador de vistas
-      await updateDoc(doc(db, 'empleos', empleoId), {
-        vistas: increment(1)
+      await updateDoc(doc(db, 'servicios', servicioId), {
+        totalVistas: increment(1)
       });
 
       setStoreData(userData);
       setStoreConfig(config);
-      setEmpleoData(empleo);
+      setServicioData(servicio);
     } catch (err) {
       console.error('Error cargando datos:', err);
-      setError('Error al cargar el empleo');
+      setError('Error al cargar el servicio');
     } finally {
       setLoading(false);
     }
@@ -120,8 +117,8 @@ export default function EmpleoDetailPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: empleoData.titulo,
-          text: empleoData.descripcion,
+          title: servicioData.titulo,
+          text: servicioData.descripcion,
           url: url,
         });
       } catch (err) {
@@ -138,26 +135,26 @@ export default function EmpleoDetailPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <Loader2 className="w-12 h-12 text-orange-600 animate-spin mx-auto mb-4" />
-          <p className="text-gray-600 dark:text-gray-400">Cargando empleo...</p>
+          <p className="text-gray-600 dark:text-gray-400">Cargando servicio...</p>
         </div>
       </div>
     );
   }
 
-  if (error || !storeData || !empleoData) {
+  if (error || !storeData || !servicioData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
         <div className="text-center">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-            {error || 'No se pudo cargar el empleo'}
+            {error || 'No se pudo cargar el servicio'}
           </h2>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
-              href={`/tienda/${slug}/empleos`}
+              href={`/tienda/${slug}/servicios`}
               className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
             >
-              Ver todos los empleos
+              Ver todos los servicios
             </Link>
             <Link
               href={`/tienda/${slug}`}
@@ -188,14 +185,14 @@ export default function EmpleoDetailPage() {
             </Link>
             <span className="text-gray-300 dark:text-gray-600">/</span>
             <Link 
-              href={`/tienda/${slug}/empleos`}
+              href={`/tienda/${slug}/servicios`}
               className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
             >
-              Empleos
+              Servicios
             </Link>
             <span className="text-gray-300 dark:text-gray-600">/</span>
             <span className="text-gray-900 dark:text-white font-medium line-clamp-1">
-              {empleoData.titulo}
+              {servicioData.titulo}
             </span>
           </nav>
         </div>
@@ -207,19 +204,19 @@ export default function EmpleoDetailPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <Link
-                href={`/tienda/${slug}/empleos`}
+                href={`/tienda/${slug}/servicios`}
                 className="inline-flex items-center text-gray-600 dark:text-gray-400 hover:text-orange-600 dark:hover:text-orange-400 transition-colors"
               >
                 <ArrowLeft className="w-5 h-5" />
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {empleoData.titulo}
+                  {servicioData.titulo}
                 </h1>
-                {empleoData.vistas > 0 && (
+                {servicioData.totalVistas > 0 && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
                     <Eye className="w-4 h-4" />
-                    {empleoData.vistas} {empleoData.vistas === 1 ? 'vista' : 'vistas'}
+                    {servicioData.totalVistas} {servicioData.totalVistas === 1 ? 'vista' : 'vistas'}
                   </p>
                 )}
               </div>
@@ -239,35 +236,14 @@ export default function EmpleoDetailPage() {
       {/* Contenido principal */}
       <div className="bg-gray-50 dark:bg-gray-900 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Card del empleo */}
+          {/* Card del servicio */}
           <div className="mb-8">
-            {empleoData.tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO && (
-              <OfertaEmpleoCard
-                oferta={empleoData}
-                storeData={storeData}
-                variant="grid"
-                showContactInfo={true}
-                showStoreInfo={false}
-              />
-            )}
-
-            {empleoData.tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO && (
-              <BusquedaEmpleoCard
-                busqueda={empleoData}
-                variant="grid"
-                showContactInfo={true}
-              />
-            )}
-
-            {empleoData.tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL && (
-              <ServicioProfesionalCard
-                servicio={empleoData}
-                storeData={storeData}
-                variant="grid"
-                showContactInfo={true}
-                showStoreInfo={false}
-              />
-            )}
+            <ServiceCard
+              service={servicioData}
+              storeData={storeData}
+              variant="featured-compact"
+              showContactInfo={true}
+            />
           </div>
 
           {/* Información adicional de la tienda */}
@@ -302,14 +278,14 @@ export default function EmpleoDetailPage() {
             </div>
           </div>
 
-          {/* Botón de ver más empleos */}
+          {/* Botón de ver más servicios */}
           <div className="text-center">
             <Link
-              href={`/tienda/${slug}/empleos`}
+              href={`/tienda/${slug}/servicios`}
               className="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Ver más empleos de esta tienda
+              Ver más servicios de esta tienda
             </Link>
           </div>
         </div>

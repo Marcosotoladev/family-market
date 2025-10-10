@@ -17,6 +17,7 @@ import {
   Calendar,
   Star
 } from 'lucide-react';
+import { formatearSalario } from '@/types/employment';
 import FavoriteButton from '@/components/ui/FavoriteButton';
 
 export default function ServicioProfesionalCard({
@@ -138,10 +139,11 @@ export default function ServicioProfesionalCard({
         <div className="p-5">
           {/* Info rápida con badges */}
           <div className="flex flex-wrap gap-2 mb-4">
-            {servicio.tarifa && (
+            {/* Tarifa/Tarifas - CORREGIDO */}
+            {servicio.tarifas && (
               <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200 rounded-lg text-sm font-medium">
                 <DollarSign className="w-4 h-4" />
-                ${servicio.tarifa}
+                {formatearSalario(servicio.tarifas)}
               </span>
             )}
             {servicio.disponibilidadHoraria && (
@@ -150,10 +152,17 @@ export default function ServicioProfesionalCard({
                 {servicio.disponibilidadHoraria}
               </span>
             )}
-            {servicio.experienciaAnios !== undefined && (
+            {servicio.experienciaAnios !== undefined && servicio.experienciaAnios !== null && (
               <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 rounded-lg text-sm font-medium">
                 <Award className="w-4 h-4" />
                 {servicio.experienciaAnios} años exp.
+              </span>
+            )}
+            {/* También manejar experiencia.años si existe */}
+            {servicio.experiencia?.años !== undefined && servicio.experiencia?.años !== null && (
+              <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 rounded-lg text-sm font-medium">
+                <Award className="w-4 h-4" />
+                {servicio.experiencia.años} años exp.
               </span>
             )}
           </div>

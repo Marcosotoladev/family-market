@@ -47,6 +47,7 @@ export default function OfertaEmpleoCard({
   const handleWhatsAppContact = (e) => {
     e.stopPropagation();
     const phone = oferta.contacto?.whatsapp || storeData?.phone || '';
+    if (!phone) return;
     const message = `Hola! Me interesa postularme para: ${oferta.titulo}`;
     const url = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
@@ -55,12 +56,14 @@ export default function OfertaEmpleoCard({
   const handlePhoneContact = (e) => {
     e.stopPropagation();
     const phone = oferta.contacto?.telefono || storeData?.phone || '';
+    if (!phone) return;
     window.open(`tel:${phone}`, '_self');
   };
 
   const handleEmailContact = (e) => {
     e.stopPropagation();
     const email = oferta.contacto?.email || storeData?.email || '';
+    if (!email) return;
     const subject = `Consulta sobre: ${oferta.titulo}`;
     const body = `Hola! Me interesa postularme para: ${oferta.titulo}`;
     window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_self');
@@ -91,16 +94,44 @@ export default function OfertaEmpleoCard({
     setShowDetails(!showDetails);
   };
 
-  // Formatear ubicación
+  // Formatear ubicación - VALIDADO Y MEJORADO
   const formatearUbicacion = (ubicacion) => {
     if (!ubicacion) return '';
-    if (typeof ubicacion === 'string') return ubicacion;
-    return [
-      ubicacion.direccion,
-      ubicacion.ciudad,
-      ubicacion.provincia,
-      ubicacion.pais
-    ].filter(Boolean).join(', ');
+    if (typeof ubicacion === 'string' && ubicacion.trim()) return ubicacion;
+    if (typeof ubicacion === 'object') {
+      const partes = [
+        ubicacion.direccion,
+        ubicacion.ciudad,
+        ubicacion.provincia,
+        ubicacion.pais
+      ].filter(parte => parte && parte.trim() !== '');
+      return partes.length > 0 ? partes.join(', ') : '';
+    }
+    return '';
+  };
+
+  // Obtener nombre de tipo de empleo - VALIDADO
+  const getTipoEmpleoNombre = (tipoEmpleo) => {
+    if (!tipoEmpleo) return '';
+    const tipo = TIPOS_EMPLEO[tipoEmpleo.toUpperCase()];
+    if (tipo && typeof tipo === 'object') return tipo.nombre;
+    return tipoEmpleo;
+  };
+
+  // Obtener nombre de modalidad - VALIDADO
+  const getModalidadNombre = (modalidad) => {
+    if (!modalidad) return '';
+    const mod = MODALIDADES_TRABAJO[modalidad.toUpperCase()];
+    if (mod && typeof mod === 'object') return mod.nombre;
+    return modalidad;
+  };
+
+  // Obtener nombre de nivel de experiencia - VALIDADO
+  const getNivelExperienciaNombre = (nivel) => {
+    if (!nivel) return '';
+    const niv = NIVELES_EXPERIENCIA[nivel.toUpperCase()];
+    if (niv && typeof niv === 'object') return niv.nombre;
+    return nivel;
   };
 
   // Variante Grid (principal)
@@ -154,29 +185,31 @@ export default function OfertaEmpleoCard({
             {oferta.tipoEmpleo && (
               <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200 rounded-lg text-sm font-medium">
                 <Clock className="w-4 h-4" />
-                {TIPOS_EMPLEO[oferta.tipoEmpleo]}
+                {getTipoEmpleoNombre(oferta.tipoEmpleo)}
               </span>
             )}
             {oferta.modalidad && (
               <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200 rounded-lg text-sm font-medium">
                 <MapPin className="w-4 h-4" />
-                {MODALIDADES_TRABAJO[oferta.modalidad]}
+                {getModalidadNombre(oferta.modalidad)}
               </span>
             )}
             {oferta.nivelExperiencia && (
               <span className="inline-flex items-center gap-1 px-3 py-1.5 bg-amber-100 dark:bg-amber-900 text-amber-700 dark:text-amber-200 rounded-lg text-sm font-medium">
                 <Award className="w-4 h-4" />
-                {NIVELES_EXPERIENCIA[oferta.nivelExperiencia]}
+                {getNivelExperienciaNombre(oferta.nivelExperiencia)}
               </span>
             )}
           </div>
 
-          {/* Salario destacado */}
-          {(oferta.salario?.minimo || oferta.salario?.maximo) && (
+          {/* Salario destacado - CORREGIDO CON VALIDACIÓN ROBUSTA */}
+          {oferta.salario && 
+           typeof oferta.salario === 'object' && 
+           (oferta.salario.minimo || oferta.salario.maximo || oferta.salario.tipo !== 'a_convenir') && (
             <div className="mb-4">
               <div className="flex items-baseline space-x-2">
                 <span className="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                  {formatearSalario(oferta.salario.minimo, oferta.salario.maximo)}
+                  {formatearSalario(oferta.salario)}
                 </span>
               </div>
             </div>
@@ -216,8 +249,8 @@ export default function OfertaEmpleoCard({
                 </div>
               )}
 
-              {/* Ubicación */}
-              {oferta.ubicacion && (
+              {/* Ubicación - Solo mostrar si tiene datos */}
+              {oferta.ubicacion && formatearUbicacion(oferta.ubicacion) && (
                 <div>
                   <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
                     Ubicación
@@ -310,7 +343,7 @@ export default function OfertaEmpleoCard({
           </div>
 
           {/* Fecha de publicación */}
-          {oferta.fechaCreacion && (
+          {oferta.fechaCreacion && oferta.fechaCreacion.seconds && (
             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <Calendar className="w-3 h-3" />
               <span>

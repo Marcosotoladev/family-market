@@ -20,9 +20,6 @@ import { CATEGORIAS_PRODUCTOS } from '@/types/categories';
 import { ESTADOS_PRODUCTO } from '@/types/product';
 import {
   Search,
-  Filter,
-  Grid3X3,
-  List,
   ChevronDown,
   Package,
   Loader2,
@@ -36,7 +33,7 @@ export default function StoreProductsSection({
   searchQuery = '',
   showFilters = true,
   maxProducts = null,
-  variant = 'grid' // 'grid' | 'list'
+  variant = 'grid'
 }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -50,7 +47,6 @@ export default function StoreProductsSection({
   const [priceRange, setPriceRange] = useState({ min: '', max: '' });
   const [sortBy, setSortBy] = useState('fechaCreacion');
   const [sortOrder, setSortOrder] = useState('desc');
-  const [viewMode, setViewMode] = useState(variant);
   const [showFiltersPanel, setShowFiltersPanel] = useState(false);
 
   // Configuración de paginación
@@ -80,12 +76,6 @@ export default function StoreProductsSection({
   }, [localSearchQuery]);
 
   const loadProducts = async (reset = false) => {
-    console.log('🔍 loadProducts ejecutándose');
-    console.log('🔍 storeId:', storeId);
-    console.log('🔍 Consultando colección: productos');
-    console.log('🔍 Filtro usuarioId ==', storeId);
-    console.log('🔍 Filtro estado ==', ESTADOS_PRODUCTO.DISPONIBLE);
-
     try {
       if (reset) {
         setLoading(true);
@@ -123,14 +113,11 @@ export default function StoreProductsSection({
       q = query(q, limit(PRODUCTS_PER_PAGE));
 
       const querySnapshot = await getDocs(q);
-      console.log('🔍 Documentos encontrados:', querySnapshot.docs.length);
 
       const newProducts = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-
-      console.log('🔍 Productos obtenidos:', newProducts);
 
       // Filtros adicionales que no se pueden hacer en Firestore
       let filteredProducts = newProducts;
@@ -161,8 +148,6 @@ export default function StoreProductsSection({
         });
       }
 
-      console.log('🔍 Productos después de filtros locales:', filteredProducts);
-
       if (reset) {
         setProducts(filteredProducts);
       } else {
@@ -175,7 +160,7 @@ export default function StoreProductsSection({
       setHasMore(querySnapshot.docs.length === PRODUCTS_PER_PAGE);
 
     } catch (error) {
-      console.error('🔥 Error cargando productos:', error);
+      console.error('Error cargando productos:', error);
     } finally {
       setLoading(false);
       setLoadingMore(false);
@@ -223,20 +208,13 @@ export default function StoreProductsSection({
   return (
     <section id="productos" className="py-8 lg:py-12 bg-gray-50 dark:bg-gray-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <h2 className="text-3xl font-bold text-gray-900 dark:text-white mb-4">
-            Nuestros Productos
-          </h2>
-        </div>
-
         {/* Filtros y búsqueda */}
         {showFilters && (
           <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4 mb-8">
             {/* Barra superior de filtros */}
             <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between mb-4">
               {/* Búsqueda */}
-              <div className="relative flex-1 max-w-md">
+              <div className="relative flex-1 max-w-md w-full">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
@@ -247,40 +225,18 @@ export default function StoreProductsSection({
                 />
               </div>
 
-              {/* Controles de vista */}
-              <div className="flex items-center space-x-4">
-                <div className="flex rounded-lg border border-gray-300 dark:border-gray-600 overflow-hidden">
-                  <button
-                    onClick={() => setViewMode('grid')}
-                    className={`p-2 ${viewMode === 'grid'
-                      ? 'bg-orange-600 text-white'
-                      : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
-                      } transition-colors`}
-                  >
-                    <Grid3X3 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => setViewMode('list')}
-                    className={`p-2 ${viewMode === 'list'
-                      ? 'bg-orange-600 text-white'
-                      : 'bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-600'
-                      } transition-colors`}
-                  >
-                    <List className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <button
-                  onClick={() => setShowFiltersPanel(!showFiltersPanel)}
-                  className="flex items-center space-x-2 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <SlidersHorizontal className="w-4 h-4" />
-                  <span>Filtros</span>
-                  {hasActiveFilters && (
-                    <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
-                  )}
-                </button>
-              </div>
+              {/* Botón de filtros */}
+              <button
+                onClick={() => setShowFiltersPanel(!showFiltersPanel)}
+                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              >
+                <SlidersHorizontal className="w-4 h-4" />
+                <span>Filtros</span>
+                {hasActiveFilters && (
+                  <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                )}
+                <ChevronDown className={`w-4 h-4 transition-transform ${showFiltersPanel ? 'rotate-180' : ''}`} />
+              </button>
             </div>
 
             {/* Panel de filtros expandible */}
@@ -379,16 +335,6 @@ export default function StoreProductsSection({
           </div>
         )}
 
-        {/* Resultados */}
-        <div className="mb-6">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            {products.length > 0
-              ? `Mostrando ${products.length} producto${products.length !== 1 ? 's' : ''}${hasActiveFilters ? ' (filtrado)' : ''}`
-              : 'No se encontraron productos'
-            }
-          </p>
-        </div>
-
         {/* Grid de productos */}
         {products.length === 0 ? (
           <div className="text-center py-12">
@@ -413,17 +359,13 @@ export default function StoreProductsSection({
           </div>
         ) : (
           <>
-            <div className={
-              viewMode === 'grid'
-                ? 'grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6'
-                : 'space-y-4'
-            }>
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {products.map((product) => (
                 <ProductCard
                   key={product.id}
                   product={product}
                   storeData={storeData}
-                  variant={viewMode === 'grid' ? 'featured-compact' : viewMode}  // ← Usa featured-compact para grid
+                  variant="featured-compact"
                   onClick={() => handleProductClick(product)}
                 />
               ))}

@@ -45,6 +45,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── store
 |   |   |   |   └── page.js
 |   |   |   └── tienda
+|   |   |   |   └── empleos
+|   |   |   |   |   └── page.js
 |   |   |   |   └── productos
 |   |   |   |   |   └── page.js
 |   |   |   |   └── servicios
@@ -67,6 +69,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   └── tienda
 |   |   |   └── [slug]
 |   |   |   |   └── empleos
+|   |   |   |   |   └── [empleoId]
+|   |   |   |   |   |   └── page.js
 |   |   |   |   |   └── page.js
 |   |   |   |   └── galeria
 |   |   |   |   |   └── page.js
@@ -130,6 +134,17 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── StoreLogoSection.js
 |   |   |   └── StoreSidebar.js
 |   |   └── tienda
+|   |   |   └── empleos
+|   |   |   |   └── BusquedaEmpleoCard.js
+|   |   |   |   └── BusquedaEmpleoForm.js
+|   |   |   |   └── EmploymentList.js
+|   |   |   |   └── EmploymentManager.js
+|   |   |   |   └── FeaturedEmploymentButton.js
+|   |   |   |   └── OfertaEmpleoCard.js
+|   |   |   |   └── OfertaEmpleoForm.js
+|   |   |   |   └── ServicioProfesionalCard.js
+|   |   |   |   └── ServicioProfesionalForm.js
+|   |   |   |   └── StoreJobsSection.js
 |   |   |   └── productos
 |   |   |   |   └── FeaturedProductButton.js
 |   |   |   |   └── ProductCard.js
