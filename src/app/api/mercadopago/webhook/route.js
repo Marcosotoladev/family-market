@@ -52,7 +52,7 @@ export async function POST(request) {
             console.log('🔍 Extracting from external_reference:', paymentData.external_reference);
             const parts = paymentData.external_reference.split('_');
             if (parts.length >= 3) {
-              item_type = parts[0]; // 'product' o 'service'
+              item_type = parts[0]; // 'product', 'service' o 'employment'
               item_id = parts[1];
               user_id = parts[2];
               amount = paymentData.transaction_amount;
@@ -70,9 +70,19 @@ export async function POST(request) {
             user_id = 'test_user';
           }
 
-          // Determinar colección según el tipo
-          const collectionName = item_type === 'service' ? 'servicios' : 'productos';
-          const itemLabel = item_type === 'service' ? 'servicio' : 'producto';
+          // ✅ CORREGIDO: Determinar colección según el tipo (incluyendo employment)
+          let collectionName, itemLabel;
+          
+          if (item_type === 'employment') {
+            collectionName = 'empleos';
+            itemLabel = 'empleo';
+          } else if (item_type === 'service') {
+            collectionName = 'servicios';
+            itemLabel = 'servicio';
+          } else {
+            collectionName = 'productos';
+            itemLabel = 'producto';
+          }
           
           const featuredUntil = new Date();
           featuredUntil.setDate(featuredUntil.getDate() + 7);
@@ -82,6 +92,7 @@ export async function POST(request) {
             console.log(`🆔 ${itemLabel} ID:`, item_id);
             console.log('📅 Featured until:', featuredUntil.toISOString());
             console.log('📚 Collection:', collectionName);
+            console.log('🔍 Item type detected:', item_type);
             
             const itemRef = doc(db, collectionName, item_id);
             
@@ -93,7 +104,7 @@ export async function POST(request) {
               fechaDestacado: serverTimestamp()
             });
 
-            console.log(`✅ ${itemLabel} updated successfully`);
+            console.log(`✅ ${itemLabel} updated successfully in ${collectionName}`);
 
             // Crear registro de pago
             await addDoc(collection(db, 'featured_payments'), {
@@ -116,6 +127,8 @@ export async function POST(request) {
           } catch (firebaseError) {
             console.error('❌ Error updating Firebase:', firebaseError);
             console.error('❌ Firebase error details:', firebaseError.code, firebaseError.message);
+            console.error('❌ Attempted collection:', collectionName);
+            console.error('❌ Attempted item_id:', item_id);
             
             return NextResponse.json({ 
               received: true,
