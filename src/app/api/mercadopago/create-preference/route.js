@@ -12,19 +12,33 @@ export async function POST(request) {
     const { 
       productId, 
       serviceId, 
+      employmentId,
       userId, 
       userName, 
       productName, 
       serviceName, 
+      employmentTitle,
+      employmentName,
       amount, 
       type 
     } = body;
 
-    // Determinar si es producto o servicio
-    const isService = type === 'service' || serviceId;
-    const itemId = isService ? serviceId : productId;
-    const itemName = isService ? serviceName : productName;
-    const itemType = isService ? 'service' : 'product';
+    // Determinar tipo de item
+    let itemType, itemId, itemName;
+    
+    if (type === 'employment' || employmentId) {
+      itemType = 'employment';
+      itemId = employmentId;
+      itemName = employmentTitle || employmentName || 'Empleo';
+    } else if (type === 'service' || serviceId) {
+      itemType = 'service';
+      itemId = serviceId;
+      itemName = serviceName;
+    } else {
+      itemType = 'product';
+      itemId = productId;
+      itemName = productName;
+    }
 
     console.log('📥 Received request:', { 
       itemId, 
@@ -38,7 +52,7 @@ export async function POST(request) {
     // Validaciones
     if (!itemId || !userId || !itemName || !amount) {
       return NextResponse.json({ 
-        error: `Datos requeridos: ${itemType}Id, userId, ${itemType}Name, amount` 
+        error: `Datos requeridos: ${itemType}Id, userId, ${itemType}Name/Title, amount` 
       }, { status: 400 });
     }
 
@@ -55,16 +69,31 @@ export async function POST(request) {
     const preference = new Preference(client);
 
     // Configurar URLs de retorno según el tipo
-    const dashboardPath = isService ? 
-      '/dashboard/tienda/servicios' : 
-      '/dashboard/tienda/productos';
+    let dashboardPath;
+    if (itemType === 'employment') {
+      dashboardPath = '/dashboard/tienda/empleos';
+    } else if (itemType === 'service') {
+      dashboardPath = '/dashboard/tienda/servicios';
+    } else {
+      dashboardPath = '/dashboard/tienda/productos';
+    }
+
+    // Descripción según el tipo
+    let description;
+    if (itemType === 'employment') {
+      description = `Destacar publicación de empleo por 7 días en Family Market`;
+    } else if (itemType === 'service') {
+      description = `Destacar servicio por 7 días en Family Market`;
+    } else {
+      description = `Destacar producto por 7 días en Family Market`;
+    }
 
     const preferenceData = {
       items: [
         {
           id: itemId,
           title: `Destacar: ${itemName}`,
-          description: `Destacar ${itemType === 'service' ? 'servicio' : 'producto'} por 7 días en Family Market`,
+          description: description,
           quantity: 1,
           unit_price: parseFloat(amount),
           currency_id: 'ARS'

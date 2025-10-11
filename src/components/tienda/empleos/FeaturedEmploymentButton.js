@@ -2,222 +2,252 @@
 'use client';
 
 import { useState } from 'react';
-import { Star, CreditCard, Loader, X } from 'lucide-react';
+import { Star, Loader2, Clock, CheckCircle2 } from 'lucide-react';
 
 export default function FeaturedEmploymentButton({ 
-  publicacion, 
-  user, 
-  onSuccess,
-  onClose 
+  empleo,
+  publicacion, // Aceptar también publicacion
+  variant = 'default',
+  user
 }) {
   const [loading, setLoading] = useState(false);
-  const [amount, setAmount] = useState(1000); // Precio por defecto: $1000
   const [error, setError] = useState('');
+  const [amount, setAmount] = useState(1000);
 
-  const isAlreadyFeatured = () => {
-    if (!publicacion.featured) return false;
-    if (!publicacion.featuredUntil) return false;
+  // Usar empleo o publicacion (son lo mismo, diferentes nombres)
+  const item = empleo || publicacion;
+
+  // Verificar si el empleo está destacado y activo
+  const isFeatured = item?.featured && 
+                     item?.featuredUntil && 
+                     new Date(item.featuredUntil.toDate?.() || item.featuredUntil) > new Date();
+
+  // Calcular días restantes
+  const getDaysRemaining = () => {
+    if (!isFeatured) return 0;
     
+    const until = new Date(item.featuredUntil.toDate?.() || item.featuredUntil);
     const now = new Date();
-    const featuredUntil = publicacion.featuredUntil.toDate ? 
-      publicacion.featuredUntil.toDate() : 
-      new Date(publicacion.featuredUntil);
-    
-    return now < featuredUntil;
+    const diff = until - now;
+    return Math.ceil(diff / (1000 * 60 * 60 * 24));
   };
 
-  const getRemainingDays = () => {
-    if (!isAlreadyFeatured()) return 0;
-    
-    const now = new Date();
-    const featuredUntil = publicacion.featuredUntil.toDate ? 
-      publicacion.featuredUntil.toDate() : 
-      new Date(publicacion.featuredUntil);
-    
-    const diffTime = featuredUntil - now;
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    return Math.max(0, diffDays);
-  };
-
-  const handlePayment = async () => {
-    if (!user) {
-      alert('Debes iniciar sesión para destacar publicaciones');
-      return;
-    }
-
-    if (amount < 100) {
-      setError('El monto mínimo es $100');
-      return;
-    }
-
+  const handleFeature = async () => {
     try {
       setLoading(true);
       setError('');
 
-      console.log('Enviando datos:', {
-        employmentId: publicacion.id,
+      // Validar que tengamos un item
+      if (!item?.id) {
+        setError('Error: No se encontró el empleo');
+        setLoading(false);
+        return;
+      }
+
+      // Validar que el usuario esté logueado
+      if (!user?.uid) {
+        setError('Debes iniciar sesión para destacar publicaciones');
+        setLoading(false);
+        return;
+      }
+
+      // Validar monto mínimo
+      if (amount < 100) {
+        setError('El monto mínimo es $100');
+        setLoading(false);
+        return;
+      }
+
+      const preferenceData = {
+        employmentId: item.id,
         userId: user.uid,
-        userName: user.displayName || user.email,
-        employmentTitle: publicacion.titulo,
-        amount: amount
-      });
+        userName: user.displayName || user.email || 'Usuario',
+        employmentTitle: item.titulo || 'Empleo',
+        amount: parseFloat(amount),
+        type: 'employment'
+      };
+
+      console.log('📤 Sending preference data:', preferenceData);
 
       const response = await fetch('/api/mercadopago/create-preference', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          employmentId: publicacion.id,
-          userId: user.uid,
-          userName: user.displayName || user.email,
-          employmentTitle: publicacion.titulo,
-          amount: amount,
-          type: 'employment' // Indicar que es una publicación de empleo
-        }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(preferenceData),
       });
 
-      console.log('Response status:', response.status);
+      const data = await response.json();
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Error desconocido' }));
-        console.error('Error response:', errorData);
-        throw new Error(errorData.error || `Error HTTP ${response.status}`);
+        throw new Error(data.error || 'Error al crear preferencia de pago');
       }
 
-      const data = await response.json();
-      console.log('Success data:', data);
-      
-      // Redirigir a MercadoPago
+      console.log('✅ Preference created:', data.preferenceId);
+      console.log('🔗 Redirecting to:', data.init_point);
+
+      // Redirigir directamente a MercadoPago
       if (data.init_point) {
-        window.open(data.init_point, '_blank');
-        
-        if (onSuccess) {
-          onSuccess();
-        }
+        window.location.href = data.init_point;
       } else {
-        throw new Error('No se recibió la URL de pago');
+        throw new Error('No se recibió la URL de pago de MercadoPago');
       }
 
-    } catch (error) {
-      console.error('Payment error:', error);
-      setError(`Error al procesar el pago: ${error.message}`);
+    } catch (err) {
+      console.error('❌ Error:', err);
+      setError(err.message || 'Error al procesar el pago');
     } finally {
       setLoading(false);
     }
   };
 
-  if (isAlreadyFeatured()) {
-    return (
-      <div className="bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center space-x-2 text-yellow-700 dark:text-yellow-300">
-            <Star className="w-5 h-5 fill-current" />
-            <span className="font-medium text-lg">Publicación Destacada</span>
-          </div>
-          {onClose && (
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          )}
+  // Si ya está destacado
+  if (isFeatured) {
+    const daysLeft = getDaysRemaining();
+    
+    if (variant === 'compact') {
+      return (
+        <div className="flex items-center gap-2 px-3 py-1.5 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+          <CheckCircle2 className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+          <span className="text-xs font-medium text-yellow-700 dark:text-yellow-300">
+            {daysLeft}d restantes
+          </span>
         </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400">
-          Esta publicación está destacada por {getRemainingDays()} días más
-        </p>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          Aparecerá en la sección principal del home hasta que expire
-        </p>
+      );
+    }
+
+    return (
+      <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-xl border-2 border-yellow-200 dark:border-yellow-800">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg">
+            <Star className="w-5 h-5 text-white fill-current" />
+          </div>
+          <div>
+            <p className="font-semibold text-yellow-900 dark:text-yellow-100">
+              ¡Empleo Destacado!
+            </p>
+            <p className="text-sm text-yellow-700 dark:text-yellow-300">
+              Visible en la página principal
+            </p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2 text-sm text-yellow-800 dark:text-yellow-200 bg-white/50 dark:bg-black/20 px-3 py-2 rounded-lg">
+          <Clock className="w-4 h-4" />
+          <span className="font-medium">
+            {daysLeft} {daysLeft === 1 ? 'día restante' : 'días restantes'}
+          </span>
+        </div>
       </div>
     );
   }
 
-  return (
-    <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg p-6 max-w-md mx-auto">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
-          <Star className="w-5 h-5 text-yellow-500 mr-2" />
-          Destacar Publicación
-        </h3>
-        {onClose && (
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          >
-            <X className="w-5 h-5" />
-          </button>
+  // Botón para destacar
+  if (variant === 'compact') {
+    return (
+      <button
+        onClick={handleFeature}
+        disabled={loading || !user}
+        className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-lg font-medium transition-all hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+      >
+        {loading ? (
+          <Loader2 className="w-4 h-4 animate-spin" />
+        ) : (
+          <Star className="w-4 h-4" />
         )}
-      </div>
-      
-      <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
-        Haz que tu publicación aparezca en la sección "Destacados" del home por 7 días
-      </p>
+        <span>{loading ? 'Procesando...' : 'Destacar'}</span>
+      </button>
+    );
+  }
 
-      <div className="mb-6">
-        <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-          Contribución voluntaria (desde $100)
-        </label>
-        <div className="flex">
-          <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm">
-            $
-          </span>
-          <input
-            type="number"
-            min="100"
-            step="100"
-            value={amount}
-            onChange={(e) => setAmount(parseInt(e.target.value) || 100)}
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-r-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-            placeholder="1000"
-          />
+  return (
+    <div className="space-y-3">
+      <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-gray-800 dark:to-gray-700 rounded-xl border-2 border-yellow-200 dark:border-yellow-700">
+        <div className="flex items-start gap-3 mb-3">
+          <div className="p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg flex-shrink-0">
+            <Star className="w-5 h-5 text-white" />
+          </div>
+          <div>
+            <h3 className="font-bold text-gray-900 dark:text-white mb-1">
+              Destaca tu empleo
+            </h3>
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              Aparece en la sección destacada del inicio durante 7 días
+            </p>
+          </div>
         </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-          Contribución sugerida: $1000 - Ayuda a mantener Family Market funcionando
-        </p>
+
+        <div className="space-y-2 mb-4 text-sm text-gray-600 dark:text-gray-300">
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <span>Mayor visibilidad en la página principal</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <span>Más postulantes o contactos</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <CheckCircle2 className="w-4 h-4 text-green-600" />
+            <span>Destacado durante 7 días completos</span>
+          </div>
+        </div>
+
+        {/* Input de monto voluntario */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+            Contribución voluntaria (mínimo $100)
+          </label>
+          <div className="flex">
+            <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm">
+              $
+            </span>
+            <input
+              type="number"
+              min="100"
+              step="100"
+              value={amount}
+              onChange={(e) => setAmount(parseInt(e.target.value) || 100)}
+              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-r-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+              placeholder="1000"
+            />
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Sugerencia: $1000 - Ayuda a mantener Family Market funcionando
+          </p>
+        </div>
+
+        <button
+          onClick={handleFeature}
+          disabled={loading || !user || amount < 100}
+          className="w-full flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-yellow-500 to-orange-500 hover:from-yellow-600 hover:to-orange-600 text-white rounded-xl font-semibold transition-all hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          {loading ? (
+            <>
+              <Loader2 className="w-5 h-5 animate-spin" />
+              <span>Procesando...</span>
+            </>
+          ) : (
+            <>
+              <Star className="w-5 h-5" />
+              <span>Destacar Ahora</span>
+            </>
+          )}
+        </button>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
-          <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
+        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+          <p className="text-sm text-red-600 dark:text-red-400">{error}</p>
         </div>
       )}
 
-      <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-6">
-        <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2 text-sm">
-          Beneficios de destacar tu publicación:
-        </h4>
-        <ul className="text-xs text-blue-700 dark:text-blue-300 space-y-1">
-          <li>• Aparece en la sección principal del home</li>
-          <li>• Mayor visibilidad para más contactos</li>
-          <li>• Badge especial de "Destacado"</li>
-          <li>• Duración: 7 días completos</li>
-          <li>• Apoyas el desarrollo de Family Market</li>
-        </ul>
-      </div>
+      {!user && (
+        <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+          <p className="text-sm text-blue-600 dark:text-blue-400">
+            Debes iniciar sesión para destacar publicaciones
+          </p>
+        </div>
+      )}
 
-      <button
-        onClick={handlePayment}
-        disabled={loading || amount < 100}
-        className="w-full bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white px-4 py-3 rounded-lg font-medium transition-all duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-      >
-        {loading ? (
-          <>
-            <Loader className="w-5 h-5 animate-spin" />
-            <span>Procesando...</span>
-          </>
-        ) : (
-          <>
-            <CreditCard className="w-5 h-5" />
-            <span>Destacar con MercadoPago</span>
-          </>
-        )}
-      </button>
-
-      <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-3">
-        Pago seguro procesado por MercadoPago
+      <p className="text-xs text-center text-gray-500 dark:text-gray-400">
+        El pago se procesa de forma segura a través de MercadoPago
       </p>
     </div>
   );
