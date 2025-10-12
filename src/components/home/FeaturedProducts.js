@@ -7,11 +7,72 @@ import { db } from '@/lib/firebase/config';
 import { Star, ChevronLeft, ChevronRight } from 'lucide-react';
 import ProductCard from '@/components/tienda/productos/ProductCard';
 
+// Componente Skeleton
+function FeaturedProductsSkeleton({ itemsPerView, gapClass }) {
+  return (
+    <div className="w-full px-2 sm:px-4 lg:px-8">
+      {/* Header Skeleton */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 bg-gradient-to-r from-yellow-200 to-orange-300 dark:from-yellow-800 dark:to-orange-800 rounded-lg animate-pulse" />
+        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-64 animate-pulse" />
+      </div>
+
+      {/* Cards Skeleton */}
+      <div className="relative">
+        <div className="overflow-hidden">
+          <div className={`flex ${gapClass}`}>
+            {Array.from({ length: itemsPerView }).map((_, index) => {
+              const gapPx = itemsPerView === 2 ? 8 : itemsPerView === 3 ? 16 : 24;
+              const totalGapPx = gapPx * (itemsPerView - 1);
+              
+              return (
+                <div
+                  key={index}
+                  className="flex-shrink-0"
+                  style={{
+                    width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
+                  }}
+                >
+                  {/* Skeleton Card */}
+                  <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700 animate-pulse">
+                    <div className="h-6 bg-gradient-to-r from-orange-300 to-amber-300 dark:from-orange-700 dark:to-amber-700" />
+                    <div className="h-40 bg-gray-200 dark:bg-gray-700 relative">
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+                    </div>
+                    <div className="p-3 space-y-3">
+                      <div className="space-y-2">
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full" />
+                        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
+                      </div>
+                      <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
+                      <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded" />
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Dots skeleton */}
+        <div className="flex justify-center gap-2 mt-6">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div
+              key={i}
+              className="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse"
+            />
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function FeaturedProducts() {
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [windowWidth, setWindowWidth] = useState(0);
+  const [windowWidth, setWindowWidth] = useState(1280);
   const [isClient, setIsClient] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
@@ -52,14 +113,12 @@ export default function FeaturedProducts() {
       );
 
       const querySnapshot = await getDocs(q);
-
-      // ✅ OPTIMIZADO: tiendaInfo ya viene en cada producto
       const products = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
 
-      console.log(`✅ ${products.length} productos destacados cargados (sin consultas adicionales)`);
+      console.log(`✅ ${products.length} productos destacados cargados`);
       setFeaturedProducts(products);
     } catch (error) {
       console.error('Error cargando productos destacados:', error);
@@ -75,8 +134,6 @@ export default function FeaturedProducts() {
     if (storeSlug && product.id) {
       const url = `https://familymarket.vercel.app/tienda/${storeSlug}/producto/${product.id}`;
       window.open(url, '_blank');
-    } else {
-      console.error('Faltan datos para la navegación:', { storeSlug, productId: product.id });
     }
   };
 
@@ -183,131 +240,112 @@ export default function FeaturedProducts() {
     };
   }, []);
 
-  if (loading) {
-    return (
-      <section className="py-8 lg:py-12">
-        <div className="w-full px-2 sm:px-4 lg:px-8">
-          <div className="text-center">
-            <div className="w-8 h-8 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
-            <p className="text-gray-600 dark:text-gray-400">Cargando productos destacados...</p>
-          </div>
-        </div>
-      </section>
-    );
+  const gapClass = isMobile ? 'gap-2' : isTablet ? 'gap-4' : 'gap-6';
+
+  if (loading || !isClient) {
+    return <FeaturedProductsSkeleton itemsPerView={itemsPerView} gapClass={gapClass} />;
   }
 
   if (error || featuredProducts.length === 0) {
     return null;
   }
 
-  if (!isClient) {
-    return (
-      <section className="py-8 lg:py-12">
-        <div className="text-center">Cargando productos destacados...</div>
-      </section>
-    );
-  }
-
   const currentOffset = currentIndex + dragOffset;
   const translateX = -(currentOffset * (100 / itemsPerView));
 
-  const gapClass = isMobile ? 'gap-2' : isTablet ? 'gap-4' : 'gap-6';
-
   return (
-    <section className="py-0 w-full">
-      <div className="w-full px-2 sm:px-4 lg:px-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg">
-            <Star className="w-6 h-6 text-white fill-current" />
-          </div>
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-            Productos Destacados
-          </h2>
+    <div className="w-full px-2 sm:px-4 lg:px-8">
+      <div className="flex items-center gap-3 mb-6">
+        <div className="p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg">
+          <Star className="w-6 h-6 text-white fill-current" />
         </div>
-
-        <div className="relative">
-          {!isMobile && maxIndex > 0 && (
-            <>
-              <button
-                onClick={goToPrevious}
-                disabled={currentIndex === 0 || isDragging || isTransitioning}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button
-                onClick={goToNext}
-                disabled={currentIndex === maxIndex || isDragging || isTransitioning}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            </>
-          )}
-
-          <div
-            ref={scrollContainerRef}
-            className={`overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            style={{ touchAction: 'pan-y' }}
-          >
-            <div
-              className={`flex ${gapClass} will-change-transform`}
-              style={{
-                transform: `translateX(${translateX}%)`,
-                transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
-              }}
-            >
-              {featuredProducts.map((product) => {
-                const gapPx = isMobile ? 8 : isTablet ? 16 : 24;
-                const totalGapPx = gapPx * (itemsPerView - 1);
-                
-                return (
-                  <div
-                    key={product.id}
-                    className={`flex-shrink-0 transition-all duration-200 ${isDragging ? 'scale-[0.98]' : ''}`}
-                    style={{
-                      width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
-                    }}
-                  >
-                    <ProductCard
-                      product={product}
-                      storeData={product.storeData}
-                      variant="featured-compact"
-                      showContactInfo={true}
-                      showStoreInfo={true}
-                      onClick={() => handleProductClick(product)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {maxIndex > 0 && (
-            <div className="flex justify-center gap-2 mt-6">
-              {Array.from({ length: maxIndex + 1 }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => animateToIndex(i)}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                    Math.round(currentIndex) === i
-                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500 scale-125 shadow-md'
-                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-yellow-300 dark:hover:bg-yellow-600'
-                  }`}
-                  disabled={isDragging || isTransitioning}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+        <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+          Productos Destacados
+        </h2>
       </div>
-    </section>
+
+      <div className="relative">
+        {!isMobile && maxIndex > 0 && (
+          <>
+            <button
+              onClick={goToPrevious}
+              disabled={currentIndex === 0 || isDragging || isTransitioning}
+              className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
+            <button
+              onClick={goToNext}
+              disabled={currentIndex === maxIndex || isDragging || isTransitioning}
+              className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
+          </>
+        )}
+
+        <div
+          ref={scrollContainerRef}
+          className={`overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseLeave}
+          style={{ touchAction: 'pan-y' }}
+        >
+          <div
+            className={`flex ${gapClass} will-change-transform`}
+            style={{
+              transform: `translateX(${translateX}%)`,
+              transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+            }}
+          >
+            {featuredProducts.map((product) => {
+              const gapPx = isMobile ? 8 : isTablet ? 16 : 24;
+              const totalGapPx = gapPx * (itemsPerView - 1);
+              
+              return (
+                <div
+                  key={product.id}
+                  className={`flex-shrink-0 transition-all duration-200 ${isDragging ? 'scale-[0.98]' : ''}`}
+                  style={{
+                    width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
+                  }}
+                >
+                  <ProductCard
+                    product={product}
+                    storeData={product.storeData}
+                    variant="featured-compact"
+                    showContactInfo={true}
+                    showStoreInfo={true}
+                    onClick={() => handleProductClick(product)}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {maxIndex > 0 && (
+          <div className="flex justify-center gap-2 mt-6">
+            {Array.from({ length: maxIndex + 1 }, (_, i) => (
+              <button
+                key={i}
+                onClick={() => animateToIndex(i)}
+                className={`w-3 h-3 rounded-full transition-all duration-200 ${
+                  Math.round(currentIndex) === i
+                    ? 'bg-gradient-to-r from-yellow-500 to-orange-500 scale-125 shadow-md'
+                    : 'bg-gray-300 dark:bg-gray-600 hover:bg-yellow-300 dark:hover:bg-yellow-600'
+                }`}
+                disabled={isDragging || isTransitioning}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

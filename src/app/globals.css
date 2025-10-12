@@ -227,3 +227,17 @@ select {
 
 /* ========== IMPORTACIÓN DE TEMAS DE TIENDA ========== */
 @import '../styles/store-themes.css';
+
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s infinite;
+}
