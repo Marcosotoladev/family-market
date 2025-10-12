@@ -1,3 +1,4 @@
+//app/empleos/page.js
 'use client'
 
 import { useState, useEffect } from 'react'
@@ -207,9 +208,8 @@ export default function EmpleosPage() {
           <div className="flex gap-2 mt-4 overflow-x-auto pb-2">
             {[
               { value: 'todos', label: 'Todos' },
-              { value: 'ofertas', label: 'Ofertas de empleo' },
-              { value: 'busquedas', label: 'Busco empleo' },
-              { value: 'profesionales', label: 'Profesionales' }
+              { value: 'ofertas', label: 'Ofertas' },
+              { value: 'busquedas', label: 'Busco empleo' }
             ].map(tab => (
               <button
                 key={tab.value}
@@ -253,7 +253,7 @@ export default function EmpleosPage() {
               <EmptyState />
             ) : (
               <div className={vistaGrid 
-                ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4' 
+                ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' 
                 : 'flex flex-col gap-4'
               }>
                 {empleosFiltrados.map(empleo => renderEmpleoCard(empleo))}
@@ -327,8 +327,8 @@ function FiltersSidebar({ filtros, setFiltros, mostrar }) {
 
 function LoadingSkeleton({ vistaGrid }) {
   return (
-    <div className={vistaGrid ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4' : 'flex flex-col gap-4'}>
-      {[1, 2, 3, 4, 5, 6].map(i => (
+    <div className={vistaGrid ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' : 'flex flex-col gap-4'}>
+      {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
         <div key={i} className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 overflow-hidden animate-pulse">
           <div className="p-4 space-y-3">
             <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />

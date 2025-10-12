@@ -45,6 +45,10 @@ export default function DashboardTopNavigation() {
   const storeUrl = userData?.storeSlug
 
   const isActive = (href) => {
+    // Para "Inicio", solo debe estar activo si NO estamos en el dashboard
+    if (href === '/') {
+      return false // Nunca activo en el dashboard
+    }
     if (href === '/dashboard') return pathname === '/dashboard'
     return pathname?.startsWith(href)
   }
@@ -201,7 +205,7 @@ export default function DashboardTopNavigation() {
                     <button
                       key={item.id}
                       onClick={() => navigateTo(item.href)}
-                      className={`flex items-center space-x-2 px-4 py-4 border-b-2 font-medium text-sm transition-all whitespace-nowrap ${getColorClasses(item.color, active)}`}
+                      className={`flex items-center space-x-2 px-4 py-4 border-b-2 font-medium text-sm transition-all whitespace-nowrap cursor-pointer ${getColorClasses(item.color, active)}`}
                     >
                       <Icon className="w-4 h-4 flex-shrink-0" />
                       <span>{item.label}</span>
@@ -218,7 +222,7 @@ export default function DashboardTopNavigation() {
                     <button
                       key={item.id}
                       onClick={() => navigateTo(item.href)}
-                      className={`flex items-center space-x-2 px-4 py-4 border-b-2 font-medium text-sm transition-all whitespace-nowrap ${getColorClasses(item.color, active)}`}
+                      className={`flex items-center space-x-2 px-4 py-4 border-b-2 font-medium text-sm transition-all whitespace-nowrap cursor-pointer ${getColorClasses(item.color, active)}`}
                     >
                       <Icon className="w-4 h-4 flex-shrink-0" />
                       <span>{item.label}</span>
@@ -234,7 +238,7 @@ export default function DashboardTopNavigation() {
                 href={`https://familymarket.vercel.app/tienda/${storeUrl}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg text-sm font-medium transition-colors ml-4 flex-shrink-0"
+                className="flex items-center gap-2 px-4 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg text-sm font-medium transition-colors ml-4 flex-shrink-0 cursor-pointer"
               >
                 <Store className="w-4 h-4" />
                 <span className="hidden xl:inline">Ver tienda</span>
@@ -260,7 +264,7 @@ export default function DashboardTopNavigation() {
                     <button
                       key={item.id}
                       onClick={() => navigateTo(item.href)}
-                      className={`flex items-center space-x-2 px-3 py-4 border-b-2 font-medium text-sm transition-all ${getColorClasses(item.color, active)}`}
+                      className={`flex items-center space-x-2 px-3 py-4 border-b-2 font-medium text-sm transition-all cursor-pointer ${getColorClasses(item.color, active)}`}
                     >
                       <Icon className="w-4 h-4" />
                       <span className="text-xs">{item.label}</span>
@@ -276,7 +280,7 @@ export default function DashboardTopNavigation() {
                 href={`https://familymarket.vercel.app/tienda/${storeUrl}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-3 flex items-center gap-1 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg text-xs font-medium transition-colors flex-shrink-0"
+                className="ml-3 flex items-center gap-1 px-3 py-2 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg text-xs font-medium transition-colors flex-shrink-0 cursor-pointer"
               >
                 <Store className="w-4 h-4" />
                 <ExternalLink className="w-3 h-3" />
@@ -294,7 +298,7 @@ export default function DashboardTopNavigation() {
             {/* Menu button */}
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="flex-1 flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:border-gray-300 dark:hover:border-gray-600 transition-colors"
+              className="flex-1 flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 hover:border-gray-300 dark:hover:border-gray-600 transition-colors cursor-pointer"
             >
               <div className="flex items-center space-x-3">
                 {showMobileMenu ? (
@@ -315,7 +319,7 @@ export default function DashboardTopNavigation() {
                 href={`https://familymarket.vercel.app/tienda/${storeUrl}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="ml-3 flex items-center gap-1.5 px-3 py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg text-xs font-medium transition-colors"
+                className="ml-3 flex items-center gap-1.5 px-3 py-3 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg text-xs font-medium transition-colors cursor-pointer"
               >
                 <Store className="w-4 h-4" />
                 <ExternalLink className="w-3.5 h-3.5" />
@@ -337,7 +341,7 @@ export default function DashboardTopNavigation() {
                     <button
                       key={item.id}
                       onClick={() => navigateTo(item.href)}
-                      className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors ${
+                      className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors cursor-pointer ${
                         active 
                           ? 'bg-gray-50 dark:bg-gray-700/50 text-gray-900 dark:text-white font-medium' 
                           : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700/50'
@@ -370,7 +374,7 @@ export default function DashboardTopNavigation() {
                         <button
                           key={item.id}
                           onClick={() => navigateTo(item.href)}
-                          className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors ${
+                          className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors cursor-pointer ${
                             active 
                               ? 'bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white font-medium' 
                               : 'text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700/50'

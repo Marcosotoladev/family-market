@@ -63,21 +63,24 @@ export default function MobileNavigation() {
       categories: Object.values(CATEGORIAS_PRODUCTOS || {}),
       type: 'productos',
       icon: Package,
-      description: 'Compra y vende productos'
+      description: 'Compra y vende productos',
+      href: '/productos'
     },
     {
       title: 'Servicios',
       categories: Object.values(CATEGORIAS_SERVICIOS || {}),
       type: 'servicios',
       icon: Grid3X3,
-      description: 'Encuentra servicios profesionales'
+      description: 'Encuentra servicios profesionales',
+      href: '/servicios'
     },
     {
       title: 'Empleos',
       categories: Object.values(CATEGORIAS_EMPLEO || {}),
       type: 'empleos',
       icon: Briefcase,
-      description: 'Busca oportunidades laborales'
+      description: 'Busca oportunidades laborales',
+      href: '/empleos'
     }
   ]
 
@@ -135,14 +138,6 @@ export default function MobileNavigation() {
           href: '/dashboard/store',
           description: 'Gestiona tu negocio',
           color: 'orange'
-        },
-        {
-          id: 'products',
-          label: 'Productos',
-          icon: ShoppingBag,
-          href: '/dashboard/store/products',
-          description: 'Administrar productos',
-          color: 'green'
         }
       ]
     }
@@ -230,6 +225,32 @@ export default function MobileNavigation() {
 
   const handleNavigate = (type, categoryId, subcategoria) => {
     console.log('Navegando a:', { type, categoryId, subcategoria })
+    
+    // Construir la URL con los parámetros apropiados
+    let url = `/${type}`
+    const params = new URLSearchParams()
+    
+    if (categoryId) {
+      params.append('categoria', categoryId)
+    }
+    if (subcategoria) {
+      params.append('subcategoria', subcategoria)
+    }
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`
+    }
+    
+    router.push(url)
+    
+    setShowCategoriesModal(false)
+    setSelectedMainCategory(null)
+    setSelectedCategory(null)
+    setShowSubcategories(false)
+  }
+
+  const handleViewAll = (href) => {
+    router.push(href)
     setShowCategoriesModal(false)
     setSelectedMainCategory(null)
     setSelectedCategory(null)
@@ -253,17 +274,15 @@ export default function MobileNavigation() {
     setShowSubcategories(false)
   }
 
-const handleLogout = async () => {
-  try {
-    await signOut()
-    setShowUserModal(false) // 👈 corrección aquí
-    router.push('/')
-  } catch (error) {
-    console.error('Error al cerrar sesión:', error)
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      setShowUserModal(false)
+      router.push('/')
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
   }
-}
-
-
 
   const handleUserMenuNavigation = (href) => {
     router.push(href)
@@ -315,7 +334,7 @@ const handleLogout = async () => {
       return (
         <div className="grid grid-cols-1 gap-3">
           <button
-            onClick={() => handleNavigate(selectedMainCategory.type, null, null)}
+            onClick={() => handleViewAll(selectedMainCategory.href)}
             className="flex items-center gap-3 p-4 rounded-xl bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-all duration-200 text-left w-full group mb-4 cursor-pointer"
           >
             <div className="w-12 h-12 bg-primary-500 rounded-xl flex items-center justify-center flex-shrink-0">
@@ -443,7 +462,7 @@ const handleLogout = async () => {
                   <button
                     key={item.id}
                     onClick={() => handleUserMenuNavigation(item.href)}
-                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left group"
+                    className="w-full flex items-center gap-3 p-3 rounded-xl bg-gray-50 dark:bg-gray-800 hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left group cursor-pointer"
                   >
                     <div className="w-10 h-10 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary-100 dark:group-hover:bg-primary-900/40 transition-colors">
                       <Icon className="w-5 h-5 text-gray-600 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
@@ -467,7 +486,7 @@ const handleLogout = async () => {
         {/* Cerrar sesión */}
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 text-left group border border-red-200 dark:border-red-800"
+          className="w-full flex items-center gap-3 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 text-left group border border-red-200 dark:border-red-800 cursor-pointer"
         >
           <div className="w-10 h-10 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-red-200 dark:group-hover:bg-red-900/60 transition-colors">
             <LogOut className="w-5 h-5 text-red-600 dark:text-red-400" />

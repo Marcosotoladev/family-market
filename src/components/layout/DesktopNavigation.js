@@ -1,368 +1,545 @@
-// src/components/home/FeaturedProducts.js
-'use client';
+// src/components/layout/DesktopNavigation.js
+'use client'
+import { useState, useRef, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
+import {
+  Home, Heart, Grid3X3, Package, Briefcase, ChevronLeft,
+  ChevronRight, User, LogOut, Store, ShoppingBag, Star,
+  MessageSquare, Users, LayoutDashboard, Settings, ChevronDown
+} from 'lucide-react'
+import { useAuth } from '@/contexts/AuthContext'
+import { CATEGORIAS_PRODUCTOS, CATEGORIAS_SERVICIOS, CATEGORIAS_EMPLEO } from '@/types'
+import Link from 'next/link'
 
-import { useState, useEffect, useRef, useCallback } from 'react';
-import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
-import { Star, ChevronLeft, ChevronRight } from 'lucide-react';
-import ProductCard from '@/components/tienda/productos/ProductCard';
+export default function DesktopNavigation() {
+  // TODOS LOS HOOKS PRIMERO
+  const { isAuthenticated, loading, user, userData, signOut } = useAuth()
+  const router = useRouter()
+  const pathname = usePathname()
+  const [activeDropdown, setActiveDropdown] = useState(null)
+  const [selectedCategory, setSelectedCategory] = useState(null)
+  const [showSubcategories, setShowSubcategories] = useState(false)
+  const dropdownRef = useRef(null)
 
-// Componente Skeleton
-function FeaturedProductsSkeleton({ itemsPerView, gapClass }) {
-  return (
-    <section className="py-0 w-full">
-      <div className="w-full px-2 sm:px-4 lg:px-8">
-        {/* Header Skeleton */}
-        <div className="flex items-center gap-3 mb-6">
-          <div className="w-10 h-10 bg-gradient-to-r from-yellow-200 to-orange-300 dark:from-yellow-800 dark:to-orange-800 rounded-lg animate-pulse" />
-          <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded w-64 animate-pulse" />
-        </div>
+  // DESPUÉS DE LOS HOOKS, LAS CONDICIONES
+  const isDashboardRoute = pathname?.startsWith('/dashboard')
+  const isAdmin = userData?.role === 'admin'
 
-        {/* Cards Skeleton */}
-        <div className="relative">
-          <div className="overflow-hidden">
-            <div className={`flex ${gapClass}`}>
-              {Array.from({ length: itemsPerView }).map((_, index) => {
-                const gapPx = itemsPerView === 2 ? 8 : itemsPerView === 3 ? 16 : 24;
-                const totalGapPx = gapPx * (itemsPerView - 1);
-                
-                return (
-                  <div
-                    key={index}
-                    className="flex-shrink-0"
-                    style={{
-                      width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
-                    }}
-                  >
-                    {/* Skeleton Card - similar a featured-compact */}
-                    <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg overflow-hidden border-2 border-gray-200 dark:border-gray-700 animate-pulse">
-                      {/* Badge superior */}
-                      <div className="h-6 bg-gradient-to-r from-orange-300 to-amber-300 dark:from-orange-700 dark:to-amber-700" />
-                      
-                      {/* Imagen skeleton */}
-                      <div className="h-40 bg-gray-200 dark:bg-gray-700 relative">
-                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
-                      </div>
-                      
-                      {/* Contenido skeleton */}
-                      <div className="p-3 space-y-3">
-                        {/* Título */}
-                        <div className="space-y-2">
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-full" />
-                          <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4" />
-                        </div>
-                        
-                        {/* Precio */}
-                        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-1/2" />
-                        
-                        {/* Botón */}
-                        <div className="h-8 bg-gray-200 dark:bg-gray-700 rounded" />
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setActiveDropdown(null)
+        setSelectedCategory(null)
+        setShowSubcategories(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
+
+  const navItems = [
+    {
+      id: 'home',
+      label: 'Inicio',
+      icon: Home,
+      href: '/'
+    },
+    {
+      id: 'productos',
+      label: 'Productos',
+      icon: Package,
+      href: '/productos',
+      hasDropdown: true,
+      categories: Object.values(CATEGORIAS_PRODUCTOS || {}),
+      type: 'productos'
+    },
+    {
+      id: 'servicios',
+      label: 'Servicios',
+      icon: Grid3X3,
+      href: '/servicios',
+      hasDropdown: true,
+      categories: Object.values(CATEGORIAS_SERVICIOS || {}),
+      type: 'servicios'
+    },
+    {
+      id: 'empleos',
+      label: 'Empleos',
+      icon: Briefcase,
+      href: '/empleos',
+      hasDropdown: true,
+      categories: Object.values(CATEGORIAS_EMPLEO || {}),
+      type: 'empleos'
+    },
+    {
+      id: 'stores',
+      label: 'Tiendas',
+      icon: Store,
+      href: '/tiendas'
+    }
+  ]
+
+  const userItem = isAuthenticated 
+    ? {
+        id: 'user',
+        label: userData?.firstName || 'Cuenta',
+        icon: User,
+        href: '/dashboard',
+        hasDropdown: true
+      }
+    : null
+
+  // Opciones del menú de usuario
+  const userMenuSections = [
+    {
+      section: 'Dashboard',
+      items: [
+        {
+          id: 'dashboard',
+          label: 'Mi Cuenta',
+          icon: LayoutDashboard,
+          href: '/dashboard',
+          description: 'Vista general',
+          color: 'purple'
+        }
+      ]
+    },
+    {
+      section: 'Personal',
+      items: [
+        {
+          id: 'profile',
+          label: 'Perfil',
+          icon: User,
+          href: '/dashboard/profile',
+          description: 'Información personal',
+          color: 'blue'
+        },
+        {
+          id: 'favorites',
+          label: 'Favoritos',
+          icon: Heart,
+          href: '/dashboard/favorites',
+          description: 'Productos guardados',
+          color: 'pink'
+        },
+        {
+          id: 'reviews',
+          label: 'Reseñas',
+          icon: Star,
+          href: '/dashboard/reviews',
+          description: 'Tus comentarios',
+          color: 'yellow'
+        }
+      ]
+    },
+    {
+      section: 'Tienda',
+      items: [
+        {
+          id: 'store',
+          label: 'Mi Tienda',
+          icon: Store,
+          href: '/dashboard/store',
+          description: 'Gestiona tu negocio',
+          color: 'orange'
+        }
+      ]
+    }
+  ]
+
+  // Opciones adicionales para admin
+  const adminMenuSection = {
+    section: 'Administración',
+    items: [
+      {
+        id: 'users',
+        label: 'Usuarios',
+        icon: Users,
+        href: '/dashboard/users',
+        description: 'Gestionar usuarios',
+        color: 'indigo'
+      },
+      {
+        id: 'messaging',
+        label: 'Mensajería',
+        icon: MessageSquare,
+        href: '/dashboard/messaging',
+        description: 'Notificaciones masivas',
+        color: 'cyan'
+      }
+    ]
+  }
+
+  // Si es admin, agregar opciones de admin
+  const finalUserMenuSections = isAdmin
+    ? [...userMenuSections, adminMenuSection]
+    : userMenuSections
+
+  const handleNavClick = (item) => {
+    // Si tiene dropdown (productos, servicios, empleos, user)
+    if (item.hasDropdown) {
+      setActiveDropdown(activeDropdown === item.id ? null : item.id)
+      setSelectedCategory(null)
+      setShowSubcategories(false)
+      return
+    }
+
+    // Para items sin dropdown, navegar directamente
+    if (item.href) {
+      router.push(item.href)
+      setActiveDropdown(null)
+    }
+  }
+
+  const handleCategoryClick = (category, itemType, itemHref) => {
+    if (category.subcategorias && Object.keys(category.subcategorias).length > 0) {
+      setSelectedCategory({ ...category, itemType, itemHref })
+      setShowSubcategories(true)
+    } else {
+      handleNavigate(itemType, category.id, null)
+    }
+  }
+
+  const handleSubcategoryClick = (subcategoria) => {
+    handleNavigate(selectedCategory.itemType, selectedCategory.id, subcategoria)
+  }
+
+  const handleNavigate = (type, categoryId, subcategoria) => {
+    console.log('Navegando a:', { type, categoryId, subcategoria })
+    setActiveDropdown(null)
+    setSelectedCategory(null)
+    setShowSubcategories(false)
+    
+    // Aquí puedes agregar la navegación real con router.push
+    // router.push(`/${type}?categoria=${categoryId}&subcategoria=${subcategoria}`)
+  }
+
+  const handleViewAll = (href) => {
+    router.push(href)
+    setActiveDropdown(null)
+    setSelectedCategory(null)
+    setShowSubcategories(false)
+  }
+
+  const handleBackToMain = () => {
+    setShowSubcategories(false)
+    setSelectedCategory(null)
+  }
+
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      setActiveDropdown(null)
+      router.push('/')
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
+  }
+
+  const handleUserMenuNavigation = (href) => {
+    router.push(href)
+    setActiveDropdown(null)
+  }
+
+  const getSubcategoryName = (subcategoriaKey) => {
+    return subcategoriaKey
+      .split('_')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  }
+
+  // Obtener iniciales del usuario
+  const getUserInitials = () => {
+    if (userData?.firstName && userData?.lastName) {
+      return `${userData.firstName.charAt(0)}${userData.lastName.charAt(0)}`.toUpperCase()
+    }
+    if (userData?.email) {
+      return userData.email.charAt(0).toUpperCase()
+    }
+    return 'U'
+  }
+
+  // No mostrar en rutas de dashboard
+  if (isDashboardRoute) {
+    return null
+  }
+
+  const renderCategoriesDropdown = (item) => {
+    const ItemIcon = item.icon
+
+    // Vista de subcategorías
+    if (showSubcategories && selectedCategory) {
+      return (
+        <div className="w-80">
+          {/* Header con botón de volver */}
+          <div className="flex items-center gap-2 p-3 border-b border-gray-200 dark:border-gray-700">
+            <button
+              onClick={handleBackToMain}
+              className="p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+            >
+              <ChevronLeft className="w-4 h-4 text-gray-500 dark:text-gray-400" />
+            </button>
+            <h3 className="font-semibold text-gray-900 dark:text-gray-100 text-sm">
+              {selectedCategory.nombre}
+            </h3>
           </div>
 
-          {/* Dots skeleton */}
-          <div className="flex justify-center gap-2 mt-6">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={i}
-                className="w-3 h-3 rounded-full bg-gray-300 dark:bg-gray-600 animate-pulse"
-              />
+          {/* Lista de subcategorías */}
+          <div className="p-2 max-h-96 overflow-y-auto">
+            {Object.entries(selectedCategory.subcategorias).map(([key, value]) => (
+              <button
+                key={key}
+                onClick={() => handleSubcategoryClick(value)}
+                className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-all duration-200 text-left group"
+              >
+                <div className="w-2 h-2 bg-primary-500 rounded-full flex-shrink-0 group-hover:bg-primary-600"></div>
+                <span className="text-sm text-gray-700 dark:text-gray-300 group-hover:text-primary-700 dark:group-hover:text-primary-400 flex-1">
+                  {getSubcategoryName(key)}
+                </span>
+                <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
+              </button>
             ))}
           </div>
         </div>
+      )
+    }
+
+    // Vista principal de categorías
+    return (
+      <div className="w-80">
+        {/* Ver todos */}
+        <div className="p-2">
+          <button
+            onClick={() => handleViewAll(item.href)}
+            className="w-full flex items-center gap-3 p-3 rounded-lg bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 hover:bg-primary-100 dark:hover:bg-primary-800/30 transition-all duration-200 text-left group mb-2"
+          >
+            <div className="w-10 h-10 bg-primary-500 rounded-lg flex items-center justify-center flex-shrink-0">
+              <ItemIcon className="w-5 h-5 text-white" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-semibold text-primary-700 dark:text-primary-300 text-sm leading-tight">
+                Ver todos los {item.label}
+              </h4>
+              <p className="text-xs text-primary-600 dark:text-primary-400 mt-0.5">
+                Explorar todas las categorías
+              </p>
+            </div>
+          </button>
+
+          {/* Lista de categorías */}
+          <div className="max-h-96 overflow-y-auto space-y-1">
+            {item.categories?.map((category) => {
+              const hasSubcategories = category.subcategorias && Object.keys(category.subcategorias).length > 0
+              const subcategoriesCount = hasSubcategories ? Object.keys(category.subcategorias).length : 0
+
+              return (
+                <button
+                  key={category.id}
+                  onClick={() => handleCategoryClick(category, item.type, item.href)}
+                  className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 text-left group"
+                >
+                  <div className="w-8 h-8 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary-200 dark:group-hover:bg-primary-800/50">
+                    <ItemIcon className="w-4 h-4 text-primary-600 dark:text-primary-400" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h4 className="font-medium text-gray-900 dark:text-gray-100 text-sm leading-tight group-hover:text-primary-700 dark:group-hover:text-primary-400">
+                      {category.nombre}
+                    </h4>
+                    {hasSubcategories && (
+                      <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                        {subcategoriesCount} subcategorías
+                      </p>
+                    )}
+                  </div>
+                  {hasSubcategories && (
+                    <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary-500" />
+                  )}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </div>
-    </section>
-  );
-}
-
-export default function FeaturedProducts() {
-  const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [windowWidth, setWindowWidth] = useState(1280); // ✅ Valor por defecto desktop
-  const [isClient, setIsClient] = useState(false);
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isDragging, setIsDragging] = useState(false);
-  const [startX, setStartX] = useState(0);
-  const [scrollLeft, setScrollLeft] = useState(0);
-  const [dragOffset, setDragOffset] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
-  const scrollContainerRef = useRef(null);
-  const rafRef = useRef();
-
-  useEffect(() => {
-    setIsClient(true);
-    const handleResize = () => setWindowWidth(window.innerWidth);
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
-  useEffect(() => {
-    loadFeaturedProducts();
-  }, []);
-
-  const loadFeaturedProducts = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const now = new Date();
-      const productsRef = collection(db, 'productos');
-      const q = query(
-        productsRef,
-        where('featured', '==', true),
-        where('featuredUntil', '>', now),
-        where('estado', '==', 'disponible'),
-        orderBy('featuredUntil', 'desc'),
-        orderBy('fechaDestacado', 'desc'),
-        limit(20)
-      );
-
-      const querySnapshot = await getDocs(q);
-
-      const products = querySnapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      }));
-
-      console.log(`✅ ${products.length} productos destacados cargados`);
-      setFeaturedProducts(products);
-    } catch (error) {
-      console.error('Error cargando productos destacados:', error);
-      setError('Error cargando productos destacados');
-      setFeaturedProducts([]);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleProductClick = (product) => {
-    const storeSlug = product.tiendaInfo?.slug || product.storeData?.storeSlug;
-    if (storeSlug && product.id) {
-      const url = `https://familymarket.vercel.app/tienda/${storeSlug}/producto/${product.id}`;
-      window.open(url, '_blank');
-    }
-  };
-
-  const isMobile = windowWidth < 768;
-  const isTablet = windowWidth >= 768 && windowWidth < 1024;
-
-  let itemsPerView;
-  if (isMobile) {
-    itemsPerView = 2;
-  } else if (isTablet) {
-    itemsPerView = 3;
-  } else {
-    itemsPerView = 5;
+    )
   }
 
-  const maxIndex = Math.max(0, featuredProducts.length - itemsPerView);
+  const renderUserDropdown = () => {
+    return (
+      <div className="w-80 p-3">
+        {/* Header del usuario */}
+        <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-xl p-3 shadow-lg mb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center flex-shrink-0">
+              <span className="text-lg font-bold text-white">
+                {getUserInitials()}
+              </span>
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-semibold text-white text-sm leading-tight">
+                {userData?.firstName} {userData?.lastName}
+              </h4>
+              <p className="text-xs text-white/80 truncate">
+                {userData?.email}
+              </p>
+              {isAdmin && (
+                <span className="inline-block mt-1 px-2 py-0.5 bg-white/20 backdrop-blur-sm rounded-full text-xs text-white font-medium">
+                  Administrador
+                </span>
+              )}
+            </div>
+          </div>
+        </div>
 
-  const animateToIndex = useCallback((targetIndex) => {
-    const clampedIndex = Math.max(0, Math.min(maxIndex, targetIndex));
-    setIsTransitioning(true);
-    setCurrentIndex(clampedIndex);
-    setDragOffset(0);
-    setTimeout(() => setIsTransitioning(false), 300);
-  }, [maxIndex]);
+        {/* Secciones del menú */}
+        <div className="max-h-96 overflow-y-auto space-y-3">
+          {finalUserMenuSections.map((section, idx) => (
+            <div key={idx}>
+              <div className="px-2 py-1">
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  {section.section}
+                </p>
+              </div>
+              <div className="space-y-1">
+                {section.items.map((item) => {
+                  const Icon = item.icon
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => handleUserMenuNavigation(item.href)}
+                      className="w-full flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 text-left group"
+                    >
+                      <div className="w-8 h-8 bg-white dark:bg-gray-700 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-primary-50 dark:group-hover:bg-primary-900/40 transition-colors">
+                        <Icon className="w-4 h-4 text-gray-600 dark:text-gray-400 group-hover:text-primary-600 dark:group-hover:text-primary-400" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h4 className="font-medium text-gray-900 dark:text-white text-sm leading-tight group-hover:text-primary-700 dark:group-hover:text-primary-400">
+                          {item.label}
+                        </h4>
+                        <p className="text-xs text-gray-500 dark:text-gray-400 truncate">
+                          {item.description}
+                        </p>
+                      </div>
+                      <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-primary-500 flex-shrink-0" />
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
 
-  const goToPrevious = () => {
-    if (currentIndex > 0) {
-      animateToIndex(currentIndex - 1);
-    }
-  };
-
-  const goToNext = () => {
-    if (currentIndex < maxIndex) {
-      animateToIndex(currentIndex + 1);
-    }
-  };
-
-  const handleDragStart = useCallback((clientX) => {
-    if (isTransitioning) return;
-    setIsDragging(true);
-    setStartX(clientX);
-    setScrollLeft(currentIndex);
-    if (rafRef.current) cancelAnimationFrame(rafRef.current);
-  }, [currentIndex, isTransitioning]);
-
-  const handleDragMove = useCallback((clientX) => {
-    if (!isDragging || isTransitioning) return;
-    rafRef.current = requestAnimationFrame(() => {
-      const containerWidth = scrollContainerRef.current?.offsetWidth || 0;
-      const itemWidth = containerWidth / itemsPerView;
-      const deltaX = startX - clientX;
-      const dragDistance = deltaX / itemWidth;
-
-      let newOffset = dragDistance;
-      const futureIndex = scrollLeft + dragDistance;
-
-      if (futureIndex < 0) {
-        newOffset = dragDistance * (1 - Math.abs(futureIndex) * 0.3);
-      } else if (futureIndex > maxIndex) {
-        const overflow = futureIndex - maxIndex;
-        newOffset = dragDistance - (overflow * 0.7);
-      }
-
-      setDragOffset(newOffset);
-    });
-  }, [isDragging, startX, scrollLeft, itemsPerView, maxIndex, isTransitioning]);
-
-  const handleDragEnd = useCallback(() => {
-    if (!isDragging || isTransitioning) return;
-    setIsDragging(false);
-    const threshold = 0.3;
-    let targetIndex = scrollLeft + dragOffset;
-
-    if (Math.abs(dragOffset) > threshold) {
-      targetIndex = dragOffset > 0 ? Math.ceil(scrollLeft + dragOffset) : Math.floor(scrollLeft + dragOffset);
-    } else {
-      targetIndex = Math.round(scrollLeft);
-    }
-
-    animateToIndex(targetIndex);
-  }, [isDragging, scrollLeft, dragOffset, animateToIndex, isTransitioning]);
-
-  const handleTouchStart = (e) => handleDragStart(e.touches[0].clientX);
-  const handleTouchMove = (e) => {
-    e.preventDefault();
-    handleDragMove(e.touches[0].clientX);
-  };
-  const handleTouchEnd = () => handleDragEnd();
-
-  const handleMouseDown = (e) => {
-    if (isMobile) return;
-    e.preventDefault();
-    handleDragStart(e.clientX);
-  };
-  const handleMouseMove = (e) => handleDragMove(e.clientX);
-  const handleMouseUp = () => handleDragEnd();
-  const handleMouseLeave = () => {
-    if (isDragging) handleDragEnd();
-  };
-
-  useEffect(() => {
-    return () => {
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
-  }, []);
-
-  const gapClass = isMobile ? 'gap-2' : isTablet ? 'gap-4' : 'gap-6';
-
-  // Mostrar skeleton mientras carga
-  if (loading || !isClient) {
-    return <FeaturedProductsSkeleton itemsPerView={itemsPerView} gapClass={gapClass} />;
+          {/* Cerrar sesión */}
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 p-2.5 rounded-lg bg-red-50 dark:bg-red-900/20 hover:bg-red-100 dark:hover:bg-red-900/30 transition-all duration-200 text-left group border border-red-200 dark:border-red-800"
+          >
+            <div className="w-8 h-8 bg-red-100 dark:bg-red-900/40 rounded-lg flex items-center justify-center flex-shrink-0 group-hover:bg-red-200 dark:group-hover:bg-red-900/60 transition-colors">
+              <LogOut className="w-4 h-4 text-red-600 dark:text-red-400" />
+            </div>
+            <div className="min-w-0 flex-1">
+              <h4 className="font-medium text-red-700 dark:text-red-400 text-sm leading-tight">
+                Cerrar Sesión
+              </h4>
+              <p className="text-xs text-red-600 dark:text-red-500">
+                Salir de tu cuenta
+              </p>
+            </div>
+          </button>
+        </div>
+      </div>
+    )
   }
-
-  // No mostrar nada si hay error o no hay productos
-  if (error || featuredProducts.length === 0) {
-    return null;
-  }
-
-  const currentOffset = currentIndex + dragOffset;
-  const translateX = -(currentOffset * (100 / itemsPerView));
 
   return (
-    <section className="py-0 w-full">
-      <div className="w-full px-2 sm:px-4 lg:px-8">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-gradient-to-r from-yellow-400 to-orange-500 rounded-lg">
-            <Star className="w-6 h-6 text-white fill-current" />
-          </div>
-          <h2 className="text-xl md:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
-            Productos Destacados
-          </h2>
-        </div>
-
-        <div className="relative">
-          {!isMobile && maxIndex > 0 && (
-            <>
-              <button
-                onClick={goToPrevious}
-                disabled={currentIndex === 0 || isDragging || isTransitioning}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button
-                onClick={goToNext}
-                disabled={currentIndex === maxIndex || isDragging || isTransitioning}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            </>
-          )}
-
-          <div
-            ref={scrollContainerRef}
-            className={`overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            style={{ touchAction: 'pan-y' }}
-          >
-            <div
-              className={`flex ${gapClass} will-change-transform`}
-              style={{
-                transform: `translateX(${translateX}%)`,
-                transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
-              }}
-            >
-              {featuredProducts.map((product) => {
-                const gapPx = isMobile ? 8 : isTablet ? 16 : 24;
-                const totalGapPx = gapPx * (itemsPerView - 1);
-                
-                return (
-                  <div
-                    key={product.id}
-                    className={`flex-shrink-0 transition-all duration-200 ${isDragging ? 'scale-[0.98]' : ''}`}
-                    style={{
-                      width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
-                    }}
+    <nav className="hidden lg:block bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 transition-colors sticky top-0 z-40">
+      <div className="max-w-7xl mx-auto px-6">
+        <div className="flex items-center justify-between" ref={dropdownRef}>
+          {/* Navegación principal - Izquierda */}
+          <div className="flex items-center">
+            {navItems.map((item) => {
+              const Icon = item.icon
+              const isActive = activeDropdown === item.id
+              
+              return (
+                <div key={item.id} className="relative">
+                  <button
+                    onClick={() => handleNavClick(item)}
+                    className={`
+                      flex items-center gap-2 py-4 px-4 text-sm font-medium transition-all duration-200 relative cursor-pointer
+                      ${isActive 
+                        ? 'text-primary-600 dark:text-primary-400' 
+                        : 'text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400'
+                      }
+                    `}
                   >
-                    <ProductCard
-                      product={product}
-                      storeData={product.storeData}
-                      variant="featured-compact"
-                      showContactInfo={true}
-                      showStoreInfo={true}
-                      onClick={() => handleProductClick(product)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+                    <Icon className="w-4 h-4" />
+                    <span>{item.label}</span>
+                    {item.hasDropdown && (
+                      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isActive ? 'rotate-180' : ''}`} />
+                    )}
+                    
+                    {/* Indicador de activo */}
+                    {isActive && (
+                      <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400" />
+                    )}
+                  </button>
+
+                  {/* Dropdown */}
+                  {isActive && item.hasDropdown && (
+                    <div className="absolute top-full left-0 mt-1 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                      {(item.id === 'productos' || item.id === 'servicios' || item.id === 'empleos') && renderCategoriesDropdown(item)}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
 
-          {maxIndex > 0 && (
-            <div className="flex justify-center gap-2 mt-6">
-              {Array.from({ length: maxIndex + 1 }, (_, i) => (
+          {/* Sección derecha - Usuario o Registro */}
+          <div className="flex items-center gap-4">
+            {isAuthenticated && userItem ? (
+              <div className="relative">
                 <button
-                  key={i}
-                  onClick={() => animateToIndex(i)}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                    Math.round(currentIndex) === i
-                      ? 'bg-gradient-to-r from-yellow-500 to-orange-500 scale-125 shadow-md'
-                      : 'bg-gray-300 dark:bg-gray-600 hover:bg-yellow-300 dark:hover:bg-yellow-600'
-                  }`}
-                  disabled={isDragging || isTransitioning}
-                />
-              ))}
-            </div>
-          )}
+                  onClick={() => handleNavClick(userItem)}
+                  className={`
+                    flex items-center gap-2 py-4 px-4 text-sm font-medium transition-all duration-200 relative cursor-pointer
+                    ${activeDropdown === 'user'
+                      ? 'text-primary-600 dark:text-primary-400' 
+                      : 'text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400'
+                    }
+                  `}
+                >
+                  <User className="w-4 h-4" />
+                  <span>{userItem.label}</span>
+                  <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${activeDropdown === 'user' ? 'rotate-180' : ''}`} />
+                  
+                  {/* Indicador de activo */}
+                  {activeDropdown === 'user' && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600 dark:bg-primary-400" />
+                  )}
+                </button>
+
+                {/* Dropdown de usuario */}
+                {activeDropdown === 'user' && (
+                  <div className="absolute top-full right-0 mt-1 bg-white dark:bg-gray-900 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 overflow-hidden z-50">
+                    {renderUserDropdown()}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button
+                onClick={() => router.push('/register')}
+                className="flex items-center gap-2 px-6 py-2.5 bg-primary-500 hover:bg-primary-600 text-white font-medium rounded-lg transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md"
+              >
+                <Store className="w-4 h-4" />
+                <span className="text-sm">¿Eres nuevo? Crea tu tienda aquí</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
-    </section>
-  );
+    </nav>
+  )
 }
