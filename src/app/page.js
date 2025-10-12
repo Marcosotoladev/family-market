@@ -27,14 +27,14 @@ export default function HomePage() {
         <FeaturedServices />
       </section>
 
-      {/* Sección de What's New */}
-      <section className="pb-2 lg:pb-4">
-        <WhatsNew />
-      </section>
-
       {/* Empleos Destacados */}
       <section className="pb-2 lg:pb-4">
         <FeaturedJobs />
+      </section>
+      
+      {/* Sección de What's New */}
+      <section className="pb-2 lg:pb-4">
+        <WhatsNew />
       </section>
 
       {/* Sección de Categorías Populares */}
