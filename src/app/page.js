@@ -4,6 +4,7 @@ import WhatsNew from '@/components/home/WhatsNew'
 import FeaturedProducts from '@/components/home/FeaturedProducts'
 import FeaturedServices from '@/components/home/FeaturedServices'
 import FeaturedJobs from '@/components/home/FeaturedJobs'
+import RecentItems from '@/components/home/RecentItems'
 import CategoriesSection from '@/components/home/CategoriesSection'
 import Testimonials from '@/components/home/Testimonials'
 
@@ -30,6 +31,11 @@ export default function HomePage() {
       {/* Empleos Destacados */}
       <section className="pb-2 lg:pb-4">
         <FeaturedJobs />
+      </section>
+
+      {/* Recién Publicado - Últimas 36 horas */}
+      <section className="pb-2 lg:pb-4">
+        <RecentItems />
       </section>
       
       {/* Sección de What's New */}

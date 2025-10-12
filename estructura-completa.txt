@@ -62,6 +62,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   └── payment
 |   |   |   └── success
 |   |   |   |   └── page.js
+|   |   └── productos
+|   |   |   └── page.js
 |   |   └── register
 |   |   |   └── page.js
 |   |   └── terms
@@ -83,6 +85,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   └── productos
 |   |   |   |   |   └── page.js
 |   |   |   |   └── servicios
+|   |   |   |   |   └── [servicioId]
+|   |   |   |   |   |   └── page.js
 |   |   |   |   |   └── page.js
 |   |   |   |   └── testimonios
 |   |   |   |   |   └── page.js
@@ -109,6 +113,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── FeaturedProducts.js
 |   |   |   └── FeaturedServices.js
 |   |   |   └── HeroCarousel.js
+|   |   |   └── RecentItems.js
 |   |   |   └── Testimonials.js
 |   |   |   └── WhatsNew.js
 |   |   └── layout
@@ -152,6 +157,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   └── ProductList.js
 |   |   |   |   └── ProductManager.js
 |   |   |   |   └── ProductRatingsAndComments.js
+|   |   |   └── PublicStoreEmploymentSection.js
 |   |   |   └── servicios
 |   |   |   |   └── FeaturedServiceButton.js
 |   |   |   |   └── ServiceCard.js
