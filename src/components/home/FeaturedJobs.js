@@ -4,8 +4,9 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
-import { Briefcase, ChevronLeft, ChevronRight, MapPin, Clock, DollarSign, Users, Award, Star } from 'lucide-react';
+import { Briefcase, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TIPOS_PUBLICACION } from '@/types/employment';
+import OfertaEmpleoCard from '@/components/tienda/empleos/OfertaEmpleoCard';
 
 export default function FeaturedJobs() {
   const [featuredJobs, setFeaturedJobs] = useState([]);
@@ -103,11 +104,11 @@ export default function FeaturedJobs() {
 
   let itemsPerView;
   if (isMobile) {
-    itemsPerView = 1;
-  } else if (isTablet) {
     itemsPerView = 2;
-  } else {
+  } else if (isTablet) {
     itemsPerView = 3;
+  } else {
+    itemsPerView = 5; // ✅ Cambiado de 3 a 5 para desktop
   }
 
   const maxIndex = Math.max(0, featuredJobs.length - itemsPerView);
@@ -294,7 +295,14 @@ export default function FeaturedJobs() {
                       width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
                     }}
                   >
-                    <JobCard job={job} onClick={() => handleJobClick(job)} />
+                    <OfertaEmpleoCard
+                      oferta={job}
+                      storeData={job.tiendaInfo}
+                      variant="featured-compact"
+                      showContactInfo={true}
+                      showStoreInfo={true}
+                      onClick={() => handleJobClick(job)}
+                    />
                   </div>
                 );
               })}
@@ -349,35 +357,38 @@ function JobCard({ job, onClick }) {
   return (
     <div
       onClick={onClick}
-      className="group h-full bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200 dark:border-gray-700"
+      className="group h-full bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200 dark:border-gray-700 relative"
     >
-      {/* Badge destacado */}
-      <div className="absolute top-3 right-3 z-10">
-        <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1.5 rounded-full text-xs font-bold shadow-lg flex items-center space-x-1">
-          <Star className="w-3 h-3 fill-current" />
-          <span>DESTACADO</span>
+      {/* Header compacto con gradiente */}
+      <div className={`relative bg-gradient-to-r ${getJobTypeColor(job)} h-32 flex items-center justify-center`}>
+        {/* Badge destacado */}
+        <div className="absolute top-2 left-2">
+          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded text-xs font-bold flex items-center gap-1">
+            <Star className="w-3 h-3 fill-current" />
+            <span>DESTACADO</span>
+          </div>
         </div>
-      </div>
 
-      {/* Header con gradiente según tipo */}
-      <div className={`relative bg-gradient-to-r ${getJobTypeColor(job)} p-6`}>
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
+        {/* Contenido centrado */}
+        <div className="flex flex-col items-center gap-2">
+          {/* Ícono */}
+          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
             <Briefcase className="w-6 h-6 text-white" />
           </div>
-          <div className="flex-1 min-w-0">
-            <span className={`inline-block px-2 py-1 rounded-md text-xs font-semibold mb-2 ${getJobTypeBadgeColor(job)}`}>
-              {getJobTypeLabel(job)}
-            </span>
-            <h3 className="font-bold text-lg text-white line-clamp-2 leading-tight">
-              {job.titulo}
-            </h3>
-          </div>
+          
+          {/* Badge de tipo */}
+          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getJobTypeBadgeColor(job)}`}>
+            {getJobTypeLabel(job)}
+          </span>
         </div>
       </div>
 
-      {/* Contenido */}
-      <div className="p-5 space-y-3">
+      {/* Contenido del card */}
+      <div className="p-4 space-y-3">
+        {/* Título */}
+        <h3 className="font-bold text-base text-gray-900 dark:text-white line-clamp-2 leading-tight">
+          {job.titulo}
+        </h3>
         {/* Tienda */}
         {job.tiendaInfo?.nombre && (
           <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
@@ -388,49 +399,42 @@ function JobCard({ job, onClick }) {
 
         {/* Descripción */}
         {job.descripcion && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-3 leading-relaxed">
+          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
             {job.descripcion}
           </p>
         )}
 
-        {/* Info adicional */}
-        <div className="space-y-2 pt-2 border-t border-gray-200 dark:border-gray-700">
+        {/* Info compacta */}
+        <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
           {job.modalidad && (
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <MapPin className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1">
+              <MapPin className="w-3 h-3" />
               <span>{job.modalidad}</span>
             </div>
           )}
 
           {job.tipoEmpleo && (
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <Clock className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1">
+              <Clock className="w-3 h-3" />
               <span>{job.tipoEmpleo}</span>
-            </div>
-          )}
-
-          {job.experienciaRequerida && (
-            <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400">
-              <Award className="w-3.5 h-3.5" />
-              <span>{job.experienciaRequerida}</span>
-            </div>
-          )}
-
-          {job.salario && job.salario.tipo !== 'a_convenir' && (job.salario.minimo || job.salario.maximo) && (
-            <div className="flex items-center gap-2 text-sm font-semibold text-blue-600 dark:text-blue-400">
-              <DollarSign className="w-4 h-4" />
-              <span>
-                ${job.salario.minimo ? job.salario.minimo.toLocaleString('es-AR') : ''}
-                {job.salario.maximo && job.salario.minimo ? ' - ' : ''}
-                {job.salario.maximo ? `$${job.salario.maximo.toLocaleString('es-AR')}` : ''}
-              </span>
             </div>
           )}
         </div>
 
-        {/* Call to action */}
-        <button className="w-full mt-4 px-4 py-2.5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all shadow-md hover:shadow-lg">
-          Ver Detalles
+        {/* Salario destacado */}
+        {job.salario && job.salario.tipo !== 'a_convenir' && (job.salario.minimo || job.salario.maximo) && (
+          <div className="flex items-center gap-2 text-lg font-bold text-blue-600 dark:text-blue-400">
+            <span>
+              ${job.salario.minimo ? job.salario.minimo.toLocaleString('es-AR') : ''}
+              {job.salario.maximo && job.salario.minimo ? ' - ' : ''}
+              {job.salario.maximo ? `${job.salario.maximo.toLocaleString('es-AR')}` : ''}
+            </span>
+          </div>
+        )}
+
+        {/* Botón */}
+        <button className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all text-sm">
+          Ver más detalles
         </button>
       </div>
     </div>

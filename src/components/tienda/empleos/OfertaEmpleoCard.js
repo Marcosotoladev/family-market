@@ -16,7 +16,8 @@ import {
   Calendar,
   Users,
   Award,
-  Crown
+  Crown,
+  Star
 } from 'lucide-react';
 import {
   obtenerNombreCategoria,
@@ -28,7 +29,8 @@ import {
   TIPOS_EMPLEO,
   MODALIDADES_TRABAJO,
   NIVELES_EXPERIENCIA,
-  formatearSalario
+  formatearSalario,
+  TIPOS_PUBLICACION
 } from '@/types/employment';
 import FavoriteButton from '@/components/ui/FavoriteButton';
 
@@ -94,7 +96,6 @@ export default function OfertaEmpleoCard({
     setShowDetails(!showDetails);
   };
 
-  // Formatear ubicación - VALIDADO Y MEJORADO
   const formatearUbicacion = (ubicacion) => {
     if (!ubicacion) return '';
     if (typeof ubicacion === 'string' && ubicacion.trim()) return ubicacion;
@@ -110,7 +111,6 @@ export default function OfertaEmpleoCard({
     return '';
   };
 
-  // Obtener nombre de tipo de empleo - VALIDADO
   const getTipoEmpleoNombre = (tipoEmpleo) => {
     if (!tipoEmpleo) return '';
     const tipo = TIPOS_EMPLEO[tipoEmpleo.toUpperCase()];
@@ -118,7 +118,6 @@ export default function OfertaEmpleoCard({
     return tipoEmpleo;
   };
 
-  // Obtener nombre de modalidad - VALIDADO
   const getModalidadNombre = (modalidad) => {
     if (!modalidad) return '';
     const mod = MODALIDADES_TRABAJO[modalidad.toUpperCase()];
@@ -126,13 +125,184 @@ export default function OfertaEmpleoCard({
     return modalidad;
   };
 
-  // Obtener nombre de nivel de experiencia - VALIDADO
   const getNivelExperienciaNombre = (nivel) => {
     if (!nivel) return '';
     const niv = NIVELES_EXPERIENCIA[nivel.toUpperCase()];
     if (niv && typeof niv === 'object') return niv.nombre;
     return nivel;
   };
+
+  const getJobTypeLabel = () => {
+    if (oferta.tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO) return 'Oferta';
+    if (oferta.tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO) return 'Busco';
+    if (oferta.tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL) return 'Servicio';
+    return 'Empleo';
+  };
+
+  // ✅ VARIANTE FEATURED COMPACT - Igual que ProductCard
+  if (variant === 'featured-compact') {
+    return (
+      <div 
+        className="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-blue-200 dark:border-blue-700"
+      >
+        {/* Badge DESTACADO arriba */}
+        <div className="absolute top-0 left-0 right-0 z-20">
+          <div className="bg-gradient-to-r from-orange-500 to-amber-500 text-white px-2 py-1 text-center">
+            <div className="flex items-center justify-center space-x-1">
+              <Crown className="w-3 h-3" />
+              <span className="text-xs font-bold">DESTACADO</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Header con gradiente - h-40 */}
+        <div 
+          className={`relative h-40 overflow-hidden mt-6 bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center ${onClick ? 'cursor-pointer' : ''}`}
+          onClick={onClick}
+        >
+          <div className="text-white text-center">
+            <Briefcase className="w-12 h-12 mx-auto mb-2 opacity-90" />
+            <span className="text-xs font-semibold bg-white/20 px-2 py-1 rounded">
+              {getJobTypeLabel()}
+            </span>
+          </div>
+
+          {/* Botones de acción */}
+          <div className="absolute top-2 right-2 flex flex-col space-y-1 z-10">
+            <FavoriteButton 
+              itemId={oferta.id} 
+              itemType="empleo"
+              size="sm"
+            />
+            <button
+              onClick={handleShare}
+              className="p-1.5 bg-white bg-opacity-90 text-gray-700 rounded-full hover:bg-opacity-100 transition-all backdrop-blur-sm"
+            >
+              <Share2 className="w-3 h-3" />
+            </button>
+          </div>
+        </div>
+
+        {/* Contenido - p-3 */}
+        <div className="p-3">
+          {/* Título */}
+          <h3 
+            className={`font-semibold text-sm text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight ${onClick ? 'cursor-pointer hover:text-orange-600 dark:hover:text-orange-400' : ''}`}
+            onClick={onClick}
+          >
+            {oferta.titulo}
+          </h3>
+
+          {/* Salario - mb-3 */}
+          <div className="mb-3">
+            {oferta.salario && oferta.salario.tipo !== 'a_convenir' && (oferta.salario.minimo || oferta.salario.maximo) ? (
+              <div className="flex items-baseline space-x-1">
+                <span className="text-lg font-bold text-orange-600 dark:text-orange-400">
+                  {formatearSalario(oferta.salario)}
+                </span>
+              </div>
+            ) : (
+              <span className="text-sm font-semibold text-gray-700 dark:text-gray-300">
+                A convenir
+              </span>
+            )}
+          </div>
+
+          {/* Botón desplegable */}
+          <button
+            onClick={toggleDetails}
+            className="w-full flex items-center justify-between px-2 py-1.5 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-lg transition-colors mb-2"
+          >
+            <span className="text-xs font-medium text-gray-700 dark:text-gray-300">
+              {showDetails ? 'Ocultar detalles' : 'Ver más detalles'}
+            </span>
+            {showDetails ? (
+              <ChevronUp className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+            )}
+          </button>
+
+          {/* Detalles desplegables */}
+          <div 
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${
+              showDetails ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+            }`}
+          >
+            <div className="space-y-2 pt-1">
+              {/* Info de tienda */}
+              {oferta.tiendaInfo?.nombre && (
+                <div className="flex items-center space-x-1 text-xs text-gray-600 dark:text-gray-400">
+                  <Users className="w-3 h-3 flex-shrink-0" />
+                  <span className="truncate">{oferta.tiendaInfo.nombre}</span>
+                </div>
+              )}
+
+              {/* Descripción */}
+              {oferta.descripcion && (
+                <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed line-clamp-3">
+                  {oferta.descripcion}
+                </p>
+              )}
+
+              {/* Tags de modalidad y tipo */}
+              <div className="flex flex-wrap gap-1">
+                {oferta.modalidad && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200">
+                    <MapPin className="w-2.5 h-2.5 mr-0.5" />
+                    {getModalidadNombre(oferta.modalidad)}
+                  </span>
+                )}
+                {oferta.tipoEmpleo && (
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200">
+                    <Clock className="w-2.5 h-2.5 mr-0.5" />
+                    {getTipoEmpleoNombre(oferta.tipoEmpleo)}
+                  </span>
+                )}
+              </div>
+
+              {/* Botones de contacto */}
+              {showContactInfo && (
+                <div className="space-y-1.5 mt-2">
+                  {(oferta.contacto?.whatsapp || storeData?.phone) && (
+                    <button
+                      onClick={handleWhatsAppContact}
+                      className="w-full bg-green-500 hover:bg-green-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center space-x-1"
+                    >
+                      <MessageCircle className="w-3 h-3" />
+                      <span>WhatsApp</span>
+                    </button>
+                  )}
+                  
+                  <div className="grid grid-cols-2 gap-1">
+                    {(oferta.contacto?.telefono || storeData?.phone) && (
+                      <button
+                        onClick={handlePhoneContact}
+                        className="px-2 py-1.5 border border-orange-300 text-orange-700 dark:text-orange-300 rounded text-xs hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors flex items-center justify-center space-x-1"
+                      >
+                        <Phone className="w-3 h-3" />
+                        <span>Llamar</span>
+                      </button>
+                    )}
+                    
+                    {(oferta.contacto?.email || storeData?.email) && (
+                      <button
+                        onClick={handleEmailContact}
+                        className="px-2 py-1.5 border border-orange-300 text-orange-700 dark:text-orange-300 rounded text-xs hover:bg-orange-50 dark:hover:bg-orange-900/20 transition-colors flex items-center justify-center space-x-1"
+                      >
+                        <Mail className="w-3 h-3" />
+                        <span>Email</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   // Variante Grid (principal)
   if (variant === 'grid') {
@@ -202,7 +372,7 @@ export default function OfertaEmpleoCard({
             )}
           </div>
 
-          {/* Salario destacado - CORREGIDO CON VALIDACIÓN ROBUSTA */}
+          {/* Salario destacado */}
           {oferta.salario && 
            typeof oferta.salario === 'object' && 
            (oferta.salario.minimo || oferta.salario.maximo || oferta.salario.tipo !== 'a_convenir') && (
@@ -237,7 +407,6 @@ export default function OfertaEmpleoCard({
             }`}
           >
             <div className="space-y-4 pt-2">
-              {/* Descripción */}
               {oferta.descripcion && (
                 <div>
                   <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
@@ -249,7 +418,6 @@ export default function OfertaEmpleoCard({
                 </div>
               )}
 
-              {/* Ubicación - Solo mostrar si tiene datos */}
               {oferta.ubicacion && formatearUbicacion(oferta.ubicacion) && (
                 <div>
                   <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
@@ -262,7 +430,6 @@ export default function OfertaEmpleoCard({
                 </div>
               )}
 
-              {/* Requisitos */}
               {oferta.requisitos?.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
@@ -280,7 +447,6 @@ export default function OfertaEmpleoCard({
                 </div>
               )}
 
-              {/* Beneficios */}
               {oferta.beneficios?.length > 0 && (
                 <div>
                   <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2 flex items-center gap-2">
@@ -298,7 +464,6 @@ export default function OfertaEmpleoCard({
                 </div>
               )}
 
-              {/* Información de contacto */}
               {showContactInfo && (
                 <div>
                   <h4 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-3">
@@ -342,7 +507,6 @@ export default function OfertaEmpleoCard({
             </div>
           </div>
 
-          {/* Fecha de publicación */}
           {oferta.fechaCreacion && oferta.fechaCreacion.seconds && (
             <div className="flex items-center gap-2 text-xs text-gray-500 dark:text-gray-400 mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
               <Calendar className="w-3 h-3" />
