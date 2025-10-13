@@ -210,6 +210,13 @@ export function useFavorites() {
     return favorites.filter(fav => fav.itemType === type).length;
   };
 
+  // Verificar si un item es favorito (función asíncrona para compatibilidad)
+  const checkIsFavorite = async (itemId, itemType) => {
+    return favorites.some(
+      fav => fav.itemId === itemId && fav.itemType === itemType
+    );
+  };
+
   return {
     favorites,
     loading,
@@ -218,6 +225,7 @@ export function useFavorites() {
     removeFavorite,
     removeFavoriteById,
     isFavorite,
+    checkIsFavorite,
     getFavoritesByType,
     refreshFavorites: loadFavorites
   };

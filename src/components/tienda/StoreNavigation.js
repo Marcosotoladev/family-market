@@ -1,7 +1,9 @@
 // src/components/tienda/StoreNavigation.js
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import { 
   Package, 
   Wrench, 
@@ -9,23 +11,51 @@ import {
   Camera, 
   MessageCircle, 
   Users,
-  ChevronDown,
+  Home,
   X
 } from 'lucide-react';
 
 const StoreNavigation = ({ 
   storeConfig, 
-  activeSection, 
-  onSectionChange,
   isMobileMenuOpen,
   onMobileMenuClose,
-  storeSlug // Agregar storeSlug para las rutas
+  storeSlug
 }) => {
-  const [dropdownOpen, setDropdownOpen] = useState(null);
+  const pathname = usePathname();
+  const [activeSection, setActiveSection] = useState('inicio');
 
-  // Mapear secciones de configuración a elementos de navegación
+  // Detectar la sección activa según la URL
+  useEffect(() => {
+    if (!pathname) return;
+
+    if (pathname === `/tienda/${storeSlug}`) {
+      setActiveSection('inicio');
+    } else if (pathname.includes('/productos')) {
+      setActiveSection('productos');
+    } else if (pathname.includes('/servicios')) {
+      setActiveSection('servicios');
+    } else if (pathname.includes('/empleos')) {
+      setActiveSection('empleos');
+    } else if (pathname.includes('/galeria')) {
+      setActiveSection('galeria');
+    } else if (pathname.includes('/resenas')) {
+      setActiveSection('resenas');
+    } else if (pathname.includes('/nosotros')) {
+      setActiveSection('nosotros');
+    }
+  }, [pathname, storeSlug]);
+
+  // Obtener items de navegación
   const getNavigationItems = () => {
     const items = [];
+    
+    // Siempre mostrar "Inicio" al principio
+    items.push({
+      id: 'inicio',
+      label: 'Inicio',
+      icon: Home,
+      path: `/tienda/${storeSlug}`
+    });
     
     if (storeConfig?.showProducts) {
       items.push({
@@ -65,10 +95,10 @@ const StoreNavigation = ({
     
     if (storeConfig?.showTestimonials) {
       items.push({
-        id: 'testimonios',
-        label: 'Testimonios',
+        id: 'resenas',
+        label: 'Reseñas',
         icon: MessageCircle,
-        path: `/tienda/${storeSlug}/testimonios`
+        path: `/tienda/${storeSlug}/resenas`
       });
     }
     
@@ -85,11 +115,8 @@ const StoreNavigation = ({
 
   const navigationItems = getNavigationItems();
 
-  const handleItemClick = (item) => {
-    // Navegar a la página correspondiente en lugar de hacer scroll
-    window.location.href = item.path;
-    
-    // Cerrar menú móvil
+  const handleItemClick = () => {
+    // Cerrar menú móvil al hacer click
     if (onMobileMenuClose) {
       onMobileMenuClose();
     }
@@ -97,7 +124,7 @@ const StoreNavigation = ({
 
   const getItemClasses = (itemId) => {
     const isActive = activeSection === itemId;
-    const baseClasses = "flex items-center space-x-2 px-4 py-2 rounded-lg font-medium transition-all duration-200";
+    const baseClasses = "flex items-center space-x-2 px-4 py-2.5 rounded-lg font-medium transition-all duration-200";
     
     if (isActive) {
       return `${baseClasses} text-white shadow-lg transform scale-105`;
@@ -109,17 +136,17 @@ const StoreNavigation = ({
   return (
     <>
       {/* DESKTOP NAVIGATION */}
-      <nav className="hidden lg:block bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700">
+      <nav className="hidden lg:block bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-center space-x-1 py-4">
+          <div className="flex items-center justify-center space-x-1 py-4 overflow-x-auto">
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeSection === item.id;
               
               return (
-                <button
+                <Link
                   key={item.id}
-                  onClick={() => handleItemClick(item)}
+                  href={item.path}
                   className={getItemClasses(item.id)}
                   style={{
                     backgroundColor: isActive 
@@ -128,18 +155,18 @@ const StoreNavigation = ({
                   }}
                   onMouseEnter={(e) => {
                     if (!isActive) {
-                      e.target.style.backgroundColor = storeConfig?.primaryColor || '#ea580c';
+                      e.currentTarget.style.backgroundColor = storeConfig?.primaryColor || '#ea580c';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isActive) {
-                      e.target.style.backgroundColor = 'transparent';
+                      e.currentTarget.style.backgroundColor = 'transparent';
                     }
                   }}
                 >
                   <Icon className="w-5 h-5" />
                   <span>{item.label}</span>
-                </button>
+                </Link>
               );
             })}
           </div>
@@ -178,9 +205,10 @@ const StoreNavigation = ({
                 const isActive = activeSection === item.id;
                 
                 return (
-                  <button
+                  <Link
                     key={item.id}
-                    onClick={() => handleItemClick(item)}
+                    href={item.path}
+                    onClick={handleItemClick}
                     className={`w-full ${getItemClasses(item.id)} justify-start`}
                     style={{
                       backgroundColor: isActive 
@@ -190,7 +218,7 @@ const StoreNavigation = ({
                   >
                     <Icon className="w-5 h-5" />
                     <span>{item.label}</span>
-                  </button>
+                  </Link>
                 );
               })}
             </div>
@@ -204,9 +232,6 @@ const StoreNavigation = ({
           </div>
         </>
       )}
-      
-      {/* MOBILE BOTTOM NAVIGATION (opcional) */}
-
     </>
   );
 };
