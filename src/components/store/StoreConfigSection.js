@@ -3,8 +3,9 @@ import { useState, useEffect } from 'react';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
-import useToast from '@/hooks/useToast'; // Importar el hook de toast
+import useToast from '@/hooks/useToast';
 import CustomColorPicker from '@/components/ui/CustomColorPicker';
+import { QRCodeCanvas } from 'qrcode.react';
 import { 
   Settings, 
   Store, 
@@ -22,13 +23,19 @@ import {
   Save,
   Loader2,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  QrCode,
+  Download,
+  Copy,
+  ExternalLink
 } from 'lucide-react';
 
 const StoreConfigSection = ({ showMessage }) => {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [storeSlug, setStoreSlug] = useState('');
+  const [storeUrl, setStoreUrl] = useState('');
   
   // Estado inicial de configuración
   const [config, setConfig] = useState({
@@ -67,11 +74,22 @@ const StoreConfigSection = ({ showMessage }) => {
       setLoading(true);
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
-        if (userDoc.exists() && userDoc.data().storeConfig) {
-          setConfig(prevConfig => ({
-            ...prevConfig,
-            ...userDoc.data().storeConfig
-          }));
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          
+          // Cargar configuración de la tienda
+          if (userData.storeConfig) {
+            setConfig(prevConfig => ({
+              ...prevConfig,
+              ...userData.storeConfig
+            }));
+          }
+          
+          // Cargar slug de la tienda
+          if (userData.storeSlug) {
+            setStoreSlug(userData.storeSlug);
+            setStoreUrl(`${window.location.origin}/tienda/${userData.storeSlug}`);
+          }
         }
       } catch (error) {
         console.error('Error al cargar configuración:', error);
@@ -135,6 +153,53 @@ const StoreConfigSection = ({ showMessage }) => {
     }));
   };
 
+  // Descargar código QR
+  const downloadQR = () => {
+    const canvas = document.getElementById('qr-code-canvas');
+    if (!canvas) return;
+
+    // Crear un canvas temporal más grande para mejor calidad
+    const tempCanvas = document.createElement('canvas');
+    const size = 1024;
+    tempCanvas.width = size;
+    tempCanvas.height = size;
+    const ctx = tempCanvas.getContext('2d');
+
+    // Fondo blanco
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, size, size);
+
+    // Dibujar el QR escalado
+    ctx.drawImage(canvas, 0, 0, size, size);
+
+    // Descargar
+    tempCanvas.toBlob((blob) => {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.download = `qr-tienda-${storeSlug}.png`;
+      link.href = url;
+      link.click();
+      URL.revokeObjectURL(url);
+    });
+
+    showMessage('success', 'Código QR descargado correctamente');
+  };
+
+  // Copiar URL de la tienda
+  const copyUrl = () => {
+    if (storeUrl) {
+      navigator.clipboard.writeText(storeUrl);
+      showMessage('success', 'URL copiada al portapapeles');
+    }
+  };
+
+  // Abrir tienda en nueva pestaña
+  const openStore = () => {
+    if (storeUrl) {
+      window.open(storeUrl, '_blank');
+    }
+  };
+
   const themes = [
     { value: 'modern', label: 'Moderno' },
     { value: 'classic', label: 'Clásico' },
@@ -191,6 +256,82 @@ const StoreConfigSection = ({ showMessage }) => {
           </div>
         </div>
       </div>
+
+      {/* Código QR de la Tienda */}
+      {storeSlug && storeUrl && (
+        <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
+          <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
+            <QrCode className="w-4 h-4 mr-2 text-blue-600 dark:text-blue-400" />
+            Código QR de tu Tienda
+          </h3>
+          
+          <div className="flex flex-col sm:flex-row gap-4 items-start">
+            {/* QR Code */}
+            <div className="flex-shrink-0">
+              <div className="bg-white p-2 rounded border border-gray-200">
+                <QRCodeCanvas
+                  id="qr-code-canvas"
+                  value={storeUrl}
+                  size={120}
+                  level="H"
+                  includeMargin={true}
+                  fgColor={config.primaryColor}
+                  bgColor="#ffffff"
+                />
+              </div>
+            </div>
+
+            {/* Información y Acciones */}
+            <div className="flex-1 space-y-2 w-full min-w-0">
+              {/* URL de la tienda */}
+              <div>
+                <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  URL de tu tienda
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={storeUrl}
+                    readOnly
+                    className="flex-1 px-2 py-1.5 bg-gray-50 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded text-xs text-gray-900 dark:text-gray-100 min-w-0"
+                  />
+                  <button
+                    onClick={copyUrl}
+                    className="px-3 py-1.5 bg-gray-600 hover:bg-gray-700 text-white rounded transition-colors text-xs font-medium flex items-center gap-1.5 flex-shrink-0"
+                    title="Copiar URL"
+                  >
+                    <Copy className="w-3.5 h-3.5" />
+                    <span className="hidden sm:inline">Copiar</span>
+                  </button>
+                  <button
+                    onClick={openStore}
+                    className="p-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors flex items-center justify-center flex-shrink-0"
+                    title="Abrir tienda"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {/* Botones de descarga */}
+              <div className="flex gap-2">
+                <button
+                  onClick={downloadQR}
+                  className="flex-1 sm:flex-none px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors font-medium flex items-center justify-center gap-2 text-sm"
+                >
+                  <Download className="w-4 h-4" />
+                  Descargar QR
+                </button>
+              </div>
+
+              {/* Nota */}
+              <p className="text-xs text-gray-600 dark:text-gray-400">
+                El QR usa el color primario de tu tienda
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Secciones de Contenido */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">

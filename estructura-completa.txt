@@ -47,6 +47,10 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── tienda
 |   |   |   |   └── empleos
 |   |   |   |   |   └── page.js
+|   |   |   |   └── galeria
+|   |   |   |   |   └── page.js
+|   |   |   |   └── nosotros
+|   |   |   |   |   └── page.js
 |   |   |   |   └── productos
 |   |   |   |   |   └── page.js
 |   |   |   |   └── servicios
@@ -88,13 +92,15 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   |   |   └── page.js
 |   |   |   |   └── productos
 |   |   |   |   |   └── page.js
+|   |   |   |   └── resenas
+|   |   |   |   |   └── page.js
 |   |   |   |   └── servicios
 |   |   |   |   |   └── [servicioId]
 |   |   |   |   |   |   └── page.js
 |   |   |   |   |   └── page.js
-|   |   |   |   └── testimonios
-|   |   |   |   |   └── page.js
 |   |   |   └── layout.js
+|   |   └── tiendas
+|   |   |   └── page.js
 |   |   └── user
 |   |   |   └── page.js
 |   └── components
@@ -154,6 +160,10 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   └── ServicioProfesionalCard.js
 |   |   |   |   └── ServicioProfesionalForm.js
 |   |   |   |   └── StoreJobsSection.js
+|   |   |   └── galeria
+|   |   |   |   └── GaleriaTab.js
+|   |   |   └── nosotros
+|   |   |   |   └── AboutSection.js
 |   |   |   └── productos
 |   |   |   |   └── FeaturedProductButton.js
 |   |   |   |   └── ProductCard.js

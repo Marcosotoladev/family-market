@@ -3,6 +3,7 @@
 
 import { Inter } from 'next/font/google'
 import './globals.css'
+import '@/styles/store-themes.css'
 import { ThemeProvider } from '../components/providers/ThemeProvider'
 import { AuthProvider } from '../contexts/AuthContext'
 import { usePathname } from 'next/navigation'

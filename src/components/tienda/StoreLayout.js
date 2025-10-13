@@ -69,24 +69,41 @@ const StoreLayout = ({
     setIsMobileMenuOpen(false);
   };
 
-  // Aplicar estilos CSS custom para colores de la tienda
+  // Aplicar tema y colores personalizados
   useEffect(() => {
+    const root = document.documentElement;
+    
+    // Aplicar colores
     if (storeConfig?.primaryColor) {
-      document.documentElement.style.setProperty('--store-primary-color', storeConfig.primaryColor);
+      root.style.setProperty('--primary-color', storeConfig.primaryColor);
+      root.style.setProperty('--store-primary-color', storeConfig.primaryColor);
     }
     if (storeConfig?.secondaryColor) {
-      document.documentElement.style.setProperty('--store-secondary-color', storeConfig.secondaryColor);
+      root.style.setProperty('--secondary-color', storeConfig.secondaryColor);
+      root.style.setProperty('--store-secondary-color', storeConfig.secondaryColor);
     }
+    
+    // Aplicar clase de tema al body
+    const theme = storeConfig?.theme || 'modern';
+    const themeClass = `theme-${theme}`;
+    document.body.classList.add(themeClass);
+    document.body.setAttribute('data-store-theme', theme);
     
     // Cleanup al desmontar
     return () => {
-      document.documentElement.style.removeProperty('--store-primary-color');
-      document.documentElement.style.removeProperty('--store-secondary-color');
+      root.style.removeProperty('--primary-color');
+      root.style.removeProperty('--secondary-color');
+      root.style.removeProperty('--store-primary-color');
+      root.style.removeProperty('--store-secondary-color');
+      document.body.classList.remove('theme-modern', 'theme-classic', 'theme-minimal', 'theme-colorful');
+      document.body.removeAttribute('data-store-theme');
     };
   }, [storeConfig]);
 
+  const theme = storeConfig?.theme || 'modern';
+
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className={`min-h-screen bg-gray-50 dark:bg-gray-900 theme-${theme}`} data-store-theme={theme}>
       
       {/* Header */}
       <StoreHeader
@@ -109,8 +126,10 @@ const StoreLayout = ({
       />
       
       {/* Contenido principal */}
-      <main className="pb-20 lg:pb-8">
-        {children}
+      <main className="pb-20 lg:pb-8 store-container">
+        <div className="store-content">
+          {children}
+        </div>
       </main>
       
       {/* Overlay para cerrar menú móvil al hacer click fuera */}
