@@ -7,6 +7,8 @@ import { db } from '@/lib/firebase/config';
 import { Briefcase, ChevronLeft, ChevronRight } from 'lucide-react';
 import { TIPOS_PUBLICACION } from '@/types/employment';
 import OfertaEmpleoCard from '@/components/tienda/empleos/OfertaEmpleoCard';
+import BusquedaEmpleoCard from '@/components/tienda/empleos/BusquedaEmpleoCard';
+import ServicioProfesionalCard from '@/components/tienda/empleos/ServicioProfesionalCard';
 
 export default function FeaturedJobs() {
   const [featuredJobs, setFeaturedJobs] = useState([]);
@@ -78,27 +80,6 @@ export default function FeaturedJobs() {
     }
   };
 
-  const getJobTypeLabel = (job) => {
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO) return 'Oferta de Empleo';
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO) return 'Busca Empleo';
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL) return 'Servicio Profesional';
-    return 'Empleo';
-  };
-
-  const getJobTypeColor = (job) => {
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO) return 'from-blue-500 to-blue-600';
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO) return 'from-green-500 to-green-600';
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL) return 'from-purple-500 to-purple-600';
-    return 'from-gray-500 to-gray-600';
-  };
-
-  const getJobTypeBadgeColor = (job) => {
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO) return 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200';
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO) return 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200';
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL) return 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200';
-    return 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200';
-  };
-
   const isMobile = windowWidth < 768;
   const isTablet = windowWidth >= 768 && windowWidth < 1024;
 
@@ -108,7 +89,7 @@ export default function FeaturedJobs() {
   } else if (isTablet) {
     itemsPerView = 3;
   } else {
-    itemsPerView = 5; // ✅ Cambiado de 3 a 5 para desktop
+    itemsPerView = 5;
   }
 
   const maxIndex = Math.max(0, featuredJobs.length - itemsPerView);
@@ -295,14 +276,49 @@ export default function FeaturedJobs() {
                       width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
                     }}
                   >
-                    <OfertaEmpleoCard
-                      oferta={job}
-                      storeData={job.tiendaInfo}
-                      variant="featured-compact"
-                      showContactInfo={true}
-                      showStoreInfo={true}
-                      onClick={() => handleJobClick(job)}
-                    />
+                    {(() => {
+                      const tipoEmpleo = job.tipoPublicacion || job.tipo;
+                      
+                      // Busqueda de empleo
+                      if (tipoEmpleo === 'busqueda' || tipoEmpleo === 'busqueda_empleo') {
+                        return (
+                          <BusquedaEmpleoCard
+                            busqueda={job}
+                            storeData={job.tiendaInfo}
+                            variant="featured-compact"
+                            showContactInfo={true}
+                            showStoreInfo={true}
+                            onClick={() => handleJobClick(job)}
+                          />
+                        );
+                      }
+                      
+                      // Servicio profesional
+                      if (tipoEmpleo === 'servicio_profesional') {
+                        return (
+                          <ServicioProfesionalCard
+                            servicio={job}
+                            storeData={job.tiendaInfo}
+                            variant="featured-compact"
+                            showContactInfo={true}
+                            showStoreInfo={true}
+                            onClick={() => handleJobClick(job)}
+                          />
+                        );
+                      }
+                      
+                      // Oferta de empleo (por defecto)
+                      return (
+                        <OfertaEmpleoCard
+                          oferta={job}
+                          storeData={job.tiendaInfo}
+                          variant="featured-compact"
+                          showContactInfo={true}
+                          showStoreInfo={true}
+                          onClick={() => handleJobClick(job)}
+                        />
+                      );
+                    })()}
                   </div>
                 );
               })}
@@ -328,115 +344,5 @@ export default function FeaturedJobs() {
         </div>
       </div>
     </section>
-  );
-}
-
-// Componente de tarjeta de empleo
-function JobCard({ job, onClick }) {
-  const getJobTypeLabel = (job) => {
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO) return 'Oferta';
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO) return 'Busco';
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL) return 'Servicio';
-    return 'Empleo';
-  };
-
-  const getJobTypeColor = (job) => {
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO) return 'from-blue-500 to-blue-600';
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO) return 'from-green-500 to-green-600';
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL) return 'from-purple-500 to-purple-600';
-    return 'from-gray-500 to-gray-600';
-  };
-
-  const getJobTypeBadgeColor = (job) => {
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO) return 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-200';
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO) return 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-200';
-    if (job.tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL) return 'bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-200';
-    return 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200';
-  };
-
-  return (
-    <div
-      onClick={onClick}
-      className="group h-full bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 cursor-pointer overflow-hidden border border-gray-200 dark:border-gray-700 relative"
-    >
-      {/* Header compacto con gradiente */}
-      <div className={`relative bg-gradient-to-r ${getJobTypeColor(job)} h-32 flex items-center justify-center`}>
-        {/* Badge destacado */}
-        <div className="absolute top-2 left-2">
-          <div className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-0.5 rounded text-xs font-bold flex items-center gap-1">
-            <Star className="w-3 h-3 fill-current" />
-            <span>DESTACADO</span>
-          </div>
-        </div>
-
-        {/* Contenido centrado */}
-        <div className="flex flex-col items-center gap-2">
-          {/* Ícono */}
-          <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center">
-            <Briefcase className="w-6 h-6 text-white" />
-          </div>
-          
-          {/* Badge de tipo */}
-          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${getJobTypeBadgeColor(job)}`}>
-            {getJobTypeLabel(job)}
-          </span>
-        </div>
-      </div>
-
-      {/* Contenido del card */}
-      <div className="p-4 space-y-3">
-        {/* Título */}
-        <h3 className="font-bold text-base text-gray-900 dark:text-white line-clamp-2 leading-tight">
-          {job.titulo}
-        </h3>
-        {/* Tienda */}
-        {job.tiendaInfo?.nombre && (
-          <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
-            <Users className="w-4 h-4 flex-shrink-0" />
-            <span className="font-medium truncate">{job.tiendaInfo.nombre}</span>
-          </div>
-        )}
-
-        {/* Descripción */}
-        {job.descripcion && (
-          <p className="text-sm text-gray-600 dark:text-gray-400 line-clamp-2 leading-relaxed">
-            {job.descripcion}
-          </p>
-        )}
-
-        {/* Info compacta */}
-        <div className="flex flex-wrap gap-2 text-xs text-gray-500 dark:text-gray-400">
-          {job.modalidad && (
-            <div className="flex items-center gap-1">
-              <MapPin className="w-3 h-3" />
-              <span>{job.modalidad}</span>
-            </div>
-          )}
-
-          {job.tipoEmpleo && (
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3" />
-              <span>{job.tipoEmpleo}</span>
-            </div>
-          )}
-        </div>
-
-        {/* Salario destacado */}
-        {job.salario && job.salario.tipo !== 'a_convenir' && (job.salario.minimo || job.salario.maximo) && (
-          <div className="flex items-center gap-2 text-lg font-bold text-blue-600 dark:text-blue-400">
-            <span>
-              ${job.salario.minimo ? job.salario.minimo.toLocaleString('es-AR') : ''}
-              {job.salario.maximo && job.salario.minimo ? ' - ' : ''}
-              {job.salario.maximo ? `${job.salario.maximo.toLocaleString('es-AR')}` : ''}
-            </span>
-          </div>
-        )}
-
-        {/* Botón */}
-        <button className="w-full px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-lg font-medium hover:from-blue-700 hover:to-purple-700 transition-all text-sm">
-          Ver más detalles
-        </button>
-      </div>
-    </div>
   );
 }

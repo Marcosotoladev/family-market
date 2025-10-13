@@ -20,13 +20,11 @@ import { useAuth } from '@/contexts/AuthContext';
 import { TIPOS_PUBLICACION } from '@/types/employment';
 import OfertaEmpleoForm from './OfertaEmpleoForm';
 import BusquedaEmpleoForm from './BusquedaEmpleoForm';
-import ServicioProfesionalForm from './ServicioProfesionalForm';
 import EmploymentList from './EmploymentList';
 import OfertaEmpleoCard from './OfertaEmpleoCard';
 import BusquedaEmpleoCard from './BusquedaEmpleoCard';
-import ServicioProfesionalCard from './ServicioProfesionalCard';
 import FeaturedEmploymentButton from './FeaturedEmploymentButton';
-import { Plus, ArrowLeft, Briefcase, X } from 'lucide-react';
+import { ArrowLeft, Briefcase, X, UserSearch } from 'lucide-react';
 
 export default function EmploymentManager({ storeId, storeData }) {
   const { user } = useAuth();
@@ -282,8 +280,8 @@ export default function EmploymentManager({ storeId, storeData }) {
             </div>
           </div>
 
-          {/* Botones de crear nuevas publicaciones */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+          {/* Botones de crear nuevas publicaciones - SOLO OFERTA Y BÚSQUEDA */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
             <button
               onClick={() => handleCreateNew(TIPOS_PUBLICACION.OFERTA_EMPLEO)}
               className="flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -296,16 +294,8 @@ export default function EmploymentManager({ storeId, storeData }) {
               onClick={() => handleCreateNew(TIPOS_PUBLICACION.BUSQUEDA_EMPLEO)}
               className="flex items-center justify-center gap-3 px-6 py-4 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
             >
-              <Plus className="w-5 h-5" />
+              <UserSearch className="w-5 h-5" />
               <span>Busco Empleo</span>
-            </button>
-
-            <button
-              onClick={() => handleCreateNew(TIPOS_PUBLICACION.SERVICIO_PROFESIONAL)}
-              className="flex items-center justify-center gap-3 px-6 py-4 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors font-medium"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Servicio Profesional</span>
             </button>
           </div>
 
@@ -339,16 +329,6 @@ export default function EmploymentManager({ storeId, storeData }) {
             <BusquedaEmpleoForm
               busqueda={selectedPublicacion}
               userId={storeId}
-              onSave={handleSavePublicacion}
-              onCancel={handleBackToList}
-              isLoading={isSaving}
-            />
-          )}
-
-          {tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL && (
-            <ServicioProfesionalForm
-              servicio={selectedPublicacion}
-              storeId={storeId}
               onSave={handleSavePublicacion}
               onCancel={handleBackToList}
               isLoading={isSaving}
@@ -410,15 +390,6 @@ export default function EmploymentManager({ storeId, storeData }) {
               {selectedPublicacion.tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO && (
                 <BusquedaEmpleoCard
                   busqueda={selectedPublicacion}
-                  variant="grid"
-                  showContactInfo={false}
-                />
-              )}
-
-              {selectedPublicacion.tipoPublicacion === TIPOS_PUBLICACION.SERVICIO_PROFESIONAL && (
-                <ServicioProfesionalCard
-                  servicio={selectedPublicacion}
-                  storeData={storeData}
                   variant="grid"
                   showContactInfo={false}
                 />
