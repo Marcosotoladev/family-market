@@ -28,13 +28,12 @@ import {
 } from '../../types/employment';
 
 // ================================
-// FUNCIONES FIREBASE (NUEVAS)
+// FUNCIONES FIREBASE
 // ================================
 
 // Crear nueva publicación de empleo en Firestore
 export const createEmployment = async (employmentData) => {
   try {
-    // 🔍 LOG: Verificar antes de enviar a Firestore
     console.log('🚀 Enviando a Firestore:', employmentData);
     console.log('📊 Estructura:', {
       hasUsuarioId: !!employmentData.usuarioId,
@@ -134,278 +133,6 @@ export const getEmploymentsByUser = async (userId) => {
 };
 
 // ================================
-// CREAR PUBLICACIONES
-// ================================
-
-// Crear Oferta de Empleo
-export const crearOfertaEmpleo = ({
-  id,
-  usuarioId,
-  tiendaId,
-  titulo,
-  descripcion,
-  categoria,
-  subcategoria = null,
-  tipoEmpleo,
-  modalidad,
-  experienciaRequerida = null,
-  requisitos = [],
-  habilidades = [],
-  horario = {},
-  salario = {},
-  ubicacion = {},
-  contacto = {},
-  fechaCreacion = new Date()
-}) => {
-  if (!id || !usuarioId || !titulo || !descripcion || !categoria || !modalidad) {
-    throw new Error('Campos requeridos faltantes para Oferta de Empleo');
-  }
-
-  return {
-    id,
-    tipo: TIPOS_PUBLICACION.OFERTA_EMPLEO,
-    usuarioId,
-    tiendaId: tiendaId || usuarioId,
-    titulo: titulo.trim(),
-    descripcion: descripcion.trim(),
-    categoria,
-    subcategoria,
-    tipoEmpleo,
-    modalidad,
-    experienciaRequerida,
-    requisitos: Array.isArray(requisitos) ? requisitos : [],
-    habilidades: Array.isArray(habilidades) ? habilidades : [],
-    horario: {
-      dias: Array.isArray(horario.dias) ? horario.dias : [],
-      turnos: Array.isArray(horario.turnos) ? horario.turnos : [],
-      horaInicio: horario.horaInicio || '',
-      horaFin: horario.horaFin || '',
-      flexible: horario.flexible || false
-    },
-    salario: {
-      tipo: salario.tipo || TIPOS_SALARIO.MENSUAL,
-      minimo: salario.minimo ? parseFloat(salario.minimo) : null,
-      maximo: salario.maximo ? parseFloat(salario.maximo) : null,
-      moneda: salario.moneda || 'ARS',
-      beneficios: Array.isArray(salario.beneficios) ? salario.beneficios : []
-    },
-    ubicacion: {
-      direccion: ubicacion.direccion || '',
-      ciudad: ubicacion.ciudad || '',
-      provincia: ubicacion.provincia || '',
-      pais: ubicacion.pais || 'Argentina',
-      coordenadas: ubicacion.coordenadas || null
-    },
-    contacto: {
-      whatsapp: contacto.whatsapp || '',
-      telefono: contacto.telefono || '',
-      email: contacto.email || '',
-      preferencia: contacto.preferencia || 'whatsapp'
-    },
-    estado: ESTADOS_PUBLICACION.ACTIVO,
-    destacado: false,
-    featuredUntil: null,
-    fechaCreacion,
-    fechaActualizacion: new Date(),
-    vistas: 0,
-    postulaciones: 0,
-    slug: generarSlugEmpleo(titulo, TIPOS_PUBLICACION.OFERTA_EMPLEO, id)
-  };
-};
-
-// Crear Búsqueda de Empleo
-export const crearBusquedaEmpleo = ({
-  id,
-  usuarioId,
-  tiendaId,
-  nombre,
-  apellido,
-  edad = null,
-  foto = '',
-  titulo,
-  descripcion,
-  categorias = [],
-  experiencia = {},
-  habilidades = [],
-  disponibilidad = {},
-  preferencias = {},
-  ubicacion = {},
-  curriculum = {},
-  contacto = {},
-  fechaCreacion = new Date()
-}) => {
-  if (!id || !usuarioId || !titulo || !descripcion || categorias.length === 0) {
-    throw new Error('Campos requeridos faltantes para Búsqueda de Empleo');
-  }
-
-  return {
-    id,
-    tipo: TIPOS_PUBLICACION.BUSQUEDA_EMPLEO,
-    usuarioId,
-    tiendaId: tiendaId || usuarioId,
-    nombre: nombre.trim(),
-    apellido: apellido.trim(),
-    edad: edad ? parseInt(edad) : null,
-    foto,
-    titulo: titulo.trim(),
-    descripcion: descripcion.trim(),
-    objetivoLaboral: descripcion.trim(),
-    categorias: Array.isArray(categorias) ? categorias : [],
-    subcategorias: [],
-    experiencia: {
-      nivel: experiencia.nivel || '',
-      años: experiencia.años ? parseInt(experiencia.años) : 0,
-      trabajosAnteriores: Array.isArray(experiencia.trabajosAnteriores) ? experiencia.trabajosAnteriores : [],
-      descripcionExperiencia: experiencia.descripcionExperiencia || ''
-    },
-    educacion: {
-      nivel: '',
-      estudios: [],
-      certificaciones: []
-    },
-    habilidades: Array.isArray(habilidades) ? habilidades : [],
-    idiomas: [],
-    disponibilidad: {
-      tiposEmpleo: Array.isArray(disponibilidad.tiposEmpleo) ? disponibilidad.tiposEmpleo : [],
-      modalidades: Array.isArray(disponibilidad.modalidades) ? disponibilidad.modalidades : [],
-      diasDisponibles: Array.isArray(disponibilidad.diasDisponibles) ? disponibilidad.diasDisponibles : [],
-      horarios: Array.isArray(disponibilidad.horarios) ? disponibilidad.horarios : [],
-      inmediata: disponibilidad.inmediata || false,
-      fechaDisponible: disponibilidad.fechaDisponible || null
-    },
-    preferencias: {
-      salarioMinimo: preferencias.salarioMinimo ? parseFloat(preferencias.salarioMinimo) : null,
-      salarioMaximo: preferencias.salarioMaximo ? parseFloat(preferencias.salarioMaximo) : null,
-      zonas: Array.isArray(preferencias.zonas) ? preferencias.zonas : [],
-      beneficiosDeseados: Array.isArray(preferencias.beneficiosDeseados) ? preferencias.beneficiosDeseados : []
-    },
-    ubicacion: {
-      ciudad: ubicacion.ciudad || '',
-      provincia: ubicacion.provincia || '',
-      pais: ubicacion.pais || 'Argentina',
-      dispuestoMudar: ubicacion.dispuestoMudar || false
-    },
-    curriculum: {
-      url: curriculum.url || '',
-      nombre: curriculum.nombre || '',
-      tamaño: curriculum.tamaño || 0
-    },
-    contacto: {
-      whatsapp: contacto.whatsapp || '',
-      telefono: contacto.telefono || '',
-      email: contacto.email || '',
-      linkedin: contacto.linkedin || '',
-      portfolio: contacto.portfolio || ''
-    },
-    estado: ESTADOS_PUBLICACION.ACTIVO,
-    destacado: false,
-    featuredUntil: null,
-    fechaCreacion,
-    fechaActualizacion: new Date(),
-    vistas: 0,
-    slug: generarSlugEmpleo(titulo, TIPOS_PUBLICACION.BUSQUEDA_EMPLEO, id)
-  };
-};
-
-// Crear Servicio Profesional
-export const crearServicioProfesional = ({
-  id,
-  usuarioId,
-  tiendaId,
-  titulo,
-  nombreProfesional,
-  foto = '',
-  descripcion,
-  categoria,
-  subcategoria = null,
-  especialidades = [],
-  experiencia = {},
-  servicios = [],
-  tarifas = {},
-  disponibilidad = {},
-  ubicacion = {},
-  portfolio = {},
-  contacto = {},
-  fechaCreacion = new Date()
-}) => {
-  if (!id || !usuarioId || !titulo || !descripcion || !categoria) {
-    throw new Error('Campos requeridos faltantes para Servicio Profesional');
-  }
-
-  return {
-    id,
-    tipo: TIPOS_PUBLICACION.SERVICIO_PROFESIONAL,
-    usuarioId,
-    tiendaId: tiendaId || usuarioId,
-    titulo: titulo.trim(),
-    nombreProfesional: nombreProfesional.trim(),
-    foto,
-    descripcion: descripcion.trim(),
-    categoria,
-    subcategoria,
-    especialidades: Array.isArray(especialidades) ? especialidades : [],
-    experiencia: {
-      años: experiencia.años ? parseInt(experiencia.años) : 0,
-      nivel: experiencia.nivel || '',
-      descripcion: experiencia.descripcion || ''
-    },
-    servicios: Array.isArray(servicios) ? servicios : [],
-    certificaciones: [],
-    titulos: [],
-    tarifas: {
-      tipo: tarifas.tipo || TIPOS_SALARIO.POR_SERVICIO,
-      minimo: tarifas.minimo ? parseFloat(tarifas.minimo) : null,
-      maximo: tarifas.maximo ? parseFloat(tarifas.maximo) : null,
-      moneda: tarifas.moneda || 'ARS',
-      detalles: tarifas.detalles || ''
-    },
-    disponibilidad: {
-      modalidades: Array.isArray(disponibilidad.modalidades) ? disponibilidad.modalidades : [],
-      diasDisponibles: Array.isArray(disponibilidad.diasDisponibles) ? disponibilidad.diasDisponibles : [],
-      horarios: Array.isArray(disponibilidad.horarios) ? disponibilidad.horarios : [],
-      zonasCobertura: Array.isArray(disponibilidad.zonasCobertura) ? disponibilidad.zonasCobertura : []
-    },
-    ubicacion: {
-      direccion: ubicacion.direccion || '',
-      ciudad: ubicacion.ciudad || '',
-      provincia: ubicacion.provincia || '',
-      pais: ubicacion.pais || 'Argentina',
-      atendeADomicilio: ubicacion.atendeADomicilio || false,
-      zonaCobertura: Array.isArray(ubicacion.zonaCobertura) ? ubicacion.zonaCobertura : []
-    },
-    portfolio: {
-      imagenes: Array.isArray(portfolio.imagenes) ? portfolio.imagenes : [],
-      videos: Array.isArray(portfolio.videos) ? portfolio.videos : [],
-      descripcionTrabajos: portfolio.descripcionTrabajos || ''
-    },
-    contacto: {
-      whatsapp: contacto.whatsapp || '',
-      telefono: contacto.telefono || '',
-      email: contacto.email || '',
-      sitioWeb: contacto.sitioWeb || '',
-      redesSociales: {
-        facebook: contacto.redesSociales?.facebook || '',
-        instagram: contacto.redesSociales?.instagram || '',
-        linkedin: contacto.redesSociales?.linkedin || ''
-      }
-    },
-    estado: ESTADOS_PUBLICACION.ACTIVO,
-    destacado: false,
-    featuredUntil: null,
-    valoraciones: {
-      promedio: 0,
-      total: 0,
-      distribucion: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 }
-    },
-    fechaCreacion,
-    fechaActualizacion: new Date(),
-    vistas: 0,
-    contactos: 0,
-    slug: generarSlugEmpleo(titulo, TIPOS_PUBLICACION.SERVICIO_PROFESIONAL, id)
-  };
-};
-
-// ================================
 // VALIDACIONES
 // ================================
 
@@ -447,29 +174,52 @@ export const validarOfertaEmpleo = (oferta) => {
   return errores;
 };
 
-// Validar Búsqueda de Empleo
+// ✅ NUEVA: Validar Búsqueda de Empleo
 export const validarBusquedaEmpleo = (busqueda) => {
   const errores = [];
 
+  // Validar nombre
   if (!busqueda.nombre || busqueda.nombre.trim().length < 2) {
-    errores.push('El nombre es requerido');
+    errores.push('El nombre es obligatorio');
   }
 
+  // Validar título
   if (!busqueda.titulo || busqueda.titulo.trim().length < 5) {
-    errores.push('El título profesional debe tener al menos 5 caracteres');
+    errores.push('El título/puesto que buscas debe tener al menos 5 caracteres');
+  }
+  if (busqueda.titulo && busqueda.titulo.length > 100) {
+    errores.push('El título no puede exceder 100 caracteres');
   }
 
+  // Validar categoría
+  if (!busqueda.categoria) {
+    errores.push('Debes seleccionar una categoría');
+  }
+
+  // Validar descripción
   if (!busqueda.descripcion || busqueda.descripcion.trim().length < 20) {
     errores.push('La descripción debe tener al menos 20 caracteres');
   }
-
-  if (!Array.isArray(busqueda.categorias) || busqueda.categorias.length === 0) {
-    errores.push('Debe seleccionar al menos una categoría de interés');
+  if (busqueda.descripcion && busqueda.descripcion.length > 1000) {
+    errores.push('La descripción no puede exceder 1000 caracteres');
   }
 
-  const tieneContacto = busqueda.contacto?.whatsapp || busqueda.contacto?.telefono || busqueda.contacto?.email;
+  // Validar disponibilidad - tipo de empleo
+  if (!busqueda.disponibilidad?.tipoEmpleo || busqueda.disponibilidad.tipoEmpleo.length === 0) {
+    errores.push('Selecciona al menos un tipo de empleo');
+  }
+
+  // Validar disponibilidad - modalidades
+  if (!busqueda.disponibilidad?.modalidades || busqueda.disponibilidad.modalidades.length === 0) {
+    errores.push('Selecciona al menos una modalidad de trabajo');
+  }
+
+  // Validar contacto
+  const tieneContacto = busqueda.contacto?.whatsapp || 
+                       busqueda.contacto?.telefono || 
+                       busqueda.contacto?.email;
   if (!tieneContacto) {
-    errores.push('Debe proporcionar al menos un método de contacto');
+    errores.push('Debes proporcionar al menos un medio de contacto');
   }
 
   return errores;
@@ -580,6 +330,7 @@ export const buscarPublicaciones = (publicaciones, termino) => {
       pub.titulo,
       pub.descripcion,
       pub.nombreProfesional,
+      pub.nombre,
       pub.categoria,
       pub.subcategoria,
       ...(pub.habilidades || []),
@@ -692,33 +443,6 @@ export const aplicarFiltros = (publicaciones, filtros = {}) => {
   resultado = ordenarPublicaciones(resultado, filtros.orden || 'destacado');
 
   return resultado;
-};
-
-// ================================
-// AUTO-COMPLETAR DATOS
-// ================================
-
-export const autoCompletarDatosPublicacion = (publicacionData, storeData, userData) => {
-  const tiendaInfo = {
-    nombre: storeData?.businessName || storeData?.familyName || userData?.displayName || '',
-    slug: storeData?.storeSlug || '',
-    logo: storeData?.storeLogo || storeData?.profileImage || userData?.photoURL || ''
-  };
-
-  const contactoBase = {
-    whatsapp: storeData?.phone || userData?.phoneNumber || '',
-    telefono: storeData?.phone || userData?.phoneNumber || '',
-    email: storeData?.email || userData?.email || ''
-  };
-
-  return {
-    ...publicacionData,
-    tiendaInfo,
-    contacto: {
-      ...contactoBase,
-      ...publicacionData.contacto
-    }
-  };
 };
 
 // ================================

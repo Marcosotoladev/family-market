@@ -294,7 +294,7 @@ export default function EmploymentManager({ storeId, storeData }) {
 
             <button
               onClick={() => handleCreateNew(TIPOS_PUBLICACION.BUSQUEDA_EMPLEO)}
-              className="flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors font-medium"
+              className="flex items-center justify-center gap-3 px-6 py-4 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium"
             >
               <Plus className="w-5 h-5" />
               <span>Busco Empleo</span>
@@ -338,7 +338,7 @@ export default function EmploymentManager({ storeId, storeData }) {
           {tipoPublicacion === TIPOS_PUBLICACION.BUSQUEDA_EMPLEO && (
             <BusquedaEmpleoForm
               busqueda={selectedPublicacion}
-              storeId={storeId}
+              userId={storeId}
               onSave={handleSavePublicacion}
               onCancel={handleBackToList}
               isLoading={isSaving}

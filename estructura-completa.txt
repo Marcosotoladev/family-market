@@ -53,6 +53,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   |   └── page.js
 |   |   |   └── users
 |   |   |   |   └── page.js
+|   |   └── empleos
+|   |   |   └── page.js
 |   |   └── favicon.ico
 |   |   └── globals.css
 |   |   └── layout.js
@@ -65,6 +67,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   └── productos
 |   |   |   └── page.js
 |   |   └── register
+|   |   |   └── page.js
+|   |   └── servicios
 |   |   |   └── page.js
 |   |   └── terms
 |   |   |   └── page.js

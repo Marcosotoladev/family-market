@@ -8,6 +8,8 @@ import { Sparkles, ChevronLeft, ChevronRight, Zap } from 'lucide-react';
 import ProductCard from '@/components/tienda/productos/ProductCard';
 import ServiceCard from '@/components/tienda/servicios/ServiceCard';
 import OfertaEmpleoCard from '@/components/tienda/empleos/OfertaEmpleoCard';
+import BusquedaEmpleoCard from '@/components/tienda/empleos/BusquedaEmpleoCard';
+import ServicioProfesionalCard from '@/components/tienda/empleos/ServicioProfesionalCard';
 
 export default function RecentItems() {
   const [recentItems, setRecentItems] = useState([]);
@@ -386,16 +388,49 @@ export default function RecentItems() {
                       />
                     )}
 
-                    {item.tipo === 'empleo' && (
-                      <OfertaEmpleoCard
-                        oferta={item}
-                        storeData={item.tiendaInfo}
-                        variant="featured-compact"
-                        showContactInfo={true}
-                        showStoreInfo={true}
-                        onClick={() => handleItemClick(item)}
-                      />
-                    )}
+                    {item.tipo === 'empleo' && (() => {
+                      const tipoEmpleo = item.tipoPublicacion || item.tipo;
+                      
+                      // Busqueda de empleo
+                      if (tipoEmpleo === 'busqueda' || tipoEmpleo === 'busqueda_empleo') {
+                        return (
+                          <BusquedaEmpleoCard
+                            busqueda={item}
+                            storeData={item.tiendaInfo}
+                            variant="featured-compact"
+                            showContactInfo={true}
+                            showStoreInfo={true}
+                            onClick={() => handleItemClick(item)}
+                          />
+                        );
+                      }
+                      
+                      // Servicio profesional
+                      if (tipoEmpleo === 'servicio_profesional') {
+                        return (
+                          <ServicioProfesionalCard
+                            servicio={item}
+                            storeData={item.tiendaInfo}
+                            variant="featured-compact"
+                            showContactInfo={true}
+                            showStoreInfo={true}
+                            onClick={() => handleItemClick(item)}
+                          />
+                        );
+                      }
+                      
+                      // Oferta de empleo (por defecto)
+                      return (
+                        <OfertaEmpleoCard
+                          oferta={item}
+                          storeData={item.tiendaInfo}
+                          variant="featured-compact"
+                          showContactInfo={true}
+                          showStoreInfo={true}
+                          onClick={() => handleItemClick(item)}
+                        />
+                      );
+                    })()}
                   </div>
                 );
               })}

@@ -6,26 +6,24 @@ import {
   TIPOS_EMPLEO,
   MODALIDADES_TRABAJO,
   NIVELES_EXPERIENCIA,
-  CATEGORIAS_EMPLEO,
-  DIAS_SEMANA,
-  HORARIOS
+  TIPOS_SALARIO,
+  CATEGORIAS_EMPLEO
 } from '@/types/employment';
-import { validarBusquedaEmpleo } from '@/lib/helpers/employmentHelpers';
 import {
   X,
   Save,
   ArrowLeft,
   Plus,
   Upload,
-  FileText,
   User,
-  Briefcase,
-  GraduationCap,
-  Target,
-  Clock,
   MapPin,
   DollarSign,
-  Info
+  Clock,
+  Award,
+  Info,
+  FileText,
+  Trash2,
+  Image as ImageIcon
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
@@ -33,93 +31,85 @@ import { db } from '@/lib/firebase/config';
 
 export default function BusquedaEmpleoForm({
   busqueda = null,
-  storeId,
+  userId,
   onSave,
   onCancel,
   isLoading = false
 }) {
   const { user } = useAuth();
-  const [storeData, setStoreData] = useState(null);
+  const [userData, setUserData] = useState(null);
   const fileInputRef = useRef(null);
-  const photoInputRef = useRef(null);
+  const cvInputRef = useRef(null);
 
   const [formData, setFormData] = useState({
     nombre: '',
-    apellido: '',
-    edad: '',
     foto: '',
     titulo: '',
+    categoria: '',
+    subcategoria: '',
     descripcion: '',
-    objetivoLaboral: '',
-    categorias: [],
-    experiencia: {
-      nivel: '',
-      años: '',
-      trabajosAnteriores: [],
-      descripcionExperiencia: ''
-    },
+    experiencia: '',
+    nivelExperiencia: '',
     habilidades: [],
     disponibilidad: {
-      tiposEmpleo: [],
-      modalidades: [],
-      diasDisponibles: [],
-      horarios: [],
       inmediata: true,
-      fechaDisponible: ''
+      fechaInicio: '',
+      tipoEmpleo: [],
+      modalidades: [],
+      horarioFlexible: false
     },
-    preferencias: {
-      salarioMinimo: '',
-      salarioMaximo: '',
-      zonas: []
+    pretensionSalarial: {
+      tipo: TIPOS_SALARIO.MENSUAL,
+      minimo: '',
+      maximo: '',
+      moneda: 'ARS'
     },
     ubicacion: {
       ciudad: '',
       provincia: '',
-      pais: 'Argentina',
-      dispuestoMudar: false
+      pais: 'Argentina'
     },
-    curriculum: {
+    cv: {
       url: '',
       nombre: '',
-      tamaño: 0
+      size: 0
     },
     contacto: {
       whatsapp: '',
       telefono: '',
       email: '',
-      linkedin: '',
-      portfolio: ''
+      preferencia: 'whatsapp'
     }
   });
 
   const [errores, setErrores] = useState([]);
   const [currentHabilidad, setCurrentHabilidad] = useState('');
-  const [currentTrabajo, setCurrentTrabajo] = useState('');
-  const [currentZona, setCurrentZona] = useState('');
+  const [uploadingFoto, setUploadingFoto] = useState(false);
   const [uploadingCV, setUploadingCV] = useState(false);
-  const [uploadingPhoto, setUploadingPhoto] = useState(false);
 
-  // Cargar datos del usuario
+  // ✅ CORREGIDO: Cargar datos del usuario SOLO si NO hay búsqueda existente
   useEffect(() => {
+    // Si ya hay una búsqueda, no cargar datos del usuario
+    if (busqueda) return;
+    
     const loadUserData = async () => {
       if (!user?.uid) return;
 
       try {
         const userDoc = await getDoc(doc(db, 'users', user.uid));
         if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setStoreData(userData);
+          const data = userDoc.data();
+          setUserData(data);
 
           setFormData(prev => ({
             ...prev,
-            nombre: userData.firstName || '',
-            apellido: userData.lastName || '',
+            nombre: data.name || '',
+            foto: data.photoURL || '',
             contacto: {
-              whatsapp: userData.phone || '',
-              telefono: userData.phone || '',
-              email: userData.email || '',
-              linkedin: '',
-              portfolio: ''
+              whatsapp: data.phone || '',
+              telefono: data.phone || '',
+              email: data.email || '',
+              preferencia: 'whatsapp'
             }
           }));
         }
@@ -129,22 +119,49 @@ export default function BusquedaEmpleoForm({
     };
 
     loadUserData();
-  }, [user]);
+  }, [user, busqueda]);
 
   // Inicializar formulario si hay búsqueda existente
   useEffect(() => {
     if (busqueda) {
       setFormData({
-        ...busqueda,
-        edad: busqueda.edad?.toString() || '',
-        experiencia: {
-          ...busqueda.experiencia,
-          años: busqueda.experiencia?.años?.toString() || ''
+        nombre: busqueda.nombre || '',
+        foto: busqueda.foto || '',
+        titulo: busqueda.titulo || '',
+        categoria: busqueda.categoria || '',
+        subcategoria: busqueda.subcategoria || '',
+        descripcion: busqueda.descripcion || '',
+        experiencia: busqueda.experiencia || '',
+        nivelExperiencia: busqueda.nivelExperiencia || '',
+        habilidades: busqueda.habilidades || [],
+        disponibilidad: {
+          inmediata: busqueda.disponibilidad?.inmediata ?? true,
+          fechaInicio: busqueda.disponibilidad?.fechaInicio || '',
+          tipoEmpleo: busqueda.disponibilidad?.tipoEmpleo || [],
+          modalidades: busqueda.disponibilidad?.modalidades || [],
+          horarioFlexible: busqueda.disponibilidad?.horarioFlexible || false
         },
-        preferencias: {
-          ...busqueda.preferencias,
-          salarioMinimo: busqueda.preferencias?.salarioMinimo?.toString() || '',
-          salarioMaximo: busqueda.preferencias?.salarioMaximo?.toString() || ''
+        pretensionSalarial: {
+          tipo: busqueda.pretensionSalarial?.tipo || TIPOS_SALARIO.MENSUAL,
+          minimo: busqueda.pretensionSalarial?.minimo?.toString() || '',
+          maximo: busqueda.pretensionSalarial?.maximo?.toString() || '',
+          moneda: busqueda.pretensionSalarial?.moneda || 'ARS'
+        },
+        ubicacion: {
+          ciudad: busqueda.ubicacion?.ciudad || '',
+          provincia: busqueda.ubicacion?.provincia || '',
+          pais: busqueda.ubicacion?.pais || 'Argentina'
+        },
+        cv: {
+          url: busqueda.cv?.url || '',
+          nombre: busqueda.cv?.nombre || '',
+          size: busqueda.cv?.size || 0
+        },
+        contacto: {
+          whatsapp: busqueda.contacto?.whatsapp || '',
+          telefono: busqueda.contacto?.telefono || '',
+          email: busqueda.contacto?.email || '',
+          preferencia: busqueda.contacto?.preferencia || 'whatsapp'
         }
       });
     }
@@ -169,7 +186,7 @@ export default function BusquedaEmpleoForm({
 
   const handleArrayToggle = (parent, field, value) => {
     setFormData(prev => {
-      const currentArray = prev[parent]?.[field] || [];
+      const currentArray = prev[parent][field] || [];
       const newArray = currentArray.includes(value)
         ? currentArray.filter(item => item !== value)
         : [...currentArray, value];
@@ -184,106 +201,70 @@ export default function BusquedaEmpleoForm({
     });
   };
 
-  const handleCategoriaToggle = (categoriaId) => {
-    setFormData(prev => {
-      const newCategorias = prev.categorias.includes(categoriaId)
-        ? prev.categorias.filter(c => c !== categoriaId)
-        : [...prev.categorias, categoriaId];
-
-      return {
-        ...prev,
-        categorias: newCategorias
-      };
-    });
-  };
-
-  const addItem = (parent, field, value, setterFn) => {
-    if (!value.trim()) return;
+  const addHabilidad = () => {
+    if (!currentHabilidad.trim()) return;
 
     setFormData(prev => ({
       ...prev,
-      [parent]: {
-        ...prev[parent],
-        [field]: [...(prev[parent][field] || []), value.trim()]
-      }
+      habilidades: [...prev.habilidades, currentHabilidad.trim()]
     }));
-    setterFn('');
+    setCurrentHabilidad('');
   };
 
-  const addItemToArray = (field, value, setterFn) => {
-    if (!value.trim()) return;
-
+  const removeHabilidad = (index) => {
     setFormData(prev => ({
       ...prev,
-      [field]: [...prev[field], value.trim()]
-    }));
-    setterFn('');
-  };
-
-  const removeItem = (parent, field, index) => {
-    setFormData(prev => ({
-      ...prev,
-      [parent]: {
-        ...prev[parent],
-        [field]: prev[parent][field].filter((_, i) => i !== index)
-      }
+      habilidades: prev.habilidades.filter((_, i) => i !== index)
     }));
   };
 
-  const removeItemFromArray = (field, index) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: prev[field].filter((_, i) => i !== index)
-    }));
-  };
-
-  const handlePhotoUpload = async (event) => {
-    const file = event.target.files[0];
+  // Upload de foto a Cloudinary
+  const handleFotoUpload = async (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     if (!file.type.startsWith('image/')) {
-      alert('Por favor selecciona una imagen');
+      alert('Por favor selecciona una imagen válida');
       return;
     }
 
-    if (file.size > 2 * 1024 * 1024) {
-      alert('La imagen no puede superar los 2MB');
+    if (file.size > 5 * 1024 * 1024) {
+      alert('La imagen no debe superar los 5MB');
       return;
     }
+
+    setUploadingFoto(true);
 
     try {
-      setUploadingPhoto(true);
-
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_PROFILES);
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', file);
+      formDataUpload.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_JOBS);
+      formDataUpload.append('folder', 'family-market/empleos/perfiles');
 
       const response = await fetch(
         `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
         {
           method: 'POST',
-          body: formData,
+          body: formDataUpload
         }
       );
 
-      if (!response.ok) throw new Error('Error al subir la imagen');
-
       const data = await response.json();
-      handleInputChange('foto', data.secure_url);
 
-      if (photoInputRef.current) {
-        photoInputRef.current.value = '';
+      if (data.secure_url) {
+        handleInputChange('foto', data.secure_url);
       }
     } catch (error) {
-      console.error('Error subiendo foto:', error);
+      console.error('Error al subir foto:', error);
       alert('Error al subir la foto. Intenta nuevamente.');
     } finally {
-      setUploadingPhoto(false);
+      setUploadingFoto(false);
     }
   };
 
-  const handleCVUpload = async (event) => {
-    const file = event.target.files[0];
+  // Upload de CV (PDF) a Cloudinary
+  const handleCVUpload = async (e) => {
+    const file = e.target.files?.[0];
     if (!file) return;
 
     if (file.type !== 'application/pdf') {
@@ -291,69 +272,111 @@ export default function BusquedaEmpleoForm({
       return;
     }
 
-    if (file.size > 5 * 1024 * 1024) {
-      alert('El CV no puede superar los 5MB');
+    if (file.size > 10 * 1024 * 1024) {
+      alert('El CV no debe superar los 10MB');
       return;
     }
 
-    try {
-      setUploadingCV(true);
+    setUploadingCV(true);
 
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_DOCUMENTS);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+      uploadFormData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_JOBS);
+      uploadFormData.append('folder', 'family-market/empleos/cvs');
+      uploadFormData.append('resource_type', 'raw');
 
       const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/upload`,
+        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`,
         {
           method: 'POST',
-          body: formData,
+          body: uploadFormData
         }
       );
 
-      if (!response.ok) throw new Error('Error al subir el CV');
-
       const data = await response.json();
-      
-      handleNestedChange('curriculum', 'url', data.secure_url);
-      handleNestedChange('curriculum', 'nombre', file.name);
-      handleNestedChange('curriculum', 'tamaño', file.size);
 
-      if (fileInputRef.current) {
-        fileInputRef.current.value = '';
+      if (data.secure_url) {
+        setFormData(prev => ({
+          ...prev,
+          cv: {
+            url: data.secure_url,
+            nombre: file.name,
+            size: file.size
+          }
+        }));
       }
     } catch (error) {
-      console.error('Error subiendo CV:', error);
+      console.error('Error al subir CV:', error);
       alert('Error al subir el CV. Intenta nuevamente.');
     } finally {
       setUploadingCV(false);
     }
   };
 
+  const removeCV = () => {
+    setFormData(prev => ({
+      ...prev,
+      cv: {
+        url: '',
+        nombre: '',
+        size: 0
+      }
+    }));
+  };
+
+  const validarFormulario = () => {
+    const errores = [];
+
+    if (!formData.nombre.trim()) {
+      errores.push('El nombre es obligatorio');
+    }
+
+    if (!formData.titulo.trim()) {
+      errores.push('El título/puesto que buscas es obligatorio');
+    }
+
+    if (!formData.categoria) {
+      errores.push('Debes seleccionar una categoría');
+    }
+
+    if (!formData.descripcion.trim()) {
+      errores.push('La descripción es obligatoria');
+    }
+
+    if (formData.disponibilidad.tipoEmpleo.length === 0) {
+      errores.push('Selecciona al menos un tipo de empleo');
+    }
+
+    if (formData.disponibilidad.modalidades.length === 0) {
+      errores.push('Selecciona al menos una modalidad de trabajo');
+    }
+
+    if (!formData.contacto.whatsapp && !formData.contacto.telefono && !formData.contacto.email) {
+      errores.push('Debes proporcionar al menos un medio de contacto');
+    }
+
+    return errores;
+  };
+
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const busquedaData = {
-      ...formData,
-      usuarioId: storeId,
-      tiendaId: storeId,
-      edad: formData.edad ? parseInt(formData.edad) : null,
-      experiencia: {
-        ...formData.experiencia,
-        años: formData.experiencia.años ? parseInt(formData.experiencia.años) : 0
-      },
-      preferencias: {
-        ...formData.preferencias,
-        salarioMinimo: formData.preferencias.salarioMinimo ? parseFloat(formData.preferencias.salarioMinimo) : null,
-        salarioMaximo: formData.preferencias.salarioMaximo ? parseFloat(formData.preferencias.salarioMaximo) : null
-      }
-    };
-
-    const validationErrors = validarBusquedaEmpleo(busquedaData);
+    const validationErrors = validarFormulario();
     if (validationErrors.length > 0) {
       setErrores(validationErrors);
       return;
     }
+
+    const busquedaData = {
+      ...formData,
+      usuarioId: userId,
+      pretensionSalarial: {
+        ...formData.pretensionSalarial,
+        minimo: formData.pretensionSalarial.minimo ? parseFloat(formData.pretensionSalarial.minimo) : null,
+        maximo: formData.pretensionSalarial.maximo ? parseFloat(formData.pretensionSalarial.maximo) : null
+      }
+    };
 
     setErrores([]);
     onSave(busquedaData);
@@ -373,9 +396,9 @@ export default function BusquedaEmpleoForm({
             <ArrowLeft className="w-5 h-5 text-gray-900 dark:text-white" />
           </button>
           <div className="flex items-center space-x-2">
-            <User className="w-6 h-6 text-orange-600" />
+            <User className="w-6 h-6 text-emerald-600" />
             <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-              {busqueda ? 'Editar Perfil Laboral' : 'Crear Perfil Laboral'}
+              {busqueda ? 'Editar Búsqueda de Empleo' : 'Nueva Búsqueda de Empleo'}
             </h1>
           </div>
         </div>
@@ -403,295 +426,202 @@ export default function BusquedaEmpleoForm({
             Información Personal
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="md:col-span-3 flex flex-col items-center">
-              <div className="relative">
+          {/* Foto de perfil */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Foto de perfil
+            </label>
+            <div className="flex items-start space-x-4">
+              <div className="flex-shrink-0">
                 {formData.foto ? (
                   <img
                     src={formData.foto}
                     alt="Foto de perfil"
-                    className="w-32 h-32 rounded-full object-cover border-4 border-gray-200 dark:border-gray-600"
+                    className="w-24 h-24 rounded-full object-cover border-4 border-emerald-200 dark:border-emerald-700"
                   />
                 ) : (
-                  <div className="w-32 h-32 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center border-4 border-gray-200 dark:border-gray-600">
-                    <User className="w-16 h-16 text-gray-400" />
+                  <div className="w-24 h-24 rounded-full bg-emerald-100 dark:bg-emerald-900 flex items-center justify-center border-4 border-emerald-200 dark:border-emerald-700">
+                    <User className="w-12 h-12 text-emerald-600 dark:text-emerald-400" />
                   </div>
                 )}
+              </div>
+              <div className="flex-1">
                 <input
-                  ref={photoInputRef}
+                  ref={fileInputRef}
                   type="file"
                   accept="image/*"
-                  onChange={handlePhotoUpload}
+                  onChange={handleFotoUpload}
                   className="hidden"
                 />
                 <button
                   type="button"
-                  onClick={() => photoInputRef.current?.click()}
-                  disabled={uploadingPhoto}
-                  className="absolute bottom-0 right-0 p-2 bg-orange-600 text-white rounded-full hover:bg-orange-700 transition-colors disabled:opacity-50"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploadingFoto}
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
                 >
-                  {uploadingPhoto ? (
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  {uploadingFoto ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Subiendo...</span>
+                    </>
                   ) : (
-                    <Upload className="w-4 h-4" />
+                    <>
+                      <ImageIcon className="w-4 h-4" />
+                      <span>{formData.foto ? 'Cambiar foto' : 'Subir foto'}</span>
+                    </>
                   )}
                 </button>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  JPG, PNG o GIF. Máximo 5MB.
+                </p>
               </div>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                Foto de perfil (opcional)
-              </p>
             </div>
+          </div>
 
+          <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Nombre *
+                Nombre completo *
               </label>
               <input
                 type="text"
                 value={formData.nombre}
                 onChange={(e) => handleInputChange('nombre', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Tu nombre"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Apellido *
-              </label>
-              <input
-                type="text"
-                value={formData.apellido}
-                onChange={(e) => handleInputChange('apellido', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Tu apellido"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Edad
-              </label>
-              <input
-                type="number"
-                min="16"
-                max="99"
-                value={formData.edad}
-                onChange={(e) => handleInputChange('edad', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="18"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Perfil Profesional */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 flex items-center">
-            <Target className="w-5 h-5 mr-2" />
-            Perfil Profesional
-          </h2>
-
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Título profesional *
-              </label>
-              <input
-                type="text"
-                value={formData.titulo}
-                onChange={(e) => handleInputChange('titulo', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Ej: Vendedor con experiencia en retail"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Ej: Juan Pérez"
                 maxLength={100}
               />
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Descripción / Presentación *
+                Título / Puesto que buscas *
+              </label>
+              <input
+                type="text"
+                value={formData.titulo}
+                onChange={(e) => handleInputChange('titulo', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Ej: Vendedor con experiencia"
+                maxLength={100}
+              />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Categoría *
+                </label>
+                <select
+                  value={formData.categoria}
+                  onChange={(e) => {
+                    handleInputChange('categoria', e.target.value);
+                    handleInputChange('subcategoria', '');
+                  }}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="">Selecciona una categoría</option>
+                  {categorias.map(cat => (
+                    <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                  ))}
+                </select>
+              </div>
+
+              {formData.categoria && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Subcategoría
+                  </label>
+                  <select
+                    value={formData.subcategoria}
+                    onChange={(e) => handleInputChange('subcategoria', e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  >
+                    <option value="">Selecciona una subcategoría</option>
+                    {Object.entries(
+                      categorias.find(c => c.id === formData.categoria)?.subcategorias || {}
+                    ).map(([key, value]) => (
+                      <option key={key} value={value}>{value}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Descripción personal *
               </label>
               <textarea
                 value={formData.descripcion}
                 onChange={(e) => handleInputChange('descripcion', e.target.value)}
-                rows={5}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Cuéntanos sobre ti, tu experiencia, tus fortalezas y qué tipo de trabajo estás buscando..."
-                maxLength={2000}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Cuéntanos sobre ti, tus fortalezas, y qué te hace un buen candidato..."
+                maxLength={1000}
               />
               <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
-                {formData.descripcion.length}/2000 caracteres
+                {formData.descripcion.length}/1000 caracteres
               </p>
             </div>
-          </div>
-        </div>
 
-        {/* Áreas de Interés */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2">
-            Áreas de Interés *
-          </h2>
-
-          <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4">
-            <p className="text-blue-800 dark:text-blue-300 text-sm">
-              <Info className="w-4 h-4 inline mr-2" />
-              Selecciona las áreas en las que te gustaría trabajar (puedes elegir varias)
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {categorias.map(categoria => (
-              <button
-                key={categoria.id}
-                type="button"
-                onClick={() => handleCategoriaToggle(categoria.id)}
-                className={`p-3 rounded-lg text-sm font-medium transition-colors text-left ${
-                  formData.categorias.includes(categoria.id)
-                    ? 'bg-orange-600 text-white'
-                    : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                }`}
-              >
-                {categoria.nombre}
-              </button>
-            ))}
-          </div>
-
-          {formData.categorias.length > 0 && (
-            <div className="flex flex-wrap gap-2">
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Seleccionadas:
-              </span>
-              {formData.categorias.map(catId => {
-                const cat = categorias.find(c => c.id === catId);
-                return cat ? (
-                  <span
-                    key={catId}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200"
-                  >
-                    {cat.nombre}
-                  </span>
-                ) : null;
-              })}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Experiencia laboral
+              </label>
+              <textarea
+                value={formData.experiencia}
+                onChange={(e) => handleInputChange('experiencia', e.target.value)}
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Describe tu experiencia laboral relevante..."
+                maxLength={1000}
+              />
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {formData.experiencia.length}/1000 caracteres
+              </p>
             </div>
-          )}
-        </div>
 
-        {/* Experiencia */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 flex items-center">
-            <Briefcase className="w-5 h-5 mr-2" />
-            Experiencia Laboral
-          </h2>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Nivel de experiencia
               </label>
               <select
-                value={formData.experiencia.nivel}
-                onChange={(e) => handleNestedChange('experiencia', 'nivel', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                value={formData.nivelExperiencia}
+                onChange={(e) => handleInputChange('nivelExperiencia', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <option value="">Selecciona un nivel</option>
+                <option value="">Selecciona tu nivel</option>
                 {Object.values(NIVELES_EXPERIENCIA).map(nivel => (
                   <option key={nivel.id} value={nivel.id}>{nivel.nombre}</option>
                 ))}
               </select>
             </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Años de experiencia
-              </label>
-              <input
-                type="number"
-                min="0"
-                max="50"
-                value={formData.experiencia.años}
-                onChange={(e) => handleNestedChange('experiencia', 'años', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="0"
-              />
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Trabajos anteriores
-            </label>
-            <div className="space-y-2 mb-3">
-              {formData.experiencia.trabajosAnteriores.map((trabajo, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg"
-                >
-                  <span className="text-sm text-gray-700 dark:text-gray-300">{trabajo}</span>
-                  <button
-                    type="button"
-                    onClick={() => removeItem('experiencia', 'trabajosAnteriores', index)}
-                    className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={currentTrabajo}
-                onChange={(e) => setCurrentTrabajo(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addItem('experiencia', 'trabajosAnteriores', currentTrabajo, setCurrentTrabajo))}
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Ej: Vendedor en Tienda ABC (2020-2023)"
-              />
-              <button
-                type="button"
-                onClick={() => addItem('experiencia', 'trabajosAnteriores', currentTrabajo, setCurrentTrabajo)}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Descripción de tu experiencia
-            </label>
-            <textarea
-              value={formData.experiencia.descripcionExperiencia}
-              onChange={(e) => handleNestedChange('experiencia', 'descripcionExperiencia', e.target.value)}
-              rows={4}
-              className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-              placeholder="Describe brevemente tu experiencia laboral, logros y responsabilidades..."
-            />
           </div>
         </div>
 
         {/* Habilidades */}
         <div className="space-y-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 flex items-center">
-            <GraduationCap className="w-5 h-5 mr-2" />
-            Habilidades y Conocimientos
+            <Award className="w-5 h-5 mr-2" />
+            Habilidades
           </h2>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Tus habilidades
+              Tus habilidades principales
             </label>
             <div className="flex flex-wrap gap-2 mb-3">
               {formData.habilidades.map((hab, index) => (
                 <span
                   key={index}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200"
+                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-emerald-100 dark:bg-emerald-900 text-emerald-800 dark:text-emerald-200"
                 >
                   {hab}
                   <button
                     type="button"
-                    onClick={() => removeItemFromArray('habilidades', index)}
-                    className="ml-2 text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-200"
+                    onClick={() => removeHabilidad(index)}
+                    className="ml-2 text-emerald-600 dark:text-emerald-400 hover:text-emerald-800 dark:hover:text-emerald-200"
                   >
                     <X className="w-3 h-3" />
                   </button>
@@ -703,18 +633,86 @@ export default function BusquedaEmpleoForm({
                 type="text"
                 value={currentHabilidad}
                 onChange={(e) => setCurrentHabilidad(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addItemToArray('habilidades', currentHabilidad, setCurrentHabilidad))}
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Ej: Atención al cliente, Excel, Inglés intermedio"
+                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addHabilidad())}
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="Ej: Atención al cliente, Trabajo en equipo"
               />
               <button
                 type="button"
-                onClick={() => addItemToArray('habilidades', currentHabilidad, setCurrentHabilidad)}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+                onClick={addHabilidad}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
               >
                 <Plus className="w-4 h-4" />
               </button>
             </div>
+          </div>
+        </div>
+
+        {/* CV */}
+        <div className="space-y-6">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 flex items-center">
+            <FileText className="w-5 h-5 mr-2" />
+            Curriculum Vitae
+          </h2>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Sube tu CV (opcional pero recomendado)
+            </label>
+            
+            {formData.cv.url ? (
+              <div className="flex items-center justify-between p-4 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-lg">
+                <div className="flex items-center space-x-3">
+                  <FileText className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                  <div>
+                    <p className="text-sm font-medium text-gray-900 dark:text-white">
+                      {formData.cv.nombre}
+                    </p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {(formData.cv.size / 1024).toFixed(2)} KB
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={removeCV}
+                  className="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
+            ) : (
+              <>
+                <input
+                  ref={cvInputRef}
+                  type="file"
+                  accept=".pdf"
+                  onChange={handleCVUpload}
+                  className="hidden"
+                />
+                <button
+                  type="button"
+                  onClick={() => cvInputRef.current?.click()}
+                  disabled={uploadingCV}
+                  className="w-full px-4 py-3 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-emerald-500 dark:hover:border-emerald-500 transition-colors disabled:opacity-50 flex items-center justify-center space-x-2 bg-gray-50 dark:bg-gray-700"
+                >
+                  {uploadingCV ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-emerald-600 border-t-transparent rounded-full animate-spin"></div>
+                      <span className="text-gray-700 dark:text-gray-300">Subiendo CV...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                      <span className="text-gray-700 dark:text-gray-300">Haz clic para subir tu CV (PDF)</span>
+                    </>
+                  )}
+                </button>
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                  Archivo PDF. Máximo 10MB.
+                </p>
+              </>
+            )}
           </div>
         </div>
 
@@ -726,19 +724,46 @@ export default function BusquedaEmpleoForm({
           </h2>
 
           <div className="space-y-4">
+            <div className="flex items-center space-x-3">
+              <input
+                type="checkbox"
+                id="disponibilidadInmediata"
+                checked={formData.disponibilidad.inmediata}
+                onChange={(e) => handleNestedChange('disponibilidad', 'inmediata', e.target.checked)}
+                className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+              />
+              <label htmlFor="disponibilidadInmediata" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Disponibilidad inmediata
+              </label>
+            </div>
+
+            {!formData.disponibilidad.inmediata && (
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Fecha de inicio
+                </label>
+                <input
+                  type="date"
+                  value={formData.disponibilidad.fechaInicio}
+                  onChange={(e) => handleNestedChange('disponibilidad', 'fechaInicio', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+            )}
+
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Tipos de empleo que buscas
+                Tipo de empleo que buscas *
               </label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 {Object.values(TIPOS_EMPLEO).map(tipo => (
                   <button
                     key={tipo.id}
                     type="button"
-                    onClick={() => handleArrayToggle('disponibilidad', 'tiposEmpleo', tipo.id)}
+                    onClick={() => handleArrayToggle('disponibilidad', 'tipoEmpleo', tipo.id)}
                     className={`px-4 py-3 rounded-lg font-medium transition-colors text-sm ${
-                      formData.disponibilidad.tiposEmpleo.includes(tipo.id)
-                        ? 'bg-orange-600 text-white'
+                      formData.disponibilidad.tipoEmpleo.includes(tipo.id)
+                        ? 'bg-emerald-600 text-white'
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
@@ -750,17 +775,17 @@ export default function BusquedaEmpleoForm({
 
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Modalidades preferidas
+                Modalidad de trabajo *
               </label>
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                 {Object.values(MODALIDADES_TRABAJO).map(mod => (
                   <button
                     key={mod.id}
                     type="button"
                     onClick={() => handleArrayToggle('disponibilidad', 'modalidades', mod.id)}
-                    className={`px-4 py-3 rounded-lg font-medium transition-colors ${
+                    className={`px-4 py-3 rounded-lg font-medium transition-colors text-sm ${
                       formData.disponibilidad.modalidades.includes(mod.id)
-                        ? 'bg-orange-600 text-white'
+                        ? 'bg-emerald-600 text-white'
                         : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
                     }`}
                   >
@@ -770,153 +795,89 @@ export default function BusquedaEmpleoForm({
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Días disponibles
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {Object.values(DIAS_SEMANA).map(dia => (
-                  <button
-                    key={dia.id}
-                    type="button"
-                    onClick={() => handleArrayToggle('disponibilidad', 'diasDisponibles', dia.id)}
-                    className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                      formData.disponibilidad.diasDisponibles.includes(dia.id)
-                        ? 'bg-orange-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    {dia.abrev}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
-                Horarios disponibles
-              </label>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {Object.values(HORARIOS).map(horario => (
-                  <button
-                    key={horario.id}
-                    type="button"
-                    onClick={() => handleArrayToggle('disponibilidad', 'horarios', horario.id)}
-                    className={`px-4 py-3 rounded-lg font-medium transition-colors text-sm ${
-                      formData.disponibilidad.horarios.includes(horario.id)
-                        ? 'bg-orange-600 text-white'
-                        : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                    }`}
-                  >
-                    <div>{horario.nombre}</div>
-                    <div className="text-xs opacity-75">{horario.rango}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
             <div className="flex items-center space-x-3">
               <input
                 type="checkbox"
-                id="disponibilidadInmediata"
-                checked={formData.disponibilidad.inmediata}
-                onChange={(e) => handleNestedChange('disponibilidad', 'inmediata', e.target.checked)}
-                className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 dark:focus:ring-orange-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
+                id="horarioFlexible"
+                checked={formData.disponibilidad.horarioFlexible}
+                onChange={(e) => handleNestedChange('disponibilidad', 'horarioFlexible', e.target.checked)}
+                className="w-4 h-4 text-emerald-600 bg-gray-100 border-gray-300 rounded focus:ring-emerald-500 dark:focus:ring-emerald-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
               />
-              <label htmlFor="disponibilidadInmediata" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Disponibilidad inmediata
+              <label htmlFor="horarioFlexible" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Horario flexible
               </label>
             </div>
           </div>
         </div>
 
-        {/* Preferencias */}
+        {/* Pretensión Salarial */}
         <div className="space-y-6">
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 flex items-center">
             <DollarSign className="w-5 h-5 mr-2" />
-            Preferencias Salariales
+            Pretensión Salarial
           </h2>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Salario mínimo esperado
+                Tipo de salario
               </label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm">
-                  $
-                </span>
-                <input
-                  type="number"
-                  step="1000"
-                  min="0"
-                  value={formData.preferencias.salarioMinimo}
-                  onChange={(e) => handleNestedChange('preferencias', 'salarioMinimo', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-r-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="50000"
-                />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Salario máximo esperado
-              </label>
-              <div className="flex">
-                <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm">
-                  $
-                </span>
-                <input
-                  type="number"
-                  step="1000"
-                  min="0"
-                  value={formData.preferencias.salarioMaximo}
-                  onChange={(e) => handleNestedChange('preferencias', 'salarioMaximo', e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-r-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                  placeholder="100000"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Zonas preferidas para trabajar
-            </label>
-            <div className="flex flex-wrap gap-2 mb-3">
-              {formData.preferencias.zonas.map((zona, index) => (
-                <span
-                  key={index}
-                  className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
-                >
-                  {zona}
-                  <button
-                    type="button"
-                    onClick={() => removeItem('preferencias', 'zonas', index)}
-                    className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
-                  >
-                    <X className="w-3 h-3" />
-                  </button>
-                </span>
-              ))}
-            </div>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={currentZona}
-                onChange={(e) => setCurrentZona(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addItem('preferencias', 'zonas', currentZona, setCurrentZona))}
-                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="Ej: Centro, Nueva Córdoba, Cerro"
-              />
-              <button
-                type="button"
-                onClick={() => addItem('preferencias', 'zonas', currentZona, setCurrentZona)}
-                className="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              <select
+                value={formData.pretensionSalarial.tipo}
+                onChange={(e) => handleNestedChange('pretensionSalarial', 'tipo', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
               >
-                <Plus className="w-4 h-4" />
-              </button>
+                <option value={TIPOS_SALARIO.MENSUAL}>Mensual</option>
+                <option value={TIPOS_SALARIO.SEMANAL}>Semanal</option>
+                <option value={TIPOS_SALARIO.POR_HORA}>Por hora</option>
+                <option value={TIPOS_SALARIO.POR_DIA}>Por día</option>
+                <option value={TIPOS_SALARIO.A_CONVENIR}>A convenir</option>
+              </select>
             </div>
+
+            {formData.pretensionSalarial.tipo !== TIPOS_SALARIO.A_CONVENIR && (
+              <>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Salario mínimo esperado
+                  </label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.pretensionSalarial.minimo}
+                      onChange={(e) => handleNestedChange('pretensionSalarial', 'minimo', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-r-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    Salario máximo esperado
+                  </label>
+                  <div className="flex">
+                    <span className="inline-flex items-center px-3 rounded-l-lg border border-r-0 border-gray-300 dark:border-gray-600 bg-gray-50 dark:bg-gray-600 text-gray-500 dark:text-gray-400 text-sm">
+                      $
+                    </span>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.pretensionSalarial.maximo}
+                      onChange={(e) => handleNestedChange('pretensionSalarial', 'maximo', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-r-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
@@ -936,7 +897,7 @@ export default function BusquedaEmpleoForm({
                 type="text"
                 value={formData.ubicacion.ciudad}
                 onChange={(e) => handleNestedChange('ubicacion', 'ciudad', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Ej: Córdoba"
               />
             </div>
@@ -949,91 +910,10 @@ export default function BusquedaEmpleoForm({
                 type="text"
                 value={formData.ubicacion.provincia}
                 onChange={(e) => handleNestedChange('ubicacion', 'provincia', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="Ej: Córdoba"
               />
             </div>
-          </div>
-
-          <div className="flex items-center space-x-3">
-            <input
-              type="checkbox"
-              id="dispuestoMudar"
-              checked={formData.ubicacion.dispuestoMudar}
-              onChange={(e) => handleNestedChange('ubicacion', 'dispuestoMudar', e.target.checked)}
-              className="w-4 h-4 text-orange-600 bg-gray-100 border-gray-300 rounded focus:ring-orange-500 dark:focus:ring-orange-600 dark:ring-offset-gray-800 focus:ring-2 dark:bg-gray-700 dark:border-gray-600"
-            />
-            <label htmlFor="dispuestoMudar" className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Dispuesto/a a mudarme por trabajo
-            </label>
-          </div>
-        </div>
-
-        {/* Curriculum */}
-        <div className="space-y-6">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white border-b border-gray-200 dark:border-gray-700 pb-2 flex items-center">
-            <FileText className="w-5 h-5 mr-2" />
-            Curriculum Vitae
-          </h2>
-
-          <div>
-            {formData.curriculum.url ? (
-              <div className="flex items-center justify-between p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
-                <div className="flex items-center space-x-3">
-                  <FileText className="w-8 h-8 text-green-600 dark:text-green-400" />
-                  <div>
-                    <p className="font-medium text-gray-900 dark:text-white">{formData.curriculum.nombre}</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {(formData.curriculum.tamaño / 1024 / 1024).toFixed(2)} MB
-                    </p>
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    handleNestedChange('curriculum', 'url', '');
-                    handleNestedChange('curriculum', 'nombre', '');
-                    handleNestedChange('curriculum', 'tamaño', 0);
-                  }}
-                  className="text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
-                >
-                  <Trash2 className="w-5 h-5" />
-                </button>
-              </div>
-            ) : (
-              <div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".pdf"
-                  onChange={handleCVUpload}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingCV}
-                  className="w-full p-6 border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg hover:border-orange-500 dark:hover:border-orange-500 transition-colors flex flex-col items-center justify-center disabled:opacity-50"
-                >
-                  {uploadingCV ? (
-                    <>
-                      <div className="w-8 h-8 border-2 border-orange-600 border-t-transparent rounded-full animate-spin mb-3"></div>
-                      <span className="text-sm text-gray-600 dark:text-gray-400">Subiendo CV...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-8 h-8 text-gray-400 mb-3" />
-                      <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                        Subir Curriculum (PDF)
-                      </span>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                        Máximo 5MB
-                      </span>
-                    </>
-                  )}
-                </button>
-              </div>
-            )}
           </div>
         </div>
 
@@ -1046,7 +926,7 @@ export default function BusquedaEmpleoForm({
           <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
             <p className="text-blue-800 dark:text-blue-300 text-sm">
               <Info className="w-4 h-4 inline mr-2" />
-              Esta información se carga automáticamente desde tu perfil.
+              Esta información se carga automáticamente desde tu perfil. Puedes personalizarla para esta búsqueda.
             </p>
           </div>
 
@@ -1059,7 +939,7 @@ export default function BusquedaEmpleoForm({
                 type="tel"
                 value={formData.contacto.whatsapp}
                 onChange={(e) => handleNestedChange('contacto', 'whatsapp', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="549351xxxxxxx"
               />
             </div>
@@ -1072,34 +952,21 @@ export default function BusquedaEmpleoForm({
                 type="tel"
                 value={formData.contacto.telefono}
                 onChange={(e) => handleNestedChange('contacto', 'telefono', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                 placeholder="351xxxxxxx"
               />
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Email *
+                Email
               </label>
               <input
                 type="email"
                 value={formData.contacto.email}
                 onChange={(e) => handleNestedChange('contacto', 'email', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="tu@email.com"
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                LinkedIn
-              </label>
-              <input
-                type="url"
-                value={formData.contacto.linkedin}
-                onChange={(e) => handleNestedChange('contacto', 'linkedin', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
-                placeholder="https://linkedin.com/in/tu-perfil"
+                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                placeholder="contacto@ejemplo.com"
               />
             </div>
           </div>
@@ -1117,8 +984,8 @@ export default function BusquedaEmpleoForm({
           </button>
           <button
             type="submit"
-            disabled={isLoading}
-            className="px-6 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
+            disabled={isLoading || uploadingFoto || uploadingCV}
+            className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center space-x-2"
           >
             {isLoading ? (
               <>
@@ -1128,7 +995,7 @@ export default function BusquedaEmpleoForm({
             ) : (
               <>
                 <Save className="w-4 h-4" />
-                <span>{busqueda ? 'Actualizar' : 'Publicar'} Perfil</span>
+                <span>{busqueda ? 'Actualizar' : 'Publicar'} Búsqueda</span>
               </>
             )}
           </button>

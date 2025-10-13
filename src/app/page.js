@@ -38,10 +38,6 @@ export default function HomePage() {
         <RecentItems />
       </section>
       
-      {/* Sección de What's New */}
-      <section className="pb-2 lg:pb-4">
-        <WhatsNew />
-      </section>
 
       {/* Sección de Categorías Populares */}
       <section className="px-4 sm:px-6 lg:px-8 pt-2 pb-4 lg:pt-2 lg:pb-4">
