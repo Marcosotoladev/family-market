@@ -32,11 +32,11 @@ import { db } from '@/lib/firebase/config';
 
 export default function CommentsSection() {
   const { user } = useAuth();
-  const [activeTab, setActiveTab] = useState('received'); // 'received' | 'made'
+  const [activeTab, setActiveTab] = useState('received');
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [viewMode, setViewMode] = useState('list'); // 'list' | 'grid'
+  const [viewMode, setViewMode] = useState('list');
 
   useEffect(() => {
     if (user?.uid) {
@@ -52,10 +52,8 @@ export default function CommentsSection() {
       let allComments = [];
 
       if (activeTab === 'made') {
-        // Comentarios que YO hice
         allComments = await getCommentsMadeByUser(user.uid);
       } else {
-        // Comentarios que ME hicieron
         allComments = await getCommentsReceivedByUser(user.uid);
       }
 
@@ -66,6 +64,18 @@ export default function CommentsSection() {
       console.error('Error cargando comentarios:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Verificar si un item existe
+  const itemExists = async (collectionName, itemId) => {
+    try {
+      const itemRef = doc(db, collectionName, itemId);
+      const itemSnap = await getDoc(itemRef);
+      return itemSnap.exists();
+    } catch (error) {
+      console.error('Error verificando item:', error);
+      return false;
     }
   };
 
@@ -84,15 +94,24 @@ export default function CommentsSection() {
 
     for (const commentDoc of productSnapshot.docs) {
       const commentData = commentDoc.data();
-      const itemData = await getItemData('productos', commentData.productoId);
       
-      allComments.push({
-        id: commentDoc.id,
-        type: 'product',
-        ...commentData,
-        fechaCreacion: commentData.fechaCreacion?.toDate() || new Date(),
-        itemData
-      });
+      // Verificar si el producto existe
+      const exists = await itemExists('productos', commentData.productoId);
+      
+      if (exists) {
+        const itemData = await getItemData('productos', commentData.productoId);
+        allComments.push({
+          id: commentDoc.id,
+          type: 'product',
+          ...commentData,
+          fechaCreacion: commentData.fechaCreacion?.toDate() || new Date(),
+          itemData
+        });
+      } else {
+        // Si no existe, eliminar el comentario
+        await deleteDoc(doc(db, 'comentarios', commentDoc.id));
+        console.log(`Comentario eliminado (producto no existe): ${commentDoc.id}`);
+      }
     }
 
     // Comentarios en servicios
@@ -106,15 +125,22 @@ export default function CommentsSection() {
 
     for (const commentDoc of serviceSnapshot.docs) {
       const commentData = commentDoc.data();
-      const itemData = await getItemData('servicios', commentData.servicioId);
       
-      allComments.push({
-        id: commentDoc.id,
-        type: 'service',
-        ...commentData,
-        fechaCreacion: commentData.fechaCreacion?.toDate() || new Date(),
-        itemData
-      });
+      const exists = await itemExists('servicios', commentData.servicioId);
+      
+      if (exists) {
+        const itemData = await getItemData('servicios', commentData.servicioId);
+        allComments.push({
+          id: commentDoc.id,
+          type: 'service',
+          ...commentData,
+          fechaCreacion: commentData.fechaCreacion?.toDate() || new Date(),
+          itemData
+        });
+      } else {
+        await deleteDoc(doc(db, 'comentarios_servicios', commentDoc.id));
+        console.log(`Comentario eliminado (servicio no existe): ${commentDoc.id}`);
+      }
     }
 
     // Comentarios en empleos
@@ -128,15 +154,22 @@ export default function CommentsSection() {
 
     for (const commentDoc of jobSnapshot.docs) {
       const commentData = commentDoc.data();
-      const itemData = await getItemData('empleos', commentData.empleoId);
       
-      allComments.push({
-        id: commentDoc.id,
-        type: 'job',
-        ...commentData,
-        fechaCreacion: commentData.fechaCreacion?.toDate() || new Date(),
-        itemData
-      });
+      const exists = await itemExists('empleos', commentData.empleoId);
+      
+      if (exists) {
+        const itemData = await getItemData('empleos', commentData.empleoId);
+        allComments.push({
+          id: commentDoc.id,
+          type: 'job',
+          ...commentData,
+          fechaCreacion: commentData.fechaCreacion?.toDate() || new Date(),
+          itemData
+        });
+      } else {
+        await deleteDoc(doc(db, 'comentarios_empleos', commentDoc.id));
+        console.log(`Comentario eliminado (empleo no existe): ${commentDoc.id}`);
+      }
     }
 
     return allComments;
@@ -254,11 +287,7 @@ export default function CommentsSection() {
       console.error('Error obteniendo item:', error);
     }
     
-    return {
-      id: itemId,
-      title: 'Item eliminado',
-      image: null
-    };
+    return null;
   };
 
   const getUserData = async (userId) => {
@@ -326,7 +355,6 @@ export default function CommentsSection() {
     }
 
     try {
-      // Determinar la colección según el tipo
       let collectionName;
       switch (commentType) {
         case 'product':
@@ -342,11 +370,9 @@ export default function CommentsSection() {
           throw new Error('Tipo de comentario no válido');
       }
 
-      // Eliminar el comentario
       const commentRef = doc(db, collectionName, commentId);
       await deleteDoc(commentRef);
 
-      // Actualizar el estado local
       setComments(prev => prev.filter(c => c.id !== commentId));
     } catch (error) {
       console.error('Error al eliminar comentario:', error);
@@ -355,21 +381,17 @@ export default function CommentsSection() {
   };
 
   const handleViewItem = (comment) => {
-    // Construir la URL completa con el dominio de producción
     const baseUrl = 'https://familymarket.vercel.app';
     let url = '';
     
     if (comment.type === 'product') {
-      // Para productos: /tienda/[slug]/producto/[productId]
       const storeSlug = comment.itemData?.storeSlug || 'tienda';
       const productId = comment.productoId || comment.itemData?.id;
       url = `${baseUrl}/tienda/${storeSlug}/producto/${productId}`;
     } else if (comment.type === 'service') {
-      // Para servicios
       const storeSlug = comment.itemData?.storeSlug || 'tienda';
       url = `${baseUrl}/tienda/${storeSlug}/servicios`;
     } else if (comment.type === 'job') {
-      // Para empleos
       const storeSlug = comment.itemData?.storeSlug || 'tienda';
       url = `${baseUrl}/tienda/${storeSlug}/empleos`;
     }
@@ -380,6 +402,9 @@ export default function CommentsSection() {
   };
 
   const filteredComments = comments.filter(comment => {
+    // Validar que itemData existe antes de filtrar
+    if (!comment.itemData) return false;
+    
     const searchLower = searchTerm.toLowerCase();
     return (
       comment.contenido?.toLowerCase().includes(searchLower) ||
@@ -413,7 +438,7 @@ export default function CommentsSection() {
                 Comentarios
               </h2>
               <p className="text-sm text-gray-600 dark:text-gray-400">
-                {comments.length} comentarios totales
+                {comments.length} comentario{comments.length !== 1 ? 's' : ''} {activeTab === 'received' ? 'recibido' : 'realizado'}{comments.length !== 1 ? 's' : ''}
               </p>
             </div>
           </div>
@@ -510,7 +535,7 @@ export default function CommentsSection() {
             : 'overflow-x-auto'
           }>
             {viewMode === 'grid' ? (
-              // Vista Grid (Tarjetas)
+              // Vista Grid (Mantén tu código de grid actual...)
               filteredComments.map((comment) => {
                 const TypeIcon = getTypeIcon(comment.type);
                 
@@ -519,7 +544,6 @@ export default function CommentsSection() {
                     key={comment.id}
                     className="bg-white dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all hover:shadow-md overflow-hidden"
                   >
-                    {/* Imagen */}
                     {comment.itemData?.image && (
                       <div className="relative h-40">
                         <img
@@ -534,7 +558,6 @@ export default function CommentsSection() {
                       </div>
                     )}
 
-                    {/* Contenido */}
                     <div className="p-4">
                       <h3 className="text-sm font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
                         {comment.itemData?.title || 'Sin título'}
@@ -551,7 +574,6 @@ export default function CommentsSection() {
                         {comment.contenido}
                       </p>
 
-                      {/* Rating */}
                       {comment.puntuacion && (
                         <div className="flex items-center mb-3">
                           {[1, 2, 3, 4, 5].map((star) => (
@@ -567,7 +589,6 @@ export default function CommentsSection() {
                         </div>
                       )}
 
-                      {/* Footer */}
                       <div className="flex items-center justify-between pt-3 border-t border-gray-200 dark:border-gray-600">
                         <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
                           <Calendar className="w-3 h-3 mr-1" />
@@ -597,7 +618,7 @@ export default function CommentsSection() {
                 );
               })
             ) : (
-              // Vista Tabla
+              // Vista Tabla (Mantén tu código de tabla actual pero solo renderiza si itemData existe)
               <table className="w-full min-w-[900px]">
                 <thead className="bg-gray-50 dark:bg-gray-700/50">
                   <tr>
