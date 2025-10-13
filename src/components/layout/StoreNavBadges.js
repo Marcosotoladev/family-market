@@ -15,7 +15,8 @@ import {
   MessageSquare,
   ExternalLink,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Heart
 } from 'lucide-react';
 
 const StoreNavBadges = ({ activeSection, setActiveSection }) => {
@@ -68,6 +69,14 @@ const StoreNavBadges = ({ activeSection, setActiveSection }) => {
       icon: Palette,
       color: 'green',
       description: 'Colores y tema'
+    },
+    {
+      id: 'nosotros',
+      name: 'Nosotros',
+      icon: Heart,
+      color: 'pink',
+      description: 'Sobre nosotros',
+      href: '/dashboard/tienda/nosotros'
     },
     {
       id: 'productos',
