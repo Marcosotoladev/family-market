@@ -53,8 +53,6 @@ const StoreHeader = ({
 
   const handleSearchChange = (e) => {
     setSearchQuery(e.target.value);
-    // Búsqueda en tiempo real opcional
-    // if (onSearch) onSearch(e.target.value);
   };
 
   return (
@@ -120,17 +118,8 @@ const StoreHeader = ({
             </form>
           </div>
 
-          {/* Nombre de la tienda (cuando hay logo) */}
-          {storeLogo && (
-            <div className="flex-shrink-0 text-right">
-              <h1 className="text-xl font-bold text-gray-900 dark:text-white">
-                {storeName}
-              </h1>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Tienda online
-              </p>
-            </div>
-          )}
+          {/* Espacio flexible para balance visual */}
+          <div className="flex-shrink-0"></div>
         </div>
 
         {/* MOBILE LAYOUT */}
@@ -139,7 +128,7 @@ const StoreHeader = ({
           {/* Primera fila: Logo, Nombre y Menú */}
           <div className="flex items-center justify-between py-3">
             
-            {/* Logo + Nombre */}
+            {/* Logo solamente */}
             <div className="flex items-center space-x-3 flex-1 min-w-0">
               {storeLogo ? (
                 <img
@@ -149,22 +138,18 @@ const StoreHeader = ({
                   onLoad={handleLogoLoad}
                 />
               ) : (
-                <div 
-                  className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
-                  style={{ backgroundColor: storeConfig?.primaryColor || '#ea580c' }}
-                >
-                  <Store className="w-5 h-5 text-white" />
+                <div className="flex items-center space-x-3">
+                  <div 
+                    className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: storeConfig?.primaryColor || '#ea580c' }}
+                  >
+                    <Store className="w-5 h-5 text-white" />
+                  </div>
+                  <span className="text-lg font-bold text-gray-900 dark:text-white truncate">
+                    {storeName}
+                  </span>
                 </div>
               )}
-              
-              <div className="min-w-0 flex-1">
-                <h1 className="text-lg font-bold text-gray-900 dark:text-white truncate">
-                  {storeName}
-                </h1>
-                <p className="text-xs text-gray-600 dark:text-gray-400">
-                  Tienda online
-                </p>
-              </div>
             </div>
 
             {/* Botón Menú */}
