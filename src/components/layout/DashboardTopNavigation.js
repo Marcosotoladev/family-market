@@ -5,8 +5,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { 
   BarChart3, User, ChevronDown, Store, ExternalLink, House, 
-  Settings, Users, MessageSquare, Heart, Star, ShoppingBag,
-  Menu, X
+  Heart, Star, ShoppingBag, Menu, X, Shield
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 
@@ -119,23 +118,14 @@ export default function DashboardTopNavigation() {
     }
   ]
 
-  // Items de admin
-  const adminItems = [
-    {
-      id: 'users',
-      label: 'Usuarios',
-      icon: Users,
-      href: '/dashboard/users',
-      color: 'indigo'
-    },
-    {
-      id: 'messaging',
-      label: 'Mensajería',
-      icon: MessageSquare,
-      href: '/dashboard/messaging',
-      color: 'cyan'
-    }
-  ]
+  // Item de admin (ahora es solo uno)
+  const adminItem = {
+    id: 'admin',
+    label: 'Panel Admin',
+    icon: Shield,
+    href: '/admin',
+    color: 'red'
+  }
 
   // Colores por tipo
   const getColorClasses = (color, isActive) => {
@@ -168,13 +158,9 @@ export default function DashboardTopNavigation() {
         active: 'border-yellow-500 text-yellow-600 dark:text-yellow-400',
         inactive: 'border-transparent text-gray-600 dark:text-gray-400 hover:text-yellow-600 dark:hover:text-yellow-400'
       },
-      indigo: {
-        active: 'border-indigo-500 text-indigo-600 dark:text-indigo-400',
-        inactive: 'border-transparent text-gray-600 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-400'
-      },
-      cyan: {
-        active: 'border-cyan-500 text-cyan-600 dark:text-cyan-400',
-        inactive: 'border-transparent text-gray-600 dark:text-gray-400 hover:text-cyan-600 dark:hover:text-cyan-400'
+      red: {
+        active: 'border-red-500 text-red-600 dark:text-red-400',
+        inactive: 'border-transparent text-gray-600 dark:text-gray-400 hover:text-red-600 dark:hover:text-red-400'
       }
     }
 
@@ -183,7 +169,7 @@ export default function DashboardTopNavigation() {
 
   // Obtener el título de la página actual
   const getCurrentPageTitle = () => {
-    const allItems = [...navItems, ...adminItems]
+    const allItems = [...navItems, ...(isAdmin ? [adminItem] : [])]
     const currentItem = allItems.find(item => isActive(item.href))
     return currentItem?.label || 'Dashboard'
   }
@@ -213,22 +199,16 @@ export default function DashboardTopNavigation() {
                   )
                 })}
 
-                {/* Items de admin */}
-                {isAdmin && adminItems.map((item) => {
-                  const Icon = item.icon
-                  const active = isActive(item.href)
-                  
-                  return (
-                    <button
-                      key={item.id}
-                      onClick={() => navigateTo(item.href)}
-                      className={`flex items-center space-x-2 px-4 py-4 border-b-2 font-medium text-sm transition-all whitespace-nowrap cursor-pointer ${getColorClasses(item.color, active)}`}
-                    >
-                      <Icon className="w-4 h-4 flex-shrink-0" />
-                      <span>{item.label}</span>
-                    </button>
-                  )
-                })}
+                {/* Item de admin */}
+                {isAdmin && (
+                  <button
+                    onClick={() => navigateTo(adminItem.href)}
+                    className={`flex items-center space-x-2 px-4 py-4 border-b-2 font-medium text-sm transition-all whitespace-nowrap cursor-pointer ${getColorClasses(adminItem.color, isActive(adminItem.href))}`}
+                  >
+                    <Shield className="w-4 h-4 flex-shrink-0" />
+                    <span>{adminItem.label}</span>
+                  </button>
+                )}
               </div>
             </div>
             
@@ -256,7 +236,7 @@ export default function DashboardTopNavigation() {
             {/* Navegación en scroll horizontal */}
             <div className="flex-1 overflow-x-auto scrollbar-hide">
               <div className="flex space-x-1 min-w-max">
-                {[...navItems.filter(item => item.showAlways), ...(isAdmin ? adminItems : [])].map((item) => {
+                {[...navItems.filter(item => item.showAlways), ...(isAdmin ? [adminItem] : [])].map((item) => {
                   const Icon = item.icon
                   const active = isActive(item.href)
                   
@@ -359,37 +339,22 @@ export default function DashboardTopNavigation() {
 
               {/* Sección de admin */}
               {isAdmin && (
-                <>
-                  <div className="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50">
-                    <div className="px-4 py-2">
-                      <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                        Administración
-                      </span>
-                    </div>
-                    {adminItems.map((item) => {
-                      const Icon = item.icon
-                      const active = isActive(item.href)
-                      
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => navigateTo(item.href)}
-                          className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors cursor-pointer ${
-                            active 
-                              ? 'bg-white dark:bg-gray-700/50 text-gray-900 dark:text-white font-medium' 
-                              : 'text-gray-700 dark:text-gray-300 hover:bg-white dark:hover:bg-gray-700/50'
-                          }`}
-                        >
-                          <Icon className="w-5 h-5 flex-shrink-0" />
-                          <span>{item.label}</span>
-                          {active && (
-                            <div className="ml-auto w-1.5 h-1.5 rounded-full bg-purple-500"></div>
-                          )}
-                        </button>
-                      )
-                    })}
-                  </div>
-                </>
+                <div className="border-t border-gray-200 dark:border-gray-700 bg-red-50 dark:bg-red-900/10">
+                  <button
+                    onClick={() => navigateTo(adminItem.href)}
+                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left transition-colors cursor-pointer ${
+                      isActive(adminItem.href)
+                        ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 font-semibold' 
+                        : 'text-red-600 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/30'
+                    }`}
+                  >
+                    <Shield className="w-5 h-5 flex-shrink-0" />
+                    <span>{adminItem.label}</span>
+                    {isActive(adminItem.href) && (
+                      <div className="ml-auto w-1.5 h-1.5 rounded-full bg-red-500"></div>
+                    )}
+                  </button>
+                </div>
               )}
             </div>
           )}
