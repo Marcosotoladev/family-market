@@ -5,7 +5,7 @@ import { useTheme } from 'next-themes'
 import { 
   Search, User, Moon, Sun, Plus, HelpCircle, LogOut, 
   LayoutDashboard, Heart, Star, Store, 
-  MessageSquare, Users, Settings, ChevronRight
+  MessageSquare, Users, Settings, ChevronRight, Shield
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -17,7 +17,7 @@ export default function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
   const { theme, setTheme } = useTheme()
-const { isAuthenticated, loading, user, userData, signOut } = useAuth()
+  const { isAuthenticated, loading, user, userData, signOut } = useAuth()
   const userMenuRef = useRef(null)
 
   const router = useRouter()
@@ -72,16 +72,15 @@ const { isAuthenticated, loading, user, userData, signOut } = useAuth()
     }
   }
 
-const handleLogout = async () => {
-  try {
-    await signOut()
-    setShowUserMenu(false)
-    router.push('/')
-  } catch (error) {
-    console.error('Error al cerrar sesión:', error)
+  const handleLogout = async () => {
+    try {
+      await signOut()
+      setShowUserMenu(false)
+      router.push('/')
+    } catch (error) {
+      console.error('Error al cerrar sesión:', error)
+    }
   }
-}
-
 
   const handleNavigation = (href) => {
     setShowUserMenu(false)
@@ -166,18 +165,11 @@ const handleLogout = async () => {
     section: 'Administración',
     items: [
       {
-        id: 'users',
-        label: 'Usuarios',
-        icon: Users,
-        href: '/dashboard/users',
-        description: 'Gestionar usuarios'
-      },
-      {
-        id: 'messaging',
-        label: 'Mensajería',
-        icon: MessageSquare,
-        href: '/dashboard/messaging',
-        description: 'Notificaciones masivas'
+        id: 'admin',
+        label: 'Panel Admin',
+        icon: Shield,
+        href: '/admin',
+        description: 'Gestión del sistema'
       }
     ]
   }

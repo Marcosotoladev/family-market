@@ -6,7 +6,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import {
   Home, Heart, Grid3X3, X, Package, Briefcase, ChevronLeft,
   ChevronRight, User, LogOut, Store, ShoppingBag, Star,
-  MessageSquare, Users, LayoutDashboard, Settings
+  MessageSquare, Users, LayoutDashboard, Settings, Shield
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { CATEGORIAS_PRODUCTOS, CATEGORIAS_SERVICIOS, CATEGORIAS_EMPLEO } from '@/types'
@@ -148,20 +148,12 @@ export default function MobileNavigation() {
     section: 'Administración',
     items: [
       {
-        id: 'users',
-        label: 'Usuarios',
-        icon: Users,
-        href: '/dashboard/users',
-        description: 'Gestionar usuarios',
+        id: 'admin',
+        label: 'Panel Admin',
+        icon: Shield,
+        href: '/admin',
+        description: 'Gestión del sistema',
         color: 'indigo'
-      },
-      {
-        id: 'messaging',
-        label: 'Mensajería',
-        icon: MessageSquare,
-        href: '/dashboard/messaging',
-        description: 'Notificaciones masivas',
-        color: 'cyan'
       }
     ]
   }

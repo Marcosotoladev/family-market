@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import {
   Home, Heart, Grid3X3, Package, Briefcase, ChevronLeft,
   ChevronRight, User, LogOut, Store, ShoppingBag, Star,
-  MessageSquare, Users, LayoutDashboard, Settings, ChevronDown
+  MessageSquare, Users, LayoutDashboard, Settings, ChevronDown, Shield
 } from 'lucide-react'
 import { useAuth } from '@/contexts/AuthContext'
 import { CATEGORIAS_PRODUCTOS, CATEGORIAS_SERVICIOS, CATEGORIAS_EMPLEO } from '@/types'
@@ -155,20 +155,12 @@ export default function DesktopNavigation() {
     section: 'Administración',
     items: [
       {
-        id: 'users',
-        label: 'Usuarios',
-        icon: Users,
-        href: '/dashboard/users',
-        description: 'Gestionar usuarios',
+        id: 'admin',
+        label: 'Panel Admin',
+        icon: Shield,
+        href: '/admin',
+        description: 'Gestión del sistema',
         color: 'indigo'
-      },
-      {
-        id: 'messaging',
-        label: 'Mensajería',
-        icon: MessageSquare,
-        href: '/dashboard/messaging',
-        description: 'Notificaciones masivas',
-        color: 'cyan'
       }
     ]
   }
@@ -213,8 +205,22 @@ export default function DesktopNavigation() {
     setSelectedCategory(null)
     setShowSubcategories(false)
     
-    // Aquí puedes agregar la navegación real con router.push
-    // router.push(`/${type}?categoria=${categoryId}&subcategoria=${subcategoria}`)
+    // Construir la URL con los parámetros apropiados
+    let url = `/${type}`
+    const params = new URLSearchParams()
+    
+    if (categoryId) {
+      params.append('categoria', categoryId)
+    }
+    if (subcategoria) {
+      params.append('subcategoria', subcategoria)
+    }
+    
+    if (params.toString()) {
+      url += `?${params.toString()}`
+    }
+    
+    router.push(url)
   }
 
   const handleViewAll = (href) => {
