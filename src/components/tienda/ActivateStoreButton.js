@@ -1,15 +1,51 @@
 // src/components/tienda/ActivateStoreButton.js
 'use client';
 
-import { useState } from 'react';
-import { Store, Loader, Check, AlertCircle, Sparkles, X, Calendar, CreditCard } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Store, Loader, Check, AlertCircle, Sparkles, X, CreditCard } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
 
 export default function ActivateStoreButton({ className = '' }) {
   const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showModal, setShowModal] = useState(false);
+  const [shouldShow, setShouldShow] = useState(false);
+  const [checkingUser, setCheckingUser] = useState(true);
+
+  // Verificar si el usuario debe ver el botón
+  useEffect(() => {
+    const checkUserStatus = async () => {
+      if (!user) {
+        setShouldShow(false);
+        setCheckingUser(false);
+        return;
+      }
+
+      try {
+        const userRef = doc(db, 'users', user.uid);
+        const userSnap = await getDoc(userRef);
+
+        if (userSnap.exists()) {
+          const userData = userSnap.data();
+          // Solo mostrar si el usuario está en estado "pending"
+          const isPending = userData.accountStatus === 'pending';
+          setShouldShow(isPending);
+        } else {
+          setShouldShow(false);
+        }
+      } catch (error) {
+        console.error('Error checking user status:', error);
+        setShouldShow(false);
+      } finally {
+        setCheckingUser(false);
+      }
+    };
+
+    checkUserStatus();
+  }, [user]);
 
   const handleOpenModal = () => {
     if (!user) {
@@ -63,17 +99,24 @@ export default function ActivateStoreButton({ className = '' }) {
     }
   };
 
+  // No mostrar nada si está checkeando o no debe mostrarse
+  if (checkingUser || !shouldShow) {
+    return null;
+  }
+
   return (
     <>
-      {/* Botón compacto */}
-      <button
-        onClick={handleOpenModal}
-        className={`bg-gradient-to-r from-orange-500 to-pink-500 text-white px-6 py-3 rounded-lg font-bold hover:from-orange-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl flex items-center space-x-2 ${className}`}
-      >
-        <Store className="w-5 h-5" />
-        <span>Activa tu Tienda Online</span>
-        <Sparkles className="w-4 h-4" />
-      </button>
+      {/* Botón compacto - CENTRADO */}
+      <div className="flex justify-center">
+        <button
+          onClick={handleOpenModal}
+          className={`bg-gradient-to-r from-orange-500 to-pink-500 text-white px-6 py-3 rounded-lg font-bold hover:from-orange-600 hover:to-pink-600 transition-all shadow-lg hover:shadow-xl flex items-center space-x-2 ${className}`}
+        >
+          <Store className="w-5 h-5" />
+          <span>Activa tu Tienda Pública</span>
+          <Sparkles className="w-4 h-4" />
+        </button>
+      </div>
 
       {/* Error simple */}
       {error && !showModal && (
@@ -97,7 +140,7 @@ export default function ActivateStoreButton({ className = '' }) {
               </button>
               <div className="flex items-center space-x-3 mb-2">
                 <Store className="w-8 h-8" />
-                <h2 className="text-2xl font-bold">Tienda Online</h2>
+                <h2 className="text-2xl font-bold">Tienda Pública</h2>
               </div>
               <p className="text-orange-100 text-sm">
                 Activa tu tienda profesional en Family Market
@@ -106,14 +149,24 @@ export default function ActivateStoreButton({ className = '' }) {
 
             {/* Contenido del modal */}
             <div className="p-6">
+              {/* Frase graciosa antes del precio */}
+              <div className="text-center mb-4">
+                <p className="text-lg font-medium text-gray-700 dark:text-gray-300 mb-1">
+                  🥤 La Coca hace mal y cuesta más...
+                </p>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  ¡Mejor invertí en tu negocio y sé más saludable! 💪
+                </p>
+              </div>
+
               {/* Precio destacado */}
               <div className="bg-gradient-to-r from-orange-50 to-pink-50 dark:from-orange-900/20 dark:to-pink-900/20 border border-orange-200 dark:border-orange-700 rounded-xl p-6 mb-6 text-center">
                 <div className="flex items-baseline justify-center mb-2">
-                  <span className="text-4xl font-bold text-gray-900 dark:text-white">$2.000</span>
+                  <span className="text-4xl font-bold text-gray-900 dark:text-white">$2.500</span>
                   <span className="text-gray-600 dark:text-gray-400 ml-2">ARS/mes</span>
                 </div>
                 <p className="text-sm text-gray-600 dark:text-gray-400">
-                  Facturación mensual automática
+                  Menos que una salida al cine 🎬
                 </p>
               </div>
 

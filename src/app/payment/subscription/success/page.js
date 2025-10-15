@@ -1,3 +1,57 @@
+useEffect(() => {
+    const checkSubscription = async () => {
+      // Si no hay userId, no hacer nada
+      if (!userId) {
+        console.log('⚠️ No userId found, skipping subscription check');
+        setLoading(false);
+        return;
+      }
+
+      // Verificar que realmente haya parámetros de pago
+      const hasPaymentParams = userIdFromQuery || externalReference || searchParams.get('collection_status');
+      if (!hasPaymentParams) {
+        console.log('⚠️ No payment parameters, skipping activation');
+        setLoading(false);
+        return;
+      }
+
+      try {
+        // Esperar para que el webhook procese y verificar varias veces
+        let attempts = 0;
+        const maxAttempts = 5;
+        
+        while (attempts < maxAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          
+          const userRef = doc(db, 'users', userId);
+          const userSnap = await getDoc(userRef);
+
+          if (userSnap.exists()) {
+            const userData = userSnap.data();
+            if (userData.accountStatus === 'approved' && userData.subscription?.isActive) {
+              console.log('✅ Subscription activated!');
+              setSubscriptionActive(true);
+              break;
+            }
+          }
+          
+          attempts++;
+          console.log(`⏳ Attempt ${attempts}/${maxAttempts} - waiting for webhook...`);
+        }
+        
+        if (attempts >= maxAttempts) {
+          console.log('⚠️ Max attempts reached. Subscription may take a bit longer to activate.');
+        }
+        
+      } catch (error) {
+        console.error('Error checking subscription:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkSubscription();
+  }, [userId, userIdFromQuery, externalReference, searchParams]);
 // src/app/payment/subscription/success/page.js
 'use client';
 
@@ -26,6 +80,16 @@ function SubscriptionSuccessContent() {
   // Prioridad: 1. Query param, 2. External reference, 3. Usuario logueado
   const userId = userIdFromQuery || userIdFromReference || user?.uid;
 
+  // ⚠️ VALIDACIÓN: Si no hay userId o parámetros de pago, redirigir
+  useEffect(() => {
+    const hasPaymentParams = userIdFromQuery || externalReference || searchParams.get('collection_status');
+    
+    if (!hasPaymentParams && !loading) {
+      console.log('⚠️ No payment parameters found, redirecting to home');
+      router.push('/');
+    }
+  }, [userIdFromQuery, externalReference, searchParams, loading, router]);
+
   useEffect(() => {
     const checkSubscription = async () => {
       if (!userId) {
@@ -37,7 +101,7 @@ function SubscriptionSuccessContent() {
         // Esperar un poco para que el webhook procese
         await new Promise(resolve => setTimeout(resolve, 3000));
 
-        const userRef = doc(db, 'usuarios', userId);
+        const userRef = doc(db, 'users', userId); // ✅ CAMBIO: 'users'
         const userSnap = await getDoc(userRef);
 
         if (userSnap.exists()) {
@@ -83,7 +147,7 @@ function SubscriptionSuccessContent() {
           planType: 'tienda_online',
           startDate: new Date(),
           expiresAt: nextBillingDate,
-          amount: 2000,
+          amount: 2500, // ✅ ACTUALIZADO
           currency: 'ARS',
           autoRenewal: true,
           activatedAt: new Date(),

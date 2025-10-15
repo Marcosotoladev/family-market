@@ -1,6 +1,5 @@
 // src/app/page.js
 import HeroCarousel from '@/components/home/HeroCarousel'
-import WhatsNew from '@/components/home/WhatsNew'
 import FeaturedProducts from '@/components/home/FeaturedProducts'
 import FeaturedServices from '@/components/home/FeaturedServices'
 import FeaturedJobs from '@/components/home/FeaturedJobs'
