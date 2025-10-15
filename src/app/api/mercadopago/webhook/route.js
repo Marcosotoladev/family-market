@@ -1,8 +1,8 @@
 // src/app/api/mercadopago/webhook/route.js
 import { MercadoPagoConfig, Payment, PreApproval } from 'mercadopago';
-import { db } from '@/lib/firebase/config';
-import { doc, updateDoc, addDoc, collection, serverTimestamp, getDoc, setDoc } from 'firebase/firestore';
 import { NextResponse } from 'next/server';
+import { adminDb } from '@/lib/firebase/admin';
+import { FieldValue } from 'firebase-admin/firestore';
 
 const client = new MercadoPagoConfig({
   accessToken: process.env.MERCADOPAGO_ACCESS_TOKEN,
@@ -39,7 +39,8 @@ export async function POST(request) {
           case 'created':
           case 'approved':
           case 'authorized':
-            console.log('✅ Subscription activated for user:', userId);
+          case 'updated': // ⭐ AGREGAR ESTE CASO
+            console.log('✅ Subscription activated/updated for user:', userId);
             await handleSubscriptionActivation(userId, subscriptionData);
             break;
             
@@ -93,12 +94,12 @@ export async function POST(request) {
             });
             
             // Registrar pago de renovación
-            await addDoc(collection(db, 'subscription_payments'), {
+            await adminDb.collection('subscription_payments').add({
               userId: userId,
               paymentId: paymentData.id,
               amount: paymentData.transaction_amount,
               status: paymentData.status,
-              paymentDate: serverTimestamp(),
+              paymentDate: FieldValue.serverTimestamp(),
               externalReference: paymentData.external_reference
             });
             
@@ -167,19 +168,19 @@ export async function POST(request) {
           try {
             console.log(`🔄 Updating ${itemLabel} in Firebase...`);
             
-            const itemRef = doc(db, collectionName, item_id);
+            const itemRef = adminDb.collection(collectionName).doc(item_id);
             
-            await updateDoc(itemRef, {
+            await itemRef.update({
               featured: true,
               featuredUntil: featuredUntil,
               featuredPaymentId: paymentData.id,
               featuredAmount: parseFloat(amount || paymentData.transaction_amount || 0),
-              fechaDestacado: serverTimestamp()
+              fechaDestacado: FieldValue.serverTimestamp()
             });
 
             console.log(`✅ ${itemLabel} updated successfully in ${collectionName}`);
 
-            await addDoc(collection(db, 'featured_payments'), {
+            await adminDb.collection('featured_payments').add({
               itemId: item_id,
               itemType: item_type,
               userId: user_id,
@@ -188,7 +189,7 @@ export async function POST(request) {
               status: paymentData.status,
               featuredUntil: featuredUntil,
               externalReference: paymentData.external_reference,
-              fechaCreacion: serverTimestamp(),
+              fechaCreacion: FieldValue.serverTimestamp(),
               paymentMethod: paymentData.payment_method_id || 'unknown',
               payerEmail: paymentData.payer?.email || 'test@example.com',
               statusDetail: paymentData.status_detail
@@ -233,10 +234,10 @@ export async function POST(request) {
 
 async function handleSubscriptionActivation(userId, subscriptionData) {
   try {
-    const userRef = doc(db, 'usuarios', userId);
-    const userSnap = await getDoc(userRef);
+    const userRef = adminDb.collection('usuarios').doc(userId);
+    const userDoc = await userRef.get();
     
-    if (!userSnap.exists()) {
+    if (!userDoc.exists) {
       console.error('❌ User not found:', userId);
       return;
     }
@@ -245,37 +246,36 @@ async function handleSubscriptionActivation(userId, subscriptionData) {
     nextBillingDate.setDate(nextBillingDate.getDate() + 30);
 
     // Actualizar usuario a "approved"
-    await updateDoc(userRef, {
+    await userRef.update({
       accountStatus: 'approved',
       subscription: {
         isActive: true,
         planType: 'tienda_online',
-        startDate: serverTimestamp(),
+        startDate: FieldValue.serverTimestamp(),
         expiresAt: nextBillingDate,
         mercadopagoSubscriptionId: subscriptionData.id,
         amount: 2000,
         currency: 'ARS',
         autoRenewal: true
       },
-      updatedAt: serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp()
     });
 
     // Crear/actualizar documento de suscripción
-    const subscriptionRef = doc(db, 'subscriptions', userId);
-    await setDoc(subscriptionRef, {
+    await adminDb.collection('subscriptions').doc(userId).set({
       userId: userId,
       status: 'active',
       mercadopagoSubscriptionId: subscriptionData.id,
       planType: 'tienda_online',
       amount: 2000,
       currency: 'ARS',
-      startDate: serverTimestamp(),
+      startDate: FieldValue.serverTimestamp(),
       nextBillingDate: nextBillingDate,
-      currentPeriodStart: serverTimestamp(),
+      currentPeriodStart: FieldValue.serverTimestamp(),
       currentPeriodEnd: nextBillingDate,
       autoRenewal: true,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp()
     }, { merge: true });
 
     console.log('✅ User activated with subscription:', userId);
@@ -287,19 +287,19 @@ async function handleSubscriptionActivation(userId, subscriptionData) {
 
 async function handleSubscriptionPause(userId, subscriptionData) {
   try {
-    const userRef = doc(db, 'usuarios', userId);
-    const subscriptionRef = doc(db, 'subscriptions', userId);
+    const userRef = adminDb.collection('usuarios').doc(userId);
+    const subscriptionRef = adminDb.collection('subscriptions').doc(userId);
 
-    await updateDoc(userRef, {
+    await userRef.update({
       'subscription.isActive': false,
       'subscription.status': 'paused',
-      updatedAt: serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp()
     });
 
-    await updateDoc(subscriptionRef, {
+    await subscriptionRef.update({
       status: 'paused',
-      pausedAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      pausedAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp()
     });
 
     console.log('⏸️ Subscription paused for user:', userId);
@@ -310,20 +310,20 @@ async function handleSubscriptionPause(userId, subscriptionData) {
 
 async function handleSubscriptionCancellation(userId, subscriptionData) {
   try {
-    const userRef = doc(db, 'usuarios', userId);
-    const subscriptionRef = doc(db, 'subscriptions', userId);
+    const userRef = adminDb.collection('usuarios').doc(userId);
+    const subscriptionRef = adminDb.collection('subscriptions').doc(userId);
 
-    await updateDoc(userRef, {
+    await userRef.update({
       accountStatus: 'pending', // Volver a pending
       'subscription.isActive': false,
       'subscription.status': 'cancelled',
-      updatedAt: serverTimestamp()
+      updatedAt: FieldValue.serverTimestamp()
     });
 
-    await updateDoc(subscriptionRef, {
+    await subscriptionRef.update({
       status: 'cancelled',
-      cancelledAt: serverTimestamp(),
-      updatedAt: serverTimestamp()
+      cancelledAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp()
     });
 
     console.log('❌ Subscription cancelled, user returned to pending:', userId);
