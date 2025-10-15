@@ -27,8 +27,18 @@ export async function POST(request) {
       }, { status: 500 });
     }
 
-    const baseUrl = process.env.NEXT_PUBLIC_URL || 'http://localhost:3000';
+    // Verificar si estamos usando credenciales de TEST
+    const isTestMode = process.env.MERCADOPAGO_ACCESS_TOKEN.startsWith('TEST-');
+    console.log('🔑 Using TEST credentials:', isTestMode);
+
+    // Asegurar que la URL no tenga barra final
+    let baseUrl = process.env.NEXT_PUBLIC_URL || 'https://familymarket.vercel.app';
+    baseUrl = baseUrl.replace(/\/$/, ''); // Eliminar barra final si existe
+    
+    const isLocalDev = baseUrl.includes('localhost');
+    
     console.log('🌐 Using base URL:', baseUrl);
+    console.log('🔧 Development mode:', isLocalDev);
 
     const preApproval = new PreApproval(client);
 
@@ -44,7 +54,7 @@ export async function POST(request) {
         transaction_amount: 2000,
         currency_id: 'ARS'
       },
-      back_url: `${baseUrl}/payment/subscription/success?user_id=${userId}`,
+      back_url: `${baseUrl}/payment/subscription/success`,
       payer_email: userEmail,
       external_reference: `subscription_${userId}`,
       status: 'pending'

@@ -15,7 +15,16 @@ function SubscriptionSuccessContent() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [subscriptionActive, setSubscriptionActive] = useState(false);
-  const userId = searchParams.get('user_id');
+  
+  // Intentar obtener userId de varias fuentes
+  const userIdFromQuery = searchParams.get('user_id');
+  const externalReference = searchParams.get('external_reference');
+  
+  // Extraer userId del external_reference si existe (formato: subscription_userId)
+  const userIdFromReference = externalReference?.replace('subscription_', '');
+  
+  // Prioridad: 1. Query param, 2. External reference, 3. Usuario logueado
+  const userId = userIdFromQuery || userIdFromReference || user?.uid;
 
   useEffect(() => {
     const checkSubscription = async () => {
