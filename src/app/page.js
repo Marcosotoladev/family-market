@@ -9,6 +9,7 @@ import CategoriesSection from '@/components/home/CategoriesSection'
 import Testimonials from '@/components/home/Testimonials'
 
 import NotificationManager from '@/components/ui/NotificationManager'
+import ActivateStoreButton from '@/components/tienda/ActivateStoreButton'
 
 export default function HomePage() {
   return (
@@ -18,10 +19,17 @@ export default function HomePage() {
         <HeroCarousel />
       </section>
 
+      {/* Activa tu Tienda */}
+      <section className="pb-2 lg:pb-4">
+        <ActivateStoreButton />
+      </section>
+
       {/* Productos Destacados */}
       <section className="pb-2 lg:pb-4">
         <FeaturedProducts />
       </section>
+
+
 
       {/* Servicios Destacados */}
       <section className="pb-2 lg:pb-4">
@@ -37,7 +45,7 @@ export default function HomePage() {
       <section className="pb-2 lg:pb-4">
         <RecentItems />
       </section>
-      
+
 
       {/* Sección de Categorías Populares */}
       <section className="px-4 sm:px-6 lg:px-8 pt-2 pb-4 lg:pt-2 lg:pb-4">
