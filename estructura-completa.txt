@@ -43,6 +43,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── mercadopago
 |   |   |   |   └── create-preference
 |   |   |   |   |   └── route.js
+|   |   |   |   └── create-subscription
+|   |   |   |   |   └── route.js
 |   |   |   |   └── webhook
 |   |   |   |   |   └── route.js
 |   |   |   └── send-notification
@@ -81,6 +83,9 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── page.js
 |   |   └── page.js
 |   |   └── payment
+|   |   |   └── subscription
+|   |   |   |   └── success
+|   |   |   |   |   └── page.js
 |   |   |   └── success
 |   |   |   |   └── page.js
 |   |   └── productos
@@ -171,6 +176,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── StoreLogoSection.js
 |   |   |   └── StoreSidebar.js
 |   |   └── tienda
+|   |   |   └── ActivateStoreButton.js
 |   |   |   └── empleos
 |   |   |   |   └── BusquedaEmpleoCard.js
 |   |   |   |   └── BusquedaEmpleoForm.js
