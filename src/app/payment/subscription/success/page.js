@@ -1,4 +1,43 @@
-useEffect(() => {
+// src/app/payment/subscription/success/page.js
+
+'use client';
+
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { CheckCircle, ArrowLeft, Store, Loader, Sparkles, Calendar, CreditCard } from 'lucide-react';
+import Link from 'next/link';
+import { useAuth } from '@/contexts/AuthContext';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
+
+function SubscriptionSuccessContent() {
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const { user } = useAuth();
+  const [loading, setLoading] = useState(true);
+  const [subscriptionActive, setSubscriptionActive] = useState(false);
+  
+  // Intentar obtener userId de varias fuentes
+  const userIdFromQuery = searchParams.get('user_id');
+  const externalReference = searchParams.get('external_reference');
+  
+  // Extraer userId del external_reference si existe (formato: subscription_userId)
+  const userIdFromReference = externalReference?.replace('subscription_', '');
+  
+  // Prioridad: 1. Query param, 2. External reference, 3. Usuario logueado
+  const userId = userIdFromQuery || userIdFromReference || user?.uid;
+
+  // ⚠️ VALIDACIÓN: Si no hay userId o parámetros de pago, redirigir
+  useEffect(() => {
+    const hasPaymentParams = userIdFromQuery || externalReference || searchParams.get('collection_status');
+    
+    if (!hasPaymentParams && !loading) {
+      console.log('⚠️ No payment parameters found, redirecting to home');
+      router.push('/');
+    }
+  }, [userIdFromQuery, externalReference, searchParams, loading, router]);
+
+  useEffect(() => {
     const checkSubscription = async () => {
       // Si no hay userId, no hacer nada
       if (!userId) {
@@ -40,7 +79,18 @@ useEffect(() => {
         }
         
         if (attempts >= maxAttempts) {
-          console.log('⚠️ Max attempts reached. Subscription may take a bit longer to activate.');
+          console.log('⚠️ Max attempts reached. Attempting manual activation...');
+          await activateSubscriptionManually(userId);
+          
+          // Verificar nuevamente
+          const userRef = doc(db, 'users', userId);
+          const updatedUserSnap = await getDoc(userRef);
+          if (updatedUserSnap.exists()) {
+            const updatedUserData = updatedUserSnap.data();
+            if (updatedUserData.accountStatus === 'approved') {
+              setSubscriptionActive(true);
+            }
+          }
         }
         
       } catch (error) {
@@ -52,91 +102,11 @@ useEffect(() => {
 
     checkSubscription();
   }, [userId, userIdFromQuery, externalReference, searchParams]);
-// src/app/payment/subscription/success/page.js
-'use client';
-
-import { Suspense, useEffect, useState } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
-import { CheckCircle, ArrowLeft, Store, Loader, Sparkles, Calendar, CreditCard } from 'lucide-react';
-import Link from 'next/link';
-import { useAuth } from '@/contexts/AuthContext';
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
-
-function SubscriptionSuccessContent() {
-  const searchParams = useSearchParams();
-  const router = useRouter();
-  const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [subscriptionActive, setSubscriptionActive] = useState(false);
-  
-  // Intentar obtener userId de varias fuentes
-  const userIdFromQuery = searchParams.get('user_id');
-  const externalReference = searchParams.get('external_reference');
-  
-  // Extraer userId del external_reference si existe (formato: subscription_userId)
-  const userIdFromReference = externalReference?.replace('subscription_', '');
-  
-  // Prioridad: 1. Query param, 2. External reference, 3. Usuario logueado
-  const userId = userIdFromQuery || userIdFromReference || user?.uid;
-
-  // ⚠️ VALIDACIÓN: Si no hay userId o parámetros de pago, redirigir
-  useEffect(() => {
-    const hasPaymentParams = userIdFromQuery || externalReference || searchParams.get('collection_status');
-    
-    if (!hasPaymentParams && !loading) {
-      console.log('⚠️ No payment parameters found, redirecting to home');
-      router.push('/');
-    }
-  }, [userIdFromQuery, externalReference, searchParams, loading, router]);
-
-  useEffect(() => {
-    const checkSubscription = async () => {
-      if (!userId) {
-        setLoading(false);
-        return;
-      }
-
-      try {
-        // Esperar un poco para que el webhook procese
-        await new Promise(resolve => setTimeout(resolve, 3000));
-
-        const userRef = doc(db, 'users', userId); // ✅ CAMBIO: 'users'
-        const userSnap = await getDoc(userRef);
-
-        if (userSnap.exists()) {
-          const userData = userSnap.data();
-          if (userData.accountStatus === 'approved' && userData.subscription?.isActive) {
-            setSubscriptionActive(true);
-          } else {
-            // Si después de 3 segundos no está activo, intentar activar manualmente
-            console.log('⚠️ Subscription not activated by webhook, attempting manual activation...');
-            await activateSubscriptionManually(userId);
-            
-            // Verificar nuevamente
-            const updatedUserSnap = await getDoc(userRef);
-            if (updatedUserSnap.exists()) {
-              const updatedUserData = updatedUserSnap.data();
-              if (updatedUserData.accountStatus === 'approved') {
-                setSubscriptionActive(true);
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error('Error checking subscription:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    checkSubscription();
-  }, [userId]);
 
   // Función para activar suscripción manualmente
   const activateSubscriptionManually = async (uid) => {
     try {
-      const userRef = doc(db, 'users', uid); // ✅ CAMBIO: 'users' en lugar de 'usuarios'
+      const userRef = doc(db, 'users', uid);
       const nextBillingDate = new Date();
       nextBillingDate.setDate(nextBillingDate.getDate() + 30);
 
@@ -147,7 +117,7 @@ function SubscriptionSuccessContent() {
           planType: 'tienda_online',
           startDate: new Date(),
           expiresAt: nextBillingDate,
-          amount: 2500, // ✅ ACTUALIZADO
+          amount: 2500,
           currency: 'ARS',
           autoRenewal: true,
           activatedAt: new Date(),
@@ -225,7 +195,7 @@ function SubscriptionSuccessContent() {
                       <CreditCard className="w-4 h-4" />
                       <span>Monto</span>
                     </div>
-                    <p className="font-bold text-gray-900 dark:text-white">$2.000 ARS</p>
+                    <p className="font-bold text-gray-900 dark:text-white">$2.500 ARS</p>
                   </div>
                 </div>
               </div>
