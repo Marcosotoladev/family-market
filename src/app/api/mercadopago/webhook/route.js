@@ -17,6 +17,52 @@ export async function POST(request) {
     
     const { type, data, action } = body;
 
+    // ==================== PAGOS DE SUSCRIPCIÓN (authorized_payment) ====================
+    if (type === 'subscription_authorized_payment') {
+      console.log('💰 Processing subscription payment:', data.id);
+      
+      try {
+        const payment = new Payment(client);
+        const paymentData = await payment.get({ id: data.id });
+        
+        console.log('💳 Payment details:', JSON.stringify(paymentData, null, 2));
+        
+        const userId = paymentData.external_reference?.replace('subscription_', '');
+        
+        if (!userId) {
+          console.error('❌ No user ID found in payment');
+          return NextResponse.json({ received: true, error: 'No user ID' });
+        }
+        
+        if (paymentData.status === 'approved') {
+          console.log('✅ Activating subscription for user:', userId);
+          
+          await handleSubscriptionActivation(userId, {
+            id: paymentData.id,
+            external_reference: paymentData.external_reference,
+            status: 'authorized'
+          });
+          
+          // Registrar pago
+          await adminDb.collection('subscription_payments').add({
+            userId: userId,
+            paymentId: paymentData.id,
+            amount: paymentData.transaction_amount,
+            status: paymentData.status,
+            paymentDate: FieldValue.serverTimestamp(),
+            externalReference: paymentData.external_reference
+          });
+          
+          console.log('✅ Subscription activated for user:', userId);
+        }
+        
+      } catch (error) {
+        console.error('❌ Error processing subscription payment:', error);
+      }
+      
+      return NextResponse.json({ received: true });
+    }
+
     // ==================== SUSCRIPCIONES ====================
     if (type === 'subscription_preapproval' || type === 'preapproval') {
       console.log('💎 Processing subscription notification:', data.id, 'Action:', action);
@@ -234,55 +280,72 @@ export async function POST(request) {
 
 async function handleSubscriptionActivation(userId, subscriptionData) {
   try {
-    const userRef = adminDb.collection('usuarios').doc(userId);
+    console.log('🔍 Attempting to activate subscription for user:', userId);
+    console.log('📋 Subscription data:', JSON.stringify(subscriptionData, null, 2));
+    
+    const userRef = adminDb.collection('users').doc(userId); // ✅ CAMBIO: users en lugar de usuarios
+    console.log('📍 Looking in collection: users, doc:', userId);
+    
     const userDoc = await userRef.get();
+    console.log('📄 User doc exists:', userDoc.exists);
     
     if (!userDoc.exists) {
-      console.error('❌ User not found:', userId);
+      console.error('❌ User not found in "users" collection:', userId);
       return;
     }
 
-    const nextBillingDate = new Date();
-    nextBillingDate.setDate(nextBillingDate.getDate() + 30);
-
-    // Actualizar usuario a "approved"
-    await userRef.update({
-      accountStatus: 'approved',
-      subscription: {
-        isActive: true,
-        planType: 'tienda_online',
-        startDate: FieldValue.serverTimestamp(),
-        expiresAt: nextBillingDate,
-        mercadopagoSubscriptionId: subscriptionData.id,
-        amount: 2000,
-        currency: 'ARS',
-        autoRenewal: true
-      },
-      updatedAt: FieldValue.serverTimestamp()
-    });
-
-    // Crear/actualizar documento de suscripción
-    await adminDb.collection('subscriptions').doc(userId).set({
-      userId: userId,
-      status: 'active',
-      mercadopagoSubscriptionId: subscriptionData.id,
-      planType: 'tienda_online',
-      amount: 2000,
-      currency: 'ARS',
-      startDate: FieldValue.serverTimestamp(),
-      nextBillingDate: nextBillingDate,
-      currentPeriodStart: FieldValue.serverTimestamp(),
-      currentPeriodEnd: nextBillingDate,
-      autoRenewal: true,
-      createdAt: FieldValue.serverTimestamp(),
-      updatedAt: FieldValue.serverTimestamp()
-    }, { merge: true });
-
+    await updateUserSubscription(userRef, subscriptionData, userId);
     console.log('✅ User activated with subscription:', userId);
   } catch (error) {
     console.error('❌ Error activating subscription:', error);
+    console.error('❌ Error stack:', error.stack);
     throw error;
   }
+}
+
+async function updateUserSubscription(userRef, subscriptionData, userId) {
+  const nextBillingDate = new Date();
+  nextBillingDate.setDate(nextBillingDate.getDate() + 30);
+
+  console.log('💾 Updating user document...');
+  
+  // Actualizar usuario a "approved"
+  await userRef.update({
+    accountStatus: 'approved',
+    subscription: {
+      isActive: true,
+      planType: 'tienda_online',
+      startDate: FieldValue.serverTimestamp(),
+      expiresAt: nextBillingDate,
+      mercadopagoSubscriptionId: subscriptionData.id,
+      amount: 2000,
+      currency: 'ARS',
+      autoRenewal: true
+    },
+    updatedAt: FieldValue.serverTimestamp()
+  });
+
+  console.log('✅ User document updated');
+
+  // Crear/actualizar documento de suscripción
+  console.log('💾 Creating subscription document...');
+  await adminDb.collection('subscriptions').doc(userId).set({
+    userId: userId,
+    status: 'active',
+    mercadopagoSubscriptionId: subscriptionData.id,
+    planType: 'tienda_online',
+    amount: 2000,
+    currency: 'ARS',
+    startDate: FieldValue.serverTimestamp(),
+    nextBillingDate: nextBillingDate,
+    currentPeriodStart: FieldValue.serverTimestamp(),
+    currentPeriodEnd: nextBillingDate,
+    autoRenewal: true,
+    createdAt: FieldValue.serverTimestamp(),
+    updatedAt: FieldValue.serverTimestamp()
+  }, { merge: true });
+  
+  console.log('✅ Subscription document created');
 }
 
 async function handleSubscriptionPause(userId, subscriptionData) {

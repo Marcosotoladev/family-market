@@ -6,7 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, ArrowLeft, Store, Loader, Sparkles, Calendar, CreditCard } from 'lucide-react';
 import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
-import { doc, getDoc } from 'firebase/firestore';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 
 function SubscriptionSuccessContent() {
@@ -44,6 +44,19 @@ function SubscriptionSuccessContent() {
           const userData = userSnap.data();
           if (userData.accountStatus === 'approved' && userData.subscription?.isActive) {
             setSubscriptionActive(true);
+          } else {
+            // Si después de 3 segundos no está activo, intentar activar manualmente
+            console.log('⚠️ Subscription not activated by webhook, attempting manual activation...');
+            await activateSubscriptionManually(userId);
+            
+            // Verificar nuevamente
+            const updatedUserSnap = await getDoc(userRef);
+            if (updatedUserSnap.exists()) {
+              const updatedUserData = updatedUserSnap.data();
+              if (updatedUserData.accountStatus === 'approved') {
+                setSubscriptionActive(true);
+              }
+            }
           }
         }
       } catch (error) {
@@ -55,6 +68,37 @@ function SubscriptionSuccessContent() {
 
     checkSubscription();
   }, [userId]);
+
+  // Función para activar suscripción manualmente
+  const activateSubscriptionManually = async (uid) => {
+    try {
+      const userRef = doc(db, 'users', uid); // ✅ CAMBIO: 'users' en lugar de 'usuarios'
+      const nextBillingDate = new Date();
+      nextBillingDate.setDate(nextBillingDate.getDate() + 30);
+
+      await updateDoc(userRef, {
+        accountStatus: 'approved',
+        subscription: {
+          isActive: true,
+          planType: 'tienda_online',
+          startDate: new Date(),
+          expiresAt: nextBillingDate,
+          amount: 2000,
+          currency: 'ARS',
+          autoRenewal: true,
+          activatedAt: new Date(),
+          activationMethod: 'manual_success_page'
+        },
+        updatedAt: new Date()
+      });
+
+      console.log('✅ Subscription activated manually for user:', uid);
+      return true;
+    } catch (error) {
+      console.error('❌ Error activating subscription manually:', error);
+      return false;
+    }
+  };
 
   if (loading) {
     return (
