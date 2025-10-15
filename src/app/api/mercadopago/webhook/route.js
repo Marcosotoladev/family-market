@@ -83,6 +83,15 @@ export async function POST(request) {
           const userId = paymentData.external_reference.replace('subscription_', '');
           
           if (paymentData.status === 'approved') {
+            console.log('✅ Activating subscription for user:', userId);
+            
+            // Activar suscripción del usuario
+            await handleSubscriptionActivation(userId, {
+              id: paymentData.id,
+              external_reference: paymentData.external_reference,
+              status: 'authorized'
+            });
+            
             // Registrar pago de renovación
             await addDoc(collection(db, 'subscription_payments'), {
               userId: userId,
