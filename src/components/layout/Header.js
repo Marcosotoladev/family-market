@@ -3,18 +3,18 @@
 import { useState, useEffect, useRef } from 'react'
 import { useTheme } from 'next-themes'
 import { 
-  Search, User, Moon, Sun, Plus, HelpCircle, LogOut, 
+  User, Moon, Sun, Plus, HelpCircle, LogOut, 
   LayoutDashboard, Heart, Star, Store, 
-  MessageSquare, Users, Settings, ChevronRight, Shield
+  ChevronRight, Shield
 } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
+import IntelligentSearchBar from '@/components/search/IntelligentSearchBar'
 
 export default function Header() {
   const [mounted, setMounted] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
   const [showUserMenu, setShowUserMenu] = useState(false)
   const { theme, setTheme } = useTheme()
   const { isAuthenticated, loading, user, userData, signOut } = useAuth()
@@ -45,13 +45,6 @@ export default function Header() {
 
   const toggleDarkMode = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
-  }
-
-  const handleSearch = (e) => {
-    e.preventDefault()
-    if (searchQuery.trim()) {
-      console.log('Buscando:', searchQuery)
-    }
   }
 
   const handleCreateStore = () => {
@@ -367,23 +360,8 @@ export default function Header() {
             </div>
           )}
 
-          {/* Barra de búsqueda móvil */}
-          <form onSubmit={handleSearch} className="relative">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="¿Qué estás buscando?"
-              className="w-full h-12 pl-12 pr-16 bg-gray-100 dark:bg-gray-800 border-0 rounded-2xl text-base placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:bg-white dark:focus:bg-gray-700 focus:ring-2 focus:ring-primary-500 focus:outline-none transition-all text-gray-900 dark:text-white"
-            />
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <button
-              type="submit"
-              className="absolute right-2 top-1/2 transform -translate-y-1/2 p-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors"
-            >
-              <Search className="w-4 h-4" />
-            </button>
-          </form>
+          {/* Buscador Inteligente Móvil */}
+          <IntelligentSearchBar />
         </div>
       </header>
 
@@ -407,24 +385,9 @@ export default function Header() {
               </h1>
             </Link>
 
-            {/* Barra de búsqueda desktop */}
+            {/* Buscador Inteligente Desktop */}
             <div className="flex-1 max-w-2xl mx-8">
-              <form onSubmit={handleSearch} className="relative">
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Buscar productos, servicios o empleos..."
-                  className="w-full h-14 pl-14 pr-32 border border-gray-200 dark:border-gray-700 rounded-2xl text-base placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:ring-2 focus:ring-primary-500 focus:border-primary-500 focus:outline-none transition-all bg-white dark:bg-gray-800 text-gray-900 dark:text-white shadow-sm"
-                />
-                <Search className="absolute left-5 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <button
-                  type="submit"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 px-6 py-2.5 bg-primary-500 text-white rounded-xl hover:bg-primary-600 transition-colors text-sm font-medium shadow-sm"
-                >
-                  Buscar
-                </button>
-              </form>
+              <IntelligentSearchBar />
             </div>
 
             {/* Acciones Desktop */}

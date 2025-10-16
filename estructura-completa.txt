@@ -49,6 +49,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   |   └── route.js
 |   |   |   └── send-notification
 |   |   |   |   └── route.js
+|   |   |   └── smart-search
+|   |   |   |   └── route.js
 |   |   └── dashboard
 |   |   |   └── favorites
 |   |   |   |   └── page.js
@@ -169,6 +171,9 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── ProfileSidebar.js
 |   |   └── providers
 |   |   |   └── ThemeProvider.jsx
+|   |   └── search
+|   |   |   └── IntelligentSearchBar.js
+|   |   |   └── SearchResults.js
 |   |   └── store
 |   |   |   └── BusinessInfoSection.js
 |   |   |   └── ServicesSection.js
@@ -231,6 +236,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   └── useAdminMessaging.js
 |   |   └── useToast.js
 |   └── lib
+|   |   └── ai
+|   |   |   └── openaiService.js
 |   |   └── cloudinary
 |   |   |   └── config.js
 |   |   └── firebase
