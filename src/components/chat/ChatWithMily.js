@@ -2,7 +2,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { X, Send, Sparkles, ShoppingBag, Briefcase, Package } from 'lucide-react';
+import { X, Send, Sparkles, ShoppingBag, Briefcase, Package, Mic } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -18,9 +18,37 @@ export default function ChatWithMily() {
   ]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
   const chatContainerRef = useRef(null);
+  const recognitionRef = useRef(null);
+
+  // Inicializar Speech Recognition
+  useEffect(() => {
+    if (typeof window !== 'undefined' && ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = false;
+      recognitionRef.current.interimResults = false;
+      recognitionRef.current.lang = 'es-ES';
+      
+      recognitionRef.current.onresult = (event) => {
+        const transcript = event.results[0][0].transcript;
+        setInputValue(transcript);
+        setIsListening(false);
+      };
+      
+      recognitionRef.current.onerror = (event) => {
+        console.error('Error de reconocimiento:', event.error);
+        setIsListening(false);
+      };
+      
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+      };
+    }
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -35,22 +63,16 @@ export default function ChatWithMily() {
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden';
-      document.body.style.position = 'fixed';
-      document.body.style.width = '100%';
       
       setTimeout(() => {
         inputRef.current?.focus();
       }, 300);
     } else {
       document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
     }
 
     return () => {
       document.body.style.overflow = '';
-      document.body.style.position = '';
-      document.body.style.width = '';
     };
   }, [isOpen]);
 
@@ -109,6 +131,21 @@ export default function ChatWithMily() {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage();
+    }
+  };
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert('Tu navegador no soporta reconocimiento de voz 😢');
+      return;
+    }
+    
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      recognitionRef.current.start();
+      setIsListening(true);
     }
   };
 
@@ -183,14 +220,15 @@ export default function ChatWithMily() {
         <>
           {/* Backdrop */}
           <div 
-            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            className="fixed inset-0 bg-black/50 z-[60] lg:hidden"
             onClick={() => setIsOpen(false)}
           />
 
-          {/* Modal Container */}
-          <div className="fixed lg:absolute inset-0 lg:inset-auto lg:top-full lg:mt-2 lg:right-0 lg:w-96 z-50 flex flex-col lg:rounded-2xl lg:shadow-2xl lg:border lg:border-gray-200 lg:dark:border-gray-700 lg:max-h-[600px]">
+          {/* Modal Container - OPTIMIZADO FINAL */}
+          <div className="fixed lg:absolute top-[8%] lg:top-full left-1/2 lg:left-auto lg:right-0 -translate-x-1/2 lg:translate-x-0 lg:translate-y-0 lg:mt-2 w-[92vw] max-w-[450px] lg:w-96 h-[70vh] lg:h-auto lg:max-h-[600px] bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 z-[70] flex flex-col">
+            
             {/* Header */}
-            <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 lg:rounded-t-2xl">
+            <div className="flex-shrink-0 flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700 bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-950 dark:to-pink-950 rounded-t-2xl">
               <div className="flex items-center gap-3">
                 <div className="relative">
                   <div className="w-10 h-10 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center shadow-md">
@@ -220,10 +258,10 @@ export default function ChatWithMily() {
               </button>
             </div>
 
-            {/* Messages - Con padding bottom para el input flotante en móvil */}
+            {/* Messages */}
             <div 
               ref={chatContainerRef}
-              className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-800 pb-24 lg:pb-4"
+              className="flex-1 overflow-y-auto p-4 bg-gray-50 dark:bg-gray-800 min-h-0"
               style={{ 
                 WebkitOverflowScrolling: 'touch',
                 overscrollBehavior: 'contain'
@@ -331,25 +369,59 @@ export default function ChatWithMily() {
               </div>
             </div>
 
-            {/* Input - FIXED en móvil, STATIC en desktop */}
-            <div className="fixed lg:relative bottom-0 left-0 right-0 lg:bottom-auto lg:left-auto lg:right-auto p-4 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 lg:rounded-b-2xl z-10">
-              <div className="flex gap-2 max-w-full">
+            {/* Indicador de escuchando */}
+            {isListening && (
+              <div className="flex-shrink-0 px-4 py-2 bg-red-50 dark:bg-red-900/20 border-t border-red-200 dark:border-red-800">
+                <div className="flex items-center justify-center gap-2">
+                  <div className="flex gap-1">
+                    <div className="w-1 h-4 bg-red-500 rounded-full animate-pulse"></div>
+                    <div className="w-1 h-6 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-1 h-8 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-1 h-6 bg-red-500 rounded-full animate-pulse" style={{ animationDelay: '0.1s' }}></div>
+                    <div className="w-1 h-4 bg-red-500 rounded-full animate-pulse"></div>
+                  </div>
+                  <span className="text-sm font-medium text-red-600 dark:text-red-400">
+                    🎤 Escuchando...
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Input - OPTIMIZADO FINAL */}
+            <div className="flex-shrink-0 p-3 border-t border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 rounded-b-2xl">
+              <div className="flex gap-1.5">
                 <input
                   ref={inputRef}
                   type="text"
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={handleKeyPress}
-                  placeholder="Escribe tu mensaje..."
+                  placeholder="Escribe o habla..."
                   disabled={isLoading}
-                  className="flex-1 px-4 py-2.5 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 disabled:opacity-50"
+                  className="flex-1 px-3 py-2 rounded-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 outline-none focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 disabled:opacity-50 text-sm"
                 />
+                
+                {/* Botón Micrófono */}
+                <button
+                  onClick={toggleListening}
+                  disabled={isLoading}
+                  className={`px-2.5 py-2 rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg flex-shrink-0 ${
+                    isListening 
+                      ? 'bg-red-500 hover:bg-red-600 animate-pulse' 
+                      : 'bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600'
+                  }`}
+                  title="Buscar por voz"
+                >
+                  <Mic className={`w-4 h-4 ${isListening ? 'text-white' : 'text-gray-700 dark:text-gray-300'}`} />
+                </button>
+                
+                {/* Botón Enviar */}
                 <button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim() || isLoading}
-                  className="px-4 py-2.5 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg flex-shrink-0"
+                  className="px-2.5 py-2 bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white rounded-full disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-md hover:shadow-lg flex-shrink-0"
                 >
-                  <Send className="w-5 h-5" />
+                  <Send className="w-4 h-4" />
                 </button>
               </div>
             </div>
