@@ -11,7 +11,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
-import IntelligentSearchBar from '@/components/search/IntelligentSearchBar'
+import ChatWithMily from '@/components/chat/ChatWithMily'
 
 export default function Header() {
   const [mounted, setMounted] = useState(false)
@@ -360,8 +360,8 @@ export default function Header() {
             </div>
           )}
 
-          {/* Buscador Inteligente Móvil */}
-          <IntelligentSearchBar />
+          {/* Chat con Mily - Móvil */}
+          <ChatWithMily />
         </div>
       </header>
 
@@ -385,9 +385,9 @@ export default function Header() {
               </h1>
             </Link>
 
-            {/* Buscador Inteligente Desktop */}
+            {/* Chat con Mily - Desktop */}
             <div className="flex-1 max-w-2xl mx-8">
-              <IntelligentSearchBar />
+              <ChatWithMily />
             </div>
 
             {/* Acciones Desktop */}
