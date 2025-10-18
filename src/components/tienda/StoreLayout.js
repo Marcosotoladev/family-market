@@ -109,6 +109,7 @@ const StoreLayout = ({
       <StoreHeader
         storeLogo={storeData?.storeLogo}
         storeName={storeData?.businessName || storeData?.familyName || 'Mi Tienda'}
+        storeSlug={storeData?.storeSlug}
         storeConfig={storeConfig}
         onSearch={handleSearch}
         onMenuToggle={handleMenuToggle}

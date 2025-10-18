@@ -6,10 +6,10 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
   const [hue, setHue] = useState(0);
   const [saturation, setSaturation] = useState(100);
   const [lightness, setLightness] = useState(50);
-  const [isUpdating, setIsUpdating] = useState(false);
   
   const pickerRef = useRef(null);
   const gradientRef = useRef(null);
+  const isInternalChangeRef = useRef(false);
 
   // Convertir hex a HSL
   const hexToHsl = useCallback((hex) => {
@@ -80,25 +80,25 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
     return { r, g, b };
   }, []);
 
-  // Solo actualizar cuando el valor externo cambia (no desde el componente)
+  // Actualizar desde el valor externo SOLO si no es un cambio interno
   useEffect(() => {
-    if (value && !isUpdating) {
+    if (value && !isInternalChangeRef.current) {
       const [h, s, l] = hexToHsl(value);
       setHue(h);
       setSaturation(s);
       setLightness(l);
     }
-  }, [value, hexToHsl, isUpdating]);
+    isInternalChangeRef.current = false;
+  }, [value, hexToHsl]);
 
-  // Función para actualizar el color externamente
+  // Función para actualizar el color
   const updateColor = useCallback((newHue, newSaturation, newLightness) => {
-    setIsUpdating(true);
+    isInternalChangeRef.current = true;
     const newColor = hslToHex(newHue, newSaturation, newLightness);
     onChange(newColor);
-    setTimeout(() => setIsUpdating(false), 0);
   }, [hslToHex, onChange]);
 
-  // Handlers que usan la función de actualización
+  // Handlers
   const handleHueChange = useCallback((newHue) => {
     setHue(newHue);
     updateColor(newHue, saturation, lightness);
@@ -134,14 +134,10 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
     const x = Math.max(0, Math.min(rect.width, event.clientX - rect.left));
     const y = Math.max(0, Math.min(rect.height, event.clientY - rect.top));
     
-    // Normalizar coordenadas (0-1)
     const xPercent = x / rect.width;
     const yPercent = y / rect.height;
     
-    // Saturación: 0% (izquierda) a 100% (derecha)
     const newSaturation = xPercent * 100;
-    
-    // Luminosidad: 100% (arriba) a 0% (abajo) - mapeo lineal simple
     const newLightness = (1 - yPercent) * 100;
     
     setSaturation(newSaturation);
@@ -152,7 +148,7 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
   // Obtener valores RGB actuales
   const rgbValues = hexToRgb(value);
 
-  // Colores predefinidos populares
+  // Colores predefinidos
   const presetColors = [
     '#ff0000', '#ff4500', '#ffa500', '#ffff00', '#9acd32', '#00ff00',
     '#00fa9a', '#00ffff', '#0080ff', '#0000ff', '#8a2be2', '#ff1493',
@@ -239,9 +235,8 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
                   onChange={(e) => {
                     const r = Math.max(0, Math.min(255, Number(e.target.value)));
                     const newHex = `#${r.toString(16).padStart(2, '0')}${rgbValues.g.toString(16).padStart(2, '0')}${rgbValues.b.toString(16).padStart(2, '0')}`;
-                    setIsUpdating(true);
+                    isInternalChangeRef.current = true;
                     onChange(newHex);
-                    setTimeout(() => setIsUpdating(false), 0);
                   }}
                   className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
@@ -256,9 +251,8 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
                   onChange={(e) => {
                     const g = Math.max(0, Math.min(255, Number(e.target.value)));
                     const newHex = `#${rgbValues.r.toString(16).padStart(2, '0')}${g.toString(16).padStart(2, '0')}${rgbValues.b.toString(16).padStart(2, '0')}`;
-                    setIsUpdating(true);
+                    isInternalChangeRef.current = true;
                     onChange(newHex);
-                    setTimeout(() => setIsUpdating(false), 0);
                   }}
                   className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
@@ -273,9 +267,8 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
                   onChange={(e) => {
                     const b = Math.max(0, Math.min(255, Number(e.target.value)));
                     const newHex = `#${rgbValues.r.toString(16).padStart(2, '0')}${rgbValues.g.toString(16).padStart(2, '0')}${b.toString(16).padStart(2, '0')}`;
-                    setIsUpdating(true);
+                    isInternalChangeRef.current = true;
                     onChange(newHex);
-                    setTimeout(() => setIsUpdating(false), 0);
                   }}
                   className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
                 />
@@ -290,9 +283,8 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
                   let hex = e.target.value;
                   if (!hex.startsWith('#')) hex = '#' + hex;
                   if (/^#[0-9A-F]{6}$/i.test(hex)) {
-                    setIsUpdating(true);
+                    isInternalChangeRef.current = true;
                     onChange(hex.toLowerCase());
-                    setTimeout(() => setIsUpdating(false), 0);
                   }
                 }}
                 className="w-full px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 font-mono"
@@ -311,9 +303,8 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
                   key={index}
                   type="button"
                   onClick={() => {
-                    setIsUpdating(true);
+                    isInternalChangeRef.current = true;
                     onChange(color);
-                    setTimeout(() => setIsUpdating(false), 0);
                   }}
                   className="w-6 h-6 rounded border border-gray-300 dark:border-gray-600 hover:scale-110 transition-transform"
                   style={{ backgroundColor: color }}
@@ -328,20 +319,4 @@ const CustomColorPicker = ({ value, onChange, className = "" }) => {
   );
 };
 
-// Demo Component
-const Demo = () => {
-  const [color, setColor] = useState('#3b82f6');
-  
-  return (
-    <div className="bg-gray-50 dark:bg-gray-900 p-8">
-      <div className="w-full max-w-md mx-auto">
-        <CustomColorPicker 
-          value={color} 
-          onChange={setColor}
-        />
-      </div>
-    </div>
-  );
-};
-
-export default Demo;
+export default CustomColorPicker;

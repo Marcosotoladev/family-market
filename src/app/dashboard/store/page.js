@@ -19,6 +19,7 @@ export default function StorePage() {
   const { toasts, showSuccess, showError, hideToast } = useToast();
 
   const [activeSection, setActiveSection] = useState('business');
+  const [storeConfig, setStoreConfig] = useState(null);
 
   // Estados para logo de tienda
   const [logoState, setLogoState] = useState({
@@ -26,6 +27,13 @@ export default function StorePage() {
     uploading: false,
     preview: null
   });
+
+  // Cargar configuración de la tienda para los colores
+  useEffect(() => {
+    if (userData?.storeConfig) {
+      setStoreConfig(userData.storeConfig);
+    }
+  }, [userData]);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -49,6 +57,20 @@ export default function StorePage() {
     } else {
       showError(message);
     }
+  };
+
+  // Callback para actualizar colores en tiempo real
+  const handleConfigUpdate = (newConfig) => {
+    setStoreConfig(newConfig);
+  };
+
+  // Obtener colores con fallbacks
+  const getPrimaryColor = () => {
+    return storeConfig?.primaryColor || '#3B82F6';
+  };
+
+  const getSecondaryColor = () => {
+    return storeConfig?.secondaryColor || '#8B5CF6';
   };
 
   if (loading) {
@@ -79,21 +101,29 @@ export default function StorePage() {
           />
         );
       case 'config':
-        return <StoreConfigSection showMessage={showMessage} />;
+        return (
+          <StoreConfigSection 
+            showMessage={showMessage}
+            onConfigUpdate={handleConfigUpdate}
+          />
+        );
       default:
         return <BusinessInfoSection showMessage={showMessage} />;
     }
   };
 
+  const primaryColor = getPrimaryColor();
+  const secondaryColor = getSecondaryColor();
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <DashboardTopNavigation />
       
-      {/* Header de la tienda */}
+      {/* Header de la tienda con colores dinámicos */}
       <div 
-        className="relative"
+        className="relative transition-all duration-500"
         style={{ 
-          background: `linear-gradient(135deg, ${userData?.storeConfig?.primaryColor || '#3B82F6'}, ${userData?.storeConfig?.secondaryColor || '#8B5CF6'})` 
+          background: `linear-gradient(135deg, ${primaryColor}, ${secondaryColor})` 
         }}
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -130,7 +160,9 @@ export default function StorePage() {
                 {userData?.city || 'Ubicación no especificada'}
               </p>
               <div className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium mt-2 bg-white/20 text-white border border-white/30">
-                Tema: {userData?.storeConfig?.theme || 'Classic'}
+                Tema: {storeConfig?.theme ? 
+                  storeConfig.theme.charAt(0).toUpperCase() + storeConfig.theme.slice(1) 
+                  : 'Moderno'}
               </div>
             </div>
           </div>

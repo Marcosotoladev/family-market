@@ -1,5 +1,5 @@
 // src/components/store/StoreConfigSection.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/contexts/AuthContext';
@@ -27,152 +27,249 @@ import {
   QrCode,
   Download,
   Copy,
-  ExternalLink
+  ExternalLink,
+  Check
 } from 'lucide-react';
 
 const StoreConfigSection = ({ showMessage }) => {
   const { user } = useAuth();
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
+  const [lastSaved, setLastSaved] = useState(null);
   const [storeSlug, setStoreSlug] = useState('');
   const [storeUrl, setStoreUrl] = useState('');
   
-  // Estado inicial de configuración
-  const [config, setConfig] = useState({
-    // Secciones de contenido
-    showProducts: true,
-    showServices: true,
-    showJobs: false,
-    showGallery: false,
-    showTestimonials: false,
-    
-    // Personalización visual
-    theme: 'modern',
-    primaryColor: '#2563eb',
-    secondaryColor: '#64748b',
-    
-    // Redes sociales
-    socialLinks: {
-      facebook: '',
-      instagram: '',
-      twitter: '',
-      linkedin: '',
-      website: ''
-    },
-    
-    // Configuración de contacto
-    showWhatsApp: true,
-    showPhone: true,
-    showContactForm: true
-  });
+  const saveTimeoutRef = useRef(null);
+  const savedIndicatorTimeoutRef = useRef(null);
+  
+  const [config, setConfig] = useState(null);
 
-  // Cargar configuración existente
   useEffect(() => {
+    let mounted = true;
+    
     const loadConfig = async () => {
       if (!user?.uid) return;
       
-      setLoading(true);
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        console.log('🔄 Cargando configuración del usuario:', user.uid);
+        const userDocRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userDocRef);
+        
+        if (!mounted) return;
+        
         if (userDoc.exists()) {
           const userData = userDoc.data();
+          console.log('📄 Datos del usuario:', userData);
+          console.log('⚙️ storeConfig en Firestore:', userData.storeConfig);
           
-          // Cargar configuración de la tienda
+          const defaultConfig = {
+            showProducts: true,
+            showServices: true,
+            showJobs: false,
+            showGallery: false,
+            showTestimonials: false,
+            theme: 'modern',
+            primaryColor: '#2563eb',
+            secondaryColor: '#64748b',
+            socialLinks: {
+              facebook: '',
+              instagram: '',
+              twitter: '',
+              linkedin: '',
+              website: ''
+            },
+            showWhatsApp: true,
+            showPhone: true,
+            showContactForm: true
+          };
+
           if (userData.storeConfig) {
-            setConfig(prevConfig => ({
-              ...prevConfig,
-              ...userData.storeConfig
-            }));
+            const loadedConfig = {
+              ...defaultConfig,
+              ...userData.storeConfig,
+              socialLinks: {
+                ...defaultConfig.socialLinks,
+                ...(userData.storeConfig.socialLinks || {})
+              }
+            };
+            
+            console.log('✅ Configuración cargada:', loadedConfig);
+            console.log('🎨 Colores cargados:', {
+              primario: loadedConfig.primaryColor,
+              secundario: loadedConfig.secondaryColor
+            });
+            
+            setConfig(loadedConfig);
+          } else {
+            console.log('⚠️ No hay storeConfig, usando defaults');
+            setConfig(defaultConfig);
           }
           
-          // Cargar slug de la tienda
           if (userData.storeSlug) {
             setStoreSlug(userData.storeSlug);
             setStoreUrl(`${window.location.origin}/tienda/${userData.storeSlug}`);
           }
         }
       } catch (error) {
-        console.error('Error al cargar configuración:', error);
-        showMessage('error', 'Error al cargar la configuración');
+        console.error('❌ Error al cargar configuración:', error);
+        if (mounted) {
+          showMessage('error', 'Error al cargar la configuración');
+        }
+      } finally {
+        if (mounted) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     };
 
     loadConfig();
-  }, [user]);
+    
+    return () => {
+      mounted = false;
+    };
+  }, [user?.uid, showMessage]);
 
-  // Actualizar configuración en Firestore
-  const handleSave = async () => {
+  useEffect(() => {
+    return () => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+      if (savedIndicatorTimeoutRef.current) {
+        clearTimeout(savedIndicatorTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  const debouncedSave = useCallback(async (newConfig) => {
     if (!user?.uid) return;
+    
+    setAutoSaving(true);
+    
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+    
+    saveTimeoutRef.current = setTimeout(async () => {
+      try {
+        console.log('💾 Guardando automáticamente:', newConfig);
+        const userDocRef = doc(db, 'users', user.uid);
+        await updateDoc(userDocRef, {
+          storeConfig: newConfig
+        });
+        
+        console.log('✅ Guardado exitoso');
+        
+        setAutoSaving(false);
+        setLastSaved(new Date());
+        
+        if (savedIndicatorTimeoutRef.current) {
+          clearTimeout(savedIndicatorTimeoutRef.current);
+        }
+        savedIndicatorTimeoutRef.current = setTimeout(() => {
+          setLastSaved(null);
+        }, 2000);
+        
+      } catch (error) {
+        console.error('❌ Error al guardar configuración:', error);
+        setAutoSaving(false);
+        showMessage('error', 'Error al guardar los cambios');
+      }
+    }, 1000);
+  }, [user?.uid, showMessage]);
+
+  const handleSave = async () => {
+    if (!user?.uid || !config) return;
+    
+    console.log('🔘 Guardado manual:', config);
     
     setSaving(true);
     try {
-      await updateDoc(doc(db, 'users', user.uid), {
+      const userDocRef = doc(db, 'users', user.uid);
+      await updateDoc(userDocRef, {
         storeConfig: config
       });
       showMessage('success', 'Configuración guardada correctamente');
+      console.log('✅ Guardado manual exitoso');
     } catch (error) {
-      console.error('Error al guardar configuración:', error);
+      console.error('❌ Error al guardar configuración:', error);
       showMessage('error', 'Error al guardar la configuración');
     }
     setSaving(false);
   };
 
-  // Actualizar sección de contenido
   const handleSectionToggle = (section) => {
-    setConfig(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
+    setConfig(prev => {
+      if (!prev) return prev;
+      const newConfig = {
+        ...prev,
+        [section]: !prev[section]
+      };
+      debouncedSave(newConfig);
+      return newConfig;
+    });
   };
 
-  // Actualizar redes sociales
   const handleSocialLinkChange = (platform, value) => {
-    setConfig(prev => ({
-      ...prev,
-      socialLinks: {
-        ...prev.socialLinks,
-        [platform]: value
-      }
-    }));
+    setConfig(prev => {
+      if (!prev) return prev;
+      const newConfig = {
+        ...prev,
+        socialLinks: {
+          ...prev.socialLinks,
+          [platform]: value
+        }
+      };
+      debouncedSave(newConfig);
+      return newConfig;
+    });
   };
 
-  // Actualizar tema
   const handleThemeChange = (theme) => {
-    setConfig(prev => ({
-      ...prev,
-      theme
-    }));
+    setConfig(prev => {
+      if (!prev) return prev;
+      const newConfig = {
+        ...prev,
+        theme
+      };
+      debouncedSave(newConfig);
+      return newConfig;
+    });
   };
 
-  // Actualizar colores
   const handleColorChange = (colorType, value) => {
-    setConfig(prev => ({
-      ...prev,
-      [colorType]: value
-    }));
+    console.log('🎨 Cambiando color:', colorType, '→', value);
+    
+    setConfig(prev => {
+      if (!prev) return prev;
+      
+      const newConfig = {
+        ...prev,
+        [colorType]: value
+      };
+      
+      console.log('📦 Nueva config:', newConfig);
+      
+      debouncedSave(newConfig);
+      
+      return newConfig;
+    });
   };
 
-  // Descargar código QR
   const downloadQR = () => {
     const canvas = document.getElementById('qr-code-canvas');
     if (!canvas) return;
 
-    // Crear un canvas temporal más grande para mejor calidad
     const tempCanvas = document.createElement('canvas');
     const size = 1024;
     tempCanvas.width = size;
     tempCanvas.height = size;
     const ctx = tempCanvas.getContext('2d');
 
-    // Fondo blanco
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, size, size);
-
-    // Dibujar el QR escalado
     ctx.drawImage(canvas, 0, 0, size, size);
 
-    // Descargar
     tempCanvas.toBlob((blob) => {
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
@@ -185,7 +282,6 @@ const StoreConfigSection = ({ showMessage }) => {
     showMessage('success', 'Código QR descargado correctamente');
   };
 
-  // Copiar URL de la tienda
   const copyUrl = () => {
     if (storeUrl) {
       navigator.clipboard.writeText(storeUrl);
@@ -193,7 +289,6 @@ const StoreConfigSection = ({ showMessage }) => {
     }
   };
 
-  // Abrir tienda en nueva pestaña
   const openStore = () => {
     if (storeUrl) {
       window.open(storeUrl, '_blank');
@@ -229,7 +324,7 @@ const StoreConfigSection = ({ showMessage }) => {
     { key: 'website', label: 'Sitio Web', icon: Globe, placeholder: 'https://tu-sitio-web.com' }
   ];
 
-  if (loading) {
+  if (loading || !config) {
     return (
       <div className="flex items-center justify-center py-12">
         <Loader2 className="w-8 h-8 animate-spin text-blue-600 dark:text-blue-400" />
@@ -240,7 +335,6 @@ const StoreConfigSection = ({ showMessage }) => {
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-3">
           <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
@@ -255,9 +349,23 @@ const StoreConfigSection = ({ showMessage }) => {
             </p>
           </div>
         </div>
+
+        <div className="flex items-center gap-2">
+          {autoSaving && (
+            <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-400">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span>Guardando...</span>
+            </div>
+          )}
+          {lastSaved && !autoSaving && (
+            <div className="flex items-center gap-2 text-sm text-green-600 dark:text-green-400 animate-slide-in">
+              <Check className="w-4 h-4" />
+              <span>Guardado</span>
+            </div>
+          )}
+        </div>
       </div>
 
-      {/* Código QR de la Tienda */}
       {storeSlug && storeUrl && (
         <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-4">
           <h3 className="text-base font-semibold text-gray-900 dark:text-white mb-3 flex items-center">
@@ -266,7 +374,6 @@ const StoreConfigSection = ({ showMessage }) => {
           </h3>
           
           <div className="flex flex-col sm:flex-row gap-4 items-start">
-            {/* QR Code */}
             <div className="flex-shrink-0">
               <div className="bg-white p-2 rounded border border-gray-200">
                 <QRCodeCanvas
@@ -281,9 +388,7 @@ const StoreConfigSection = ({ showMessage }) => {
               </div>
             </div>
 
-            {/* Información y Acciones */}
             <div className="flex-1 space-y-2 w-full min-w-0">
-              {/* URL de la tienda */}
               <div>
                 <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
                   URL de tu tienda
@@ -313,7 +418,6 @@ const StoreConfigSection = ({ showMessage }) => {
                 </div>
               </div>
 
-              {/* Botones de descarga */}
               <div className="flex gap-2">
                 <button
                   onClick={downloadQR}
@@ -324,7 +428,6 @@ const StoreConfigSection = ({ showMessage }) => {
                 </button>
               </div>
 
-              {/* Nota */}
               <p className="text-xs text-gray-600 dark:text-gray-400">
                 El QR usa el color primario de tu tienda
               </p>
@@ -333,7 +436,6 @@ const StoreConfigSection = ({ showMessage }) => {
         </div>
       )}
 
-      {/* Secciones de Contenido */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
           <Eye className="w-5 h-5 mr-2 text-gray-600 dark:text-gray-400" />
@@ -355,7 +457,6 @@ const StoreConfigSection = ({ showMessage }) => {
         </div>
       </div>
 
-      {/* Personalización Visual */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
           <Palette className="w-5 h-5 mr-2 text-gray-600 dark:text-gray-400" />
@@ -363,7 +464,6 @@ const StoreConfigSection = ({ showMessage }) => {
         </h3>
         
         <div className="space-y-6">
-          {/* Selector de Tema */}
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Tema de la Tienda
@@ -381,11 +481,10 @@ const StoreConfigSection = ({ showMessage }) => {
             </select>
           </div>
 
-          {/* Selectores de Color Personalizados */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Color Primario
+                Color Primario: {config.primaryColor}
               </label>
               <CustomColorPicker
                 value={config.primaryColor}
@@ -395,7 +494,7 @@ const StoreConfigSection = ({ showMessage }) => {
             
             <div>
               <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Color Secundario
+                Color Secundario: {config.secondaryColor}
               </label>
               <CustomColorPicker
                 value={config.secondaryColor}
@@ -406,7 +505,6 @@ const StoreConfigSection = ({ showMessage }) => {
         </div>
       </div>
 
-      {/* Redes Sociales */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
           <Globe className="w-5 h-5 mr-2 text-gray-600 dark:text-gray-400" />
@@ -432,7 +530,6 @@ const StoreConfigSection = ({ showMessage }) => {
         </div>
       </div>
 
-      {/* Configuración de Contacto */}
       <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4 flex items-center">
           <Phone className="w-5 h-5 mr-2 text-gray-600 dark:text-gray-400" />
@@ -455,7 +552,6 @@ const StoreConfigSection = ({ showMessage }) => {
         </div>
       </div>
 
-      {/* Botón Guardar */}
       <div className="flex justify-end">
         <button
           onClick={handleSave}

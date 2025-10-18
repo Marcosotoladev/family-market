@@ -38,6 +38,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── usuarios
 |   |   |   |   └── page.js
 |   |   └── api
+|   |   |   └── chat-mily
+|   |   |   |   └── route.js
 |   |   |   └── firebase-messaging-sw
 |   |   |   |   └── route.js
 |   |   |   └── mercadopago
@@ -47,6 +49,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   |   └── route.js
 |   |   |   |   └── webhook
 |   |   |   |   |   └── route.js
+|   |   |   └── search
+|   |   |   |   └── route.js
 |   |   |   └── send-notification
 |   |   |   |   └── route.js
 |   |   |   └── smart-search
@@ -137,6 +141,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── CompleteProfileModal.js
 |   |   |   └── Login.js
 |   |   |   └── Register.js
+|   |   └── chat
+|   |   |   └── ChatWithMily.js
 |   |   └── dashboard
 |   |   |   └── ActionCardsGrid.js
 |   |   |   └── CommentsSection.js
