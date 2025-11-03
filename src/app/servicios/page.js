@@ -232,7 +232,7 @@ export default function ServiciosPage() {
                     variant={vistaGrid ? (isMobile ? 'featured-compact' : 'grid') : 'list'}
                     showContactInfo={true}
                     showStoreInfo={true}
-                    onClick={() => window.location.href = `/tienda/${servicio.tiendaInfo?.slug}/servicios/${servicio.id}`}
+                    onClick={() => window.location.href = `/tienda/${servicio.tiendaInfo?.slug}/servicio/${servicio.id}`}
                   />
                 ))}
               </div>

@@ -104,9 +104,10 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── page.js
 |   |   └── tienda
 |   |   |   └── [slug]
-|   |   |   |   └── empleos
+|   |   |   |   └── empleo
 |   |   |   |   |   └── [empleoId]
 |   |   |   |   |   |   └── page.js
+|   |   |   |   └── empleos
 |   |   |   |   |   └── page.js
 |   |   |   |   └── galeria
 |   |   |   |   |   └── page.js
@@ -120,9 +121,10 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   |   |   └── page.js
 |   |   |   |   └── resenas
 |   |   |   |   |   └── page.js
-|   |   |   |   └── servicios
+|   |   |   |   └── servicio
 |   |   |   |   |   └── [servicioId]
 |   |   |   |   |   |   └── page.js
+|   |   |   |   └── servicios
 |   |   |   |   |   └── page.js
 |   |   |   └── layout.js
 |   |   └── tiendas

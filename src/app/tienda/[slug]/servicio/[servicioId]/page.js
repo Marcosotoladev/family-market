@@ -8,6 +8,7 @@ import { db } from '@/lib/firebase/config';
 import { getPublicStoreConfig } from '@/lib/storeConfigUtils';
 import StoreLayout from '@/components/tienda/StoreLayout';
 import ServiceCard from '@/components/tienda/servicios/ServiceCard';
+import ServiceRatingsAndComments from '@/components/tienda/servicios/ServiceRatingsAndComments';
 import { Loader2, AlertCircle, ArrowLeft, Share2, Eye } from 'lucide-react';
 import Link from 'next/link';
 
@@ -130,6 +131,11 @@ export default function ServicioDetailPage() {
     }
   };
 
+  const handleRatingUpdate = () => {
+    // Recargar el servicio para obtener las valoraciones actualizadas
+    loadData();
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -235,58 +241,109 @@ export default function ServicioDetailPage() {
 
       {/* Contenido principal */}
       <div className="bg-gray-50 dark:bg-gray-900 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Card del servicio */}
-          <div className="mb-8">
-            <ServiceCard
-              service={servicioData}
-              storeData={storeData}
-              variant="featured-compact"
-              showContactInfo={true}
-            />
-          </div>
-
-          {/* Información adicional de la tienda */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700 mb-8">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-              Acerca de la tienda
-            </h3>
-            <div className="flex items-center gap-4">
-              {storeData.logoUrl && (
-                <img
-                  src={storeData.logoUrl}
-                  alt={storeData.businessName || storeData.familyName}
-                  className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            {/* Columna izquierda - Detalles del servicio */}
+            <div className="lg:col-span-2 space-y-8">
+              
+              {/* Card del servicio */}
+              <div className="max-w-md">
+                <ServiceCard
+                  service={servicioData}
+                  storeData={storeData}
+                  variant="featured-compact"
+                  showContactInfo={true}
                 />
-              )}
-              <div className="flex-1 min-w-0">
-                <h4 className="text-base font-semibold text-gray-900 dark:text-white">
-                  {storeData.businessName || storeData.familyName}
-                </h4>
-                {storeData.description && (
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
-                    {storeData.description}
+              </div>
+
+              {/* Descripción completa */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 p-6">
+                <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-4">
+                  Descripción del Servicio
+                </h2>
+                <div className="prose dark:prose-invert max-w-none">
+                  <p className="text-gray-700 dark:text-gray-300 leading-relaxed whitespace-pre-line">
+                    {servicioData.descripcion}
                   </p>
+                </div>
+
+                {/* Información adicional */}
+                {(servicioData.categoria || servicioData.etiquetas?.length > 0) && (
+                  <div className="mt-6 pt-6 border-t border-gray-200 dark:border-gray-700">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      
+                      {servicioData.categoria && (
+                        <div>
+                          <h4 className="font-medium text-gray-900 dark:text-white mb-2">Categoría</h4>
+                          <span className="inline-block px-3 py-1 bg-gray-100 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full text-sm">
+                            {servicioData.categoria}
+                          </span>
+                        </div>
+                      )}
+                      
+                      {servicioData.etiquetas?.length > 0 && (
+                        <div>
+                          <h4 className="font-medium text-gray-900 dark:text-white mb-2">Etiquetas</h4>
+                          <div className="flex flex-wrap gap-2">
+                            {servicioData.etiquetas.map((etiqueta, index) => (
+                              <span 
+                                key={index}
+                                className="inline-block px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 rounded-full text-sm"
+                              >
+                                {etiqueta.replace(/_/g, ' ').toUpperCase()}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 )}
               </div>
-              <Link
-                href={`/tienda/${slug}`}
-                className="flex-shrink-0 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
-              >
-                Ver tienda
-              </Link>
-            </div>
-          </div>
 
-          {/* Botón de ver más servicios */}
-          <div className="text-center">
-            <Link
-              href={`/tienda/${slug}/servicios`}
-              className="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Ver más servicios de esta tienda
-            </Link>
+              {/* Información adicional de la tienda */}
+              <div className="bg-white dark:bg-gray-800 rounded-lg p-6 border border-gray-200 dark:border-gray-700">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                  Acerca de la tienda
+                </h3>
+                <div className="flex items-center gap-4">
+                  {storeData.logoUrl && (
+                    <img
+                      src={storeData.logoUrl}
+                      alt={storeData.businessName || storeData.familyName}
+                      className="w-16 h-16 rounded-lg object-cover flex-shrink-0"
+                    />
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <h4 className="text-base font-semibold text-gray-900 dark:text-white">
+                      {storeData.businessName || storeData.familyName}
+                    </h4>
+                    {storeData.description && (
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mt-1 line-clamp-2">
+                        {storeData.description}
+                      </p>
+                    )}
+                  </div>
+                  <Link
+                    href={`/tienda/${slug}`}
+                    className="flex-shrink-0 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors text-sm font-medium"
+                  >
+                    Ver tienda
+                  </Link>
+                </div>
+              </div>
+            </div>
+
+            {/* Columna derecha - Valoraciones y comentarios */}
+            <div className="lg:col-span-1">
+              <div className="sticky top-8">
+                <ServiceRatingsAndComments 
+                  service={servicioData}
+                  onRatingUpdate={handleRatingUpdate}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </div>
