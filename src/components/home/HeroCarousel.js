@@ -10,25 +10,7 @@ export default function HeroCarousel() {
   // Mock data - más adelante vendrá de Cloudinary
   const slides = [
     {
-      id: 2,
-      title: '',
-      description: '',
-      date: '',
-      location: '',
-      image: 'https://tomatulugar.com/wp-content/uploads/2024/10/conf-25-events.jpg',
-      color: ''
-    },
-    {
-      id: 5,
-      title: '',
-      description: '',
-      date: '',
-      location: '',
-      image: 'https://tomatulugar.com/wp-content/uploads/2025/08/VivirElEvangelio.jpg',
-      color: ''
-    },
-    {
-      id: 1,
+      id: 4,
       title: 'Casa de Oración TTL',
       description: 'Únete a nosotros en un evento excepcional',
       date: 'Miércoles y Viernes 20hs',
@@ -37,22 +19,13 @@ export default function HeroCarousel() {
       color: 'from-blue-600 to-purple-600'
     },
     {
-      id: 3,
+      id: 5,
       title: 'Experiencia TTL',
       description: 'Una experiencia especial de alabanza y adoración y semilla',
       date: '1º y 3º Sábados 16hs y 19hs',
       location: 'TTL Iglesia',
       image: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=400&fit=crop',
       color: 'from-purple-600 to-pink-600'
-    },
-    {
-      id: 4,
-      title: 'Campaña Solidaria',
-      description: 'Juntamos alimentos para familias necesitadas',
-      date: 'A Amar Que Hace Falta',
-      location: 'TTL Iglesia',
-      image: 'https://images.unsplash.com/photo-1559027615-cd4628902d4a?w=800&h=400&fit=crop',
-      color: 'from-green-500 to-teal-500'
     }
   ]
 
@@ -82,8 +55,8 @@ export default function HeroCarousel() {
             key={slide.id}
             className={`
               absolute inset-0 transition-all duration-700 ease-in-out
-              ${index === currentSlide 
-                ? 'opacity-100 scale-100' 
+              ${index === currentSlide
+                ? 'opacity-100 scale-100'
                 : 'opacity-0 scale-105'
               }
             `}
@@ -148,8 +121,8 @@ export default function HeroCarousel() {
             onClick={() => goToSlide(index)}
             className={`
               w-2.5 h-2.5 sm:w-3 sm:h-3 rounded-full transition-all duration-300 touch-manipulation
-              ${index === currentSlide 
-                ? 'bg-white scale-110' 
+              ${index === currentSlide
+                ? 'bg-white scale-110'
                 : 'bg-white bg-opacity-50 hover:bg-opacity-75 active:bg-opacity-90'
               }
             `}
