@@ -71,16 +71,19 @@ export default function BusquedaEmpleoCard({
     window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_self');
   };
 
-  const handleDownloadCV = (e) => {
+  // ✅ FUNCIÓN ACTUALIZADA PARA FIREBASE STORAGE - Descargar CV
+  const handleViewCV = (e) => {
     e.stopPropagation();
     if (busqueda.cv?.url) {
+      // Abrir directamente la URL de Firebase Storage
+      // El navegador decidirá si descarga o muestra el PDF según su configuración
       window.open(busqueda.cv.url, '_blank');
     }
   };
 
   const handleShare = async (e) => {
     e.stopPropagation();
-    const busquedaUrl = `${window.location.origin}/empleos/${busqueda.id}`;
+    const busquedaUrl = `${window.location.origin}/empleo/${busqueda.id}`;
 
     if (navigator.share) {
       try {
@@ -138,7 +141,7 @@ export default function BusquedaEmpleoCard({
     return nivel;
   };
 
-  // ✅ VARIANTE FEATURED COMPACT
+  // VARIANTE FEATURED COMPACT
   if (variant === 'featured-compact') {
     return (
       <div
@@ -210,7 +213,7 @@ export default function BusquedaEmpleoCard({
             {busqueda.titulo}
           </p>
 
-          {/* Pretensión salarial con fondo - MODIFICADO */}
+          {/* Pretensión salarial con fondo */}
           <div className="mb-3 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg p-2.5 border border-emerald-100 dark:border-emerald-800">
             {busqueda.pretensionSalarial && busqueda.pretensionSalarial.tipo !== 'a_convenir' && (busqueda.pretensionSalarial.minimo || busqueda.pretensionSalarial.maximo) ? (
               <div>
@@ -285,10 +288,10 @@ export default function BusquedaEmpleoCard({
                 )}
               </div>
 
-              {/* Botón CV */}
+              {/* BOTÓN DESCARGAR CV - Versión compacta */}
               {busqueda.cv?.url && (
                 <button
-                  onClick={handleDownloadCV}
+                  onClick={handleViewCV}
                   className="w-full bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-2 rounded-lg text-xs font-medium transition-colors flex items-center justify-center space-x-1"
                 >
                   <Download className="w-3 h-3" />
@@ -339,7 +342,7 @@ export default function BusquedaEmpleoCard({
     );
   }
 
-  // ✅ VARIANTE GRID (principal)
+  // VARIANTE GRID (principal)
   if (variant === 'grid') {
     return (
       <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700">
@@ -427,7 +430,7 @@ export default function BusquedaEmpleoCard({
             )}
           </div>
 
-          {/* Pretensión salarial - MODIFICADO */}
+          {/* Pretensión salarial */}
           {busqueda.pretensionSalarial &&
             typeof busqueda.pretensionSalarial === 'object' &&
             (busqueda.pretensionSalarial.minimo || busqueda.pretensionSalarial.maximo || busqueda.pretensionSalarial.tipo !== 'a_convenir') && (
@@ -441,10 +444,10 @@ export default function BusquedaEmpleoCard({
               </div>
             )}
 
-          {/* Botón descargar CV */}
+          {/* BOTÓN DESCARGAR CV - Versión grid */}
           {busqueda.cv?.url && (
             <button
-              onClick={handleDownloadCV}
+              onClick={handleViewCV}
               className="w-full mb-3 bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2.5 rounded-lg font-medium transition-colors flex items-center justify-center space-x-2 shadow-md hover:shadow-lg"
             >
               <Download className="w-5 h-5" />

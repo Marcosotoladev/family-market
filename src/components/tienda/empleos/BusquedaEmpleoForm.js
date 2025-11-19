@@ -28,6 +28,7 @@ import {
 import { useAuth } from '@/contexts/AuthContext';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { uploadCV, deleteCV } from '@/lib/services/storageService'; // ✅ NUEVO IMPORT
 
 export default function BusquedaEmpleoForm({
   busqueda = null,
@@ -71,6 +72,7 @@ export default function BusquedaEmpleoForm({
     },
     cv: {
       url: '',
+      path: '', // ✅ NUEVO - Agregado path para Firebase Storage
       nombre: '',
       size: 0
     },
@@ -87,7 +89,7 @@ export default function BusquedaEmpleoForm({
   const [uploadingFoto, setUploadingFoto] = useState(false);
   const [uploadingCV, setUploadingCV] = useState(false);
 
-  // ✅ CORREGIDO: Cargar datos del usuario SOLO si NO hay búsqueda existente
+  // Cargar datos del usuario SOLO si NO hay búsqueda existente
   useEffect(() => {
     // Si ya hay una búsqueda, no cargar datos del usuario
     if (busqueda) return;
@@ -154,6 +156,7 @@ export default function BusquedaEmpleoForm({
         },
         cv: {
           url: busqueda.cv?.url || '',
+          path: busqueda.cv?.path || '', // ✅ NUEVO - Incluir path
           nombre: busqueda.cv?.nombre || '',
           size: busqueda.cv?.size || 0
         },
@@ -218,7 +221,7 @@ export default function BusquedaEmpleoForm({
     }));
   };
 
-  // Upload de foto a Cloudinary
+  // Upload de foto a Cloudinary (sin cambios)
   const handleFotoUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -262,7 +265,7 @@ export default function BusquedaEmpleoForm({
     }
   };
 
-  // Upload de CV (PDF) a Cloudinary
+  // ✅ FUNCIÓN ACTUALIZADA - Upload de CV con Firebase Storage
   const handleCVUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -280,45 +283,42 @@ export default function BusquedaEmpleoForm({
     setUploadingCV(true);
 
     try {
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', file);
-      uploadFormData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_JOBS);
-      uploadFormData.append('folder', 'family-market/empleos/cvs');
-      uploadFormData.append('resource_type', 'raw');
-
-      const response = await fetch(
-        `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`,
-        {
-          method: 'POST',
-          body: uploadFormData
-        }
-      );
-
-      const data = await response.json();
-
-      if (data.secure_url) {
-        setFormData(prev => ({
-          ...prev,
-          cv: {
-            url: data.secure_url,
-            nombre: file.name,
-            size: file.size
-          }
-        }));
-      }
+      // Subir CV a Firebase Storage
+      const cvData = await uploadCV(file, userId || user?.uid);
+      
+      // Actualizar el estado con los datos del CV
+      setFormData(prev => ({
+        ...prev,
+        cv: cvData
+      }));
+      
+      alert('CV subido exitosamente');
     } catch (error) {
       console.error('Error al subir CV:', error);
-      alert('Error al subir el CV. Intenta nuevamente.');
+      alert(error.message || 'Error al subir el CV. Intenta nuevamente.');
     } finally {
       setUploadingCV(false);
     }
   };
 
-  const removeCV = () => {
+  // ✅ FUNCIÓN ACTUALIZADA - Eliminar CV con Firebase Storage
+  const removeCV = async () => {
+    // Si el CV tiene un path en Storage, intentar eliminarlo
+    if (formData.cv?.path) {
+      try {
+        await deleteCV(formData.cv.path);
+      } catch (error) {
+        console.error('Error al eliminar CV del storage:', error);
+        // Continuar aunque falle la eliminación del storage
+      }
+    }
+
+    // Limpiar el estado local
     setFormData(prev => ({
       ...prev,
       cv: {
         url: '',
+        path: '',
         nombre: '',
         size: 0
       }
@@ -371,6 +371,7 @@ export default function BusquedaEmpleoForm({
     const busquedaData = {
       ...formData,
       usuarioId: userId,
+      cv: formData.cv, // ✅ Incluir todos los datos del CV (url, path, nombre, size)
       pretensionSalarial: {
         ...formData.pretensionSalarial,
         minimo: formData.pretensionSalarial.minimo ? parseFloat(formData.pretensionSalarial.minimo) : null,

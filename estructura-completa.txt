@@ -1,6 +1,5 @@
 find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -not -path "./public/images*" | sort | sed 's/[^/]*\//|   /g; s/|   \([^|]\)/└── \1/' > estructura-completa.txt
 
-
 .
 └── .env.local
 └── estructura-completa.txt
@@ -34,6 +33,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── productos
 |   |   |   |   └── page.js
 |   |   |   └── servicios
+|   |   |   |   └── page.js
+|   |   |   └── testimonios
 |   |   |   |   └── page.js
 |   |   |   └── usuarios
 |   |   |   |   └── page.js
@@ -188,6 +189,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── StoreConfigSection.js
 |   |   |   └── StoreLogoSection.js
 |   |   |   └── StoreSidebar.js
+|   |   └── testimonials
+|   |   |   └── TestimonialModal.js
 |   |   └── tienda
 |   |   |   └── ActivateStoreButton.js
 |   |   |   └── empleos
@@ -269,6 +272,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── favoritesService.js
 |   |   |   └── notificationService.js
 |   |   |   └── serviceUtils.js
+|   |   |   └── testimonialsService.js
 |   |   └── storeConfigUtils.js
 |   └── styles
 |   |   └── store-themes.css

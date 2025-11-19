@@ -26,6 +26,7 @@ import {
   generarSlugEmpleo,
 
 } from '../../types/employment';
+import { deleteCV } from '@/lib/services/storageService';
 
 // ================================
 // FUNCIONES FIREBASE
@@ -475,4 +476,49 @@ export const generarMensajeWhatsApp = (publicacion) => {
   };
 
   return `Hola! Me interesa ${tipos[publicacion.tipo]}: ${publicacion.titulo}`;
+};
+
+/**
+ * Elimina una búsqueda de empleo y su CV asociado
+ * @param {string} busquedaId - ID de la búsqueda a eliminar
+ * @param {string} userId - ID del usuario propietario
+ * @returns {Promise<void>}
+ */
+
+export const eliminarBusquedaEmpleo = async (busquedaId, userId) => {
+  try {
+    // Obtener la búsqueda antes de eliminarla para acceder al path del CV
+    const busquedaRef = doc(db, 'empleos', busquedaId);
+    const busquedaDoc = await getDoc(busquedaRef);
+    
+    if (!busquedaDoc.exists()) {
+      throw new Error('La búsqueda no existe');
+    }
+    
+    const busquedaData = busquedaDoc.data();
+    
+    // Verificar que el usuario sea el propietario
+    if (busquedaData.usuarioId !== userId) {
+      throw new Error('No tienes permisos para eliminar esta búsqueda');
+    }
+    
+    // Eliminar el CV del Storage si existe
+    if (busquedaData.cv?.path) {
+      try {
+        await deleteCV(busquedaData.cv.path);
+        console.log('CV eliminado del Storage');
+      } catch (error) {
+        console.error('Error al eliminar CV del Storage:', error);
+        // Continuar con la eliminación del documento aunque falle el Storage
+      }
+    }
+    
+    // Eliminar el documento de Firestore
+    await deleteDoc(busquedaRef);
+    console.log('Búsqueda de empleo eliminada exitosamente');
+    
+  } catch (error) {
+    console.error('Error al eliminar búsqueda de empleo:', error);
+    throw error;
+  }
 };
