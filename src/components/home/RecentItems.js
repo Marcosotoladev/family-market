@@ -118,10 +118,7 @@ export default function RecentItems() {
       // Tomar solo los primeros 15
       const items = todosLosItems.slice(0, 15);
 
-      console.log(`✅ ${items.length} items recientes cargados:`);
-      console.log(`📦 ${productos.length} productos`);
-      console.log(`🔧 ${servicios.length} servicios`);
-      console.log(`💼 ${empleos.length} empleos`);
+
 
       setRecentItems(items);
     } catch (error) {
@@ -143,7 +140,7 @@ export default function RecentItems() {
     } else if (item.tipo === 'servicio') {
       url = `https://familymarket.vercel.app/tienda/${storeSlug}/servicio/${item.id}`;
     } else if (item.tipo === 'empleo') {
-      url = `https://familymarket.vercel.app/tienda/${storeSlug}/empleos/${item.id}`;
+      url = `https://familymarket.vercel.app/tienda/${storeSlug}/empleo/${item.id}`;
     }
 
     if (url) window.open(url, '_blank');
