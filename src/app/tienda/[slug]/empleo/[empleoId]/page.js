@@ -1,10 +1,11 @@
-// src/app/tienda/[slug]/empleos/[empleoId]/page.js
+// src/app/tienda/[slug]/empleo/[empleoId]/page.js
 'use client';
 
 import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { doc, getDoc, collection, query, where, getDocs, updateDoc, increment } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { useAuth } from '@/contexts/AuthContext';
 import { getPublicStoreConfig } from '@/lib/storeConfigUtils';
 import StoreLayout from '@/components/tienda/StoreLayout';
 import { TIPOS_PUBLICACION } from '@/types/employment';
@@ -17,6 +18,7 @@ import Link from 'next/link';
 export default function EmpleoDetailPage() {
   const params = useParams();
   const { slug, empleoId } = params;
+  const { user } = useAuth();
 
   const [storeData, setStoreData] = useState(null);
   const [storeConfig, setStoreConfig] = useState(null);
@@ -35,60 +37,118 @@ export default function EmpleoDetailPage() {
       setLoading(true);
       setError(null);
 
-      // Buscar tienda por slug
-      const usersRef = collection(db, 'users');
-      const q = query(usersRef, where('storeSlug', '==', slug));
-      const querySnapshot = await getDocs(q);
+      console.log('=== INICIANDO CARGA DE DATOS ===');
+      console.log('Usuario autenticado:', user ? user.uid : 'NO AUTENTICADO');
+      console.log('Slug:', slug);
+      console.log('EmpleoId:', empleoId);
 
-      if (querySnapshot.empty) {
-        setError('Tienda no encontrada');
+      // PASO 1: Cargar el empleo
+      console.log('PASO 1: Intentando cargar empleo...');
+      let empleo = null;
+      try {
+        const empleoDoc = await getDoc(doc(db, 'empleos', empleoId));
+        
+        if (!empleoDoc.exists()) {
+          console.error('Empleo no encontrado');
+          setError('Empleo no encontrado');
+          setLoading(false);
+          return;
+        }
+
+        empleo = {
+          id: empleoDoc.id,
+          ...empleoDoc.data()
+        };
+        console.log('✓ Empleo cargado exitosamente:', empleo.titulo);
+      } catch (empleoError) {
+        console.error('ERROR al cargar empleo:', empleoError);
+        setError('Error al cargar el empleo: ' + empleoError.message);
+        setLoading(false);
         return;
       }
 
-      const userDoc = querySnapshot.docs[0];
-      const userData = {
-        id: userDoc.id,
-        ...userDoc.data()
-      };
+      // PASO 2: Buscar tienda por slug
+      console.log('PASO 2: Buscando tienda con slug:', slug);
+      let userData = null;
+      try {
+        const usersRef = collection(db, 'users');
+        const q = query(usersRef, where('storeSlug', '==', slug));
+        const querySnapshot = await getDocs(q);
+
+        if (querySnapshot.empty) {
+          console.error('Tienda no encontrada');
+          setError('Tienda no encontrada');
+          setLoading(false);
+          return;
+        }
+
+        const userDoc = querySnapshot.docs[0];
+        userData = {
+          id: userDoc.id,
+          ...userDoc.data()
+        };
+        console.log('✓ Tienda encontrada:', userData.businessName || userData.familyName);
+      } catch (storeError) {
+        console.error('ERROR al buscar tienda:', storeError);
+        setError('Error al buscar la tienda: ' + storeError.message);
+        setLoading(false);
+        return;
+      }
+
+      // PASO 3: Verificaciones
+      console.log('PASO 3: Verificando pertenencia y estado...');
+      if (empleo.usuarioId !== userData.id) {
+        console.error('El empleo no pertenece a esta tienda');
+        console.log('usuarioId del empleo:', empleo.usuarioId);
+        console.log('ID de la tienda:', userData.id);
+        setError('Este empleo no pertenece a esta tienda');
+        setLoading(false);
+        return;
+      }
 
       if (userData.accountStatus !== 'approved' && userData.accountStatus !== 'true') {
+        console.error('Tienda no aprobada. Estado:', userData.accountStatus);
         setError('Esta tienda no está disponible');
+        setLoading(false);
         return;
       }
+      console.log('✓ Verificaciones completadas');
 
-      // Cargar configuración de la tienda
-      const config = await getPublicStoreConfig(userData.id);
-
-      // Cargar datos del empleo
-      const empleoDoc = await getDoc(doc(db, 'empleos', empleoId));
-      
-      if (!empleoDoc.exists()) {
-        setError('Empleo no encontrado');
-        return;
+      // PASO 4: Cargar configuración (opcional)
+      console.log('PASO 4: Cargando configuración de la tienda...');
+      let config = {};
+      try {
+        config = await getPublicStoreConfig(userData.id);
+        console.log('✓ Configuración cargada');
+      } catch (configError) {
+        console.log('⚠ No se pudo cargar la configuración (no crítico):', configError.message);
       }
 
-      const empleo = {
-        id: empleoDoc.id,
-        ...empleoDoc.data()
-      };
-
-      // Verificar que el empleo pertenece a esta tienda
-      if (empleo.usuarioId !== userData.id) {
-        setError('Este empleo no pertenece a esta tienda');
-        return;
+      // PASO 5: Incrementar vistas (opcional)
+      console.log('PASO 5: Intentando incrementar vistas...');
+      try {
+        if (user) {
+          await updateDoc(doc(db, 'empleos', empleoId), {
+            vistas: increment(1)
+          });
+          console.log('✓ Vistas incrementadas');
+        } else {
+          console.log('⚠ Usuario no autenticado, no se pueden incrementar vistas');
+        }
+      } catch (viewError) {
+        console.log('⚠ No se pudieron actualizar vistas (no crítico):', viewError.message);
       }
 
-      // Incrementar contador de vistas
-      await updateDoc(doc(db, 'empleos', empleoId), {
-        vistas: increment(1)
-      });
-
+      // PASO 6: Establecer todos los datos
+      console.log('PASO 6: Estableciendo datos en el estado...');
       setStoreData(userData);
       setStoreConfig(config);
       setEmpleoData(empleo);
+      console.log('✓ CARGA COMPLETADA EXITOSAMENTE');
+
     } catch (err) {
-      console.error('Error cargando datos:', err);
-      setError('Error al cargar el empleo');
+      console.error('ERROR GENERAL:', err);
+      setError('Error al cargar el empleo: ' + (err.message || 'Error desconocido'));
     } finally {
       setLoading(false);
     }
@@ -120,19 +180,25 @@ export default function EmpleoDetailPage() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: empleoData.titulo,
-          text: empleoData.descripcion,
+          title: empleoData.titulo || empleoData.nombre || 'Empleo',
+          text: empleoData.descripcion || 'Ver este empleo',
           url: url,
         });
       } catch (err) {
-        console.log('Error sharing:', err);
+        console.log('Error compartiendo:', err);
       }
     } else {
-      navigator.clipboard.writeText(url);
-      alert('Enlace copiado al portapapeles');
+      try {
+        await navigator.clipboard.writeText(url);
+        alert('Enlace copiado al portapapeles');
+      } catch (err) {
+        console.error('Error copiando al portapapeles:', err);
+        alert('No se pudo copiar el enlace');
+      }
     }
   };
 
+  // Estado de carga
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
@@ -144,26 +210,36 @@ export default function EmpleoDetailPage() {
     );
   }
 
+  // Estado de error
   if (error || !storeData || !empleoData) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
-        <div className="text-center">
+        <div className="text-center max-w-md mx-auto px-4">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             {error || 'No se pudo cargar el empleo'}
           </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Es posible que el empleo haya sido eliminado o no esté disponible.
+          </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
             <Link
               href={`/tienda/${slug}/empleos`}
-              className="inline-flex items-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
+              className="inline-flex items-center justify-center px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors"
             >
               Ver todos los empleos
             </Link>
             <Link
               href={`/tienda/${slug}`}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               Volver a la tienda
+            </Link>
+            <Link
+              href="/empleos"
+              className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+            >
+              Ver todos los empleos
             </Link>
           </div>
         </div>
@@ -174,7 +250,7 @@ export default function EmpleoDetailPage() {
   return (
     <StoreLayout
       storeData={storeData}
-      storeConfig={storeConfig}
+      storeConfig={storeConfig || {}}
     >
       {/* Breadcrumbs */}
       <div className="bg-gray-50 dark:bg-gray-900 py-4">
@@ -195,7 +271,7 @@ export default function EmpleoDetailPage() {
             </Link>
             <span className="text-gray-300 dark:text-gray-600">/</span>
             <span className="text-gray-900 dark:text-white font-medium line-clamp-1">
-              {empleoData.titulo}
+              {empleoData.titulo || empleoData.nombre || 'Detalle'}
             </span>
           </nav>
         </div>
@@ -214,7 +290,7 @@ export default function EmpleoDetailPage() {
               </Link>
               <div>
                 <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
-                  {empleoData.titulo}
+                  {empleoData.titulo || empleoData.nombre || 'Empleo'}
                 </h1>
                 {empleoData.vistas > 0 && (
                   <p className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-1 mt-1">
@@ -227,7 +303,7 @@ export default function EmpleoDetailPage() {
 
             <button
               onClick={handleShare}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+              className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
             >
               <Share2 className="w-4 h-4 mr-2" />
               Compartir
@@ -239,7 +315,7 @@ export default function EmpleoDetailPage() {
       {/* Contenido principal */}
       <div className="bg-gray-50 dark:bg-gray-900 py-8">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          {/* Card del empleo */}
+          {/* Card del empleo según su tipo */}
           <div className="mb-8">
             {empleoData.tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO && (
               <OfertaEmpleoCard
@@ -306,7 +382,7 @@ export default function EmpleoDetailPage() {
           <div className="text-center">
             <Link
               href={`/tienda/${slug}/empleos`}
-              className="inline-flex items-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-colors"
+              className="inline-flex items-center justify-center px-6 py-3 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-white dark:hover:bg-gray-800 transition-colors"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Ver más empleos de esta tienda
