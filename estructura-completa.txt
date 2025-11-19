@@ -103,6 +103,8 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── page.js
 |   |   └── terms
 |   |   |   └── page.js
+|   |   └── test-prod
+|   |   |   └── page.js
 |   |   └── tienda
 |   |   |   └── [slug]
 |   |   |   |   └── empleo
@@ -272,6 +274,7 @@ find . -not -path "./node_modules*" -not -path "./.next*" -not -path "./.git*" -
 |   |   |   └── favoritesService.js
 |   |   |   └── notificationService.js
 |   |   |   └── serviceUtils.js
+|   |   |   └── storageService.js
 |   |   |   └── testimonialsService.js
 |   |   └── storeConfigUtils.js
 |   └── styles
