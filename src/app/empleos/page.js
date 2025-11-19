@@ -143,7 +143,7 @@ export default function EmpleosPage() {
       showContactInfo: true,
       showStoreInfo: true,
       variant: vistaGrid ? (isMobile ? 'featured-compact' : 'grid') : 'grid',
-      onClick: () => window.location.href = `/tienda/${empleo.tiendaInfo?.slug}/empleos/${empleo.id}`
+      onClick: () => window.location.href = `/tienda/${empleo.tiendaInfo?.slug}/empleo/${empleo.id}`
     }
 
     const tipo = empleo.tipoPublicacion || empleo.tipo

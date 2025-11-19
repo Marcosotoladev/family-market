@@ -83,7 +83,7 @@ export default function BusquedaEmpleoCard({
 
   const handleShare = async (e) => {
     e.stopPropagation();
-    const busquedaUrl = `${window.location.origin}/empleo/${busqueda.id}`;
+    const busquedaUrl = window.location.href.replace('/empleos', `/empleo/${busqueda.id}`);
 
     if (navigator.share) {
       try {
