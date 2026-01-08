@@ -3,13 +3,13 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
-import { 
-  Star, 
-  Trash2, 
-  Edit2, 
-  Shield, 
-  CheckCircle, 
-  XCircle, 
+import {
+  Star,
+  Trash2,
+  Edit2,
+  Shield,
+  CheckCircle,
+  XCircle,
   Search,
   Filter,
   Loader2,
@@ -25,13 +25,13 @@ import {
   getTestimonialStats
 } from '@/lib/services/testimonialsService';
 import TestimonialModal from '@/components/testimonials/TestimonialModal';
-import { useToast } from '@/hooks/useToast';
+import useToast from '@/hooks/useToast';
 
 export default function AdminTestimonialsPage() {
   const { user } = useAuth();
   const router = useRouter();
   const { showToast } = useToast();
-  
+
   const [testimonials, setTestimonials] = useState([]);
   const [filteredTestimonials, setFilteredTestimonials] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -86,17 +86,17 @@ export default function AdminTestimonialsPage() {
   // Filtrar testimonios
   useEffect(() => {
     let filtered = [...testimonials];
-    
+
     // Filtrar por búsqueda
     if (searchTerm) {
-      filtered = filtered.filter(t => 
+      filtered = filtered.filter(t =>
         t.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.testimonial?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.role?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         t.userEmail?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
+
     // Filtrar por estado
     switch (filterStatus) {
       case 'approved':
@@ -109,7 +109,7 @@ export default function AdminTestimonialsPage() {
         filtered = filtered.filter(t => t.featured);
         break;
     }
-    
+
     setFilteredTestimonials(filtered);
   }, [searchTerm, filterStatus, testimonials]);
 
@@ -117,12 +117,12 @@ export default function AdminTestimonialsPage() {
     if (!window.confirm('¿Estás seguro de eliminar este testimonio permanentemente?')) {
       return;
     }
-    
+
     setProcessingId(testimonialId);
-    
+
     try {
       const result = await deleteTestimonial(testimonialId);
-      
+
       if (result.success) {
         showToast('Testimonio eliminado exitosamente', 'success');
         loadTestimonials();
@@ -140,10 +140,10 @@ export default function AdminTestimonialsPage() {
 
   const handleToggleFeatured = async (testimonialId, currentFeatured) => {
     setProcessingId(testimonialId);
-    
+
     try {
       const result = await toggleFeaturedTestimonial(testimonialId, !currentFeatured);
-      
+
       if (result.success) {
         showToast(
           !currentFeatured ? 'Testimonio destacado' : 'Testimonio ya no está destacado',
@@ -163,10 +163,10 @@ export default function AdminTestimonialsPage() {
 
   const handleToggleApproved = async (testimonialId, currentApproved) => {
     setProcessingId(testimonialId);
-    
+
     try {
       const result = await toggleApproveTestimonial(testimonialId, !currentApproved);
-      
+
       if (result.success) {
         showToast(
           !currentApproved ? 'Testimonio aprobado' : 'Testimonio ocultado',
@@ -188,11 +188,10 @@ export default function AdminTestimonialsPage() {
     return Array.from({ length: 5 }, (_, index) => (
       <Star
         key={index}
-        className={`w-4 h-4 ${
-          index < rating 
-            ? 'text-yellow-400 fill-current' 
+        className={`w-4 h-4 ${index < rating
+            ? 'text-yellow-400 fill-current'
             : 'text-gray-300 dark:text-gray-600'
-        }`}
+          }`}
       />
     ));
   };
@@ -238,7 +237,7 @@ export default function AdminTestimonialsPage() {
             <MessageCircle className="w-8 h-8 text-primary-600" />
           </div>
         </div>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
@@ -250,7 +249,7 @@ export default function AdminTestimonialsPage() {
             <CheckCircle className="w-8 h-8 text-green-600" />
           </div>
         </div>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
@@ -262,7 +261,7 @@ export default function AdminTestimonialsPage() {
             <Star className="w-8 h-8 text-yellow-600" />
           </div>
         </div>
-        
+
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-sm border border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div>
@@ -294,46 +293,42 @@ export default function AdminTestimonialsPage() {
               />
             </div>
           </div>
-          
+
           {/* Filtro de estado */}
           <div className="flex gap-2">
             <button
               onClick={() => setFilterStatus('all')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filterStatus === 'all'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterStatus === 'all'
                   ? 'bg-primary-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
+                }`}
             >
               Todos
             </button>
             <button
               onClick={() => setFilterStatus('approved')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filterStatus === 'approved'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterStatus === 'approved'
                   ? 'bg-green-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
+                }`}
             >
               Aprobados
             </button>
             <button
               onClick={() => setFilterStatus('pending')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filterStatus === 'pending'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterStatus === 'pending'
                   ? 'bg-yellow-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
+                }`}
             >
               Pendientes
             </button>
             <button
               onClick={() => setFilterStatus('featured')}
-              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                filterStatus === 'featured'
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${filterStatus === 'featured'
                   ? 'bg-purple-600 text-white'
                   : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-              }`}
+                }`}
             >
               Destacados
             </button>

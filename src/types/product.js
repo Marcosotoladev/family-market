@@ -29,21 +29,21 @@ export const UNIDADES_MEDIDA = {
   // Peso
   GRAMOS: 'gramos',
   KILOGRAMOS: 'kilogramos',
-  
+
   // Volumen
   MILILITROS: 'mililitros',
   LITROS: 'litros',
-  
+
   // Longitud
   CENTIMETROS: 'centimetros',
   METROS: 'metros',
-  
+
   // Cantidad
   UNIDAD: 'unidad',
   DOCENA: 'docena',
   PACK: 'pack',
   KIT: 'kit',
-  
+
   // Tiempo (para servicios)
   HORA: 'hora',
   DIA: 'dia',
@@ -132,6 +132,35 @@ export const CATEGORIAS_PRODUCTO = {
   OTROS: 'otros'
 }
 
+// Labels para las categorías
+export const CATEGORIAS_PRODUCTO_LABELS = {
+  [CATEGORIAS_PRODUCTO.ALIMENTOS]: 'Alimentos',
+  [CATEGORIAS_PRODUCTO.BEBIDAS]: 'Bebidas',
+  [CATEGORIAS_PRODUCTO.PANADERIA]: 'Panadería',
+  [CATEGORIAS_PRODUCTO.DULCES]: 'Dulces y Golosinas',
+  [CATEGORIAS_PRODUCTO.LACTEOS]: 'Lácteos',
+  [CATEGORIAS_PRODUCTO.CARNES]: 'Carnes',
+  [CATEGORIAS_PRODUCTO.VERDURAS]: 'Verduras',
+  [CATEGORIAS_PRODUCTO.FRUTAS]: 'Frutas',
+  [CATEGORIAS_PRODUCTO.ROPA]: 'Ropa',
+  [CATEGORIAS_PRODUCTO.ACCESORIOS]: 'Accesorios',
+  [CATEGORIAS_PRODUCTO.HOGAR]: 'Hogar',
+  [CATEGORIAS_PRODUCTO.DECORACION]: 'Decoración',
+  [CATEGORIAS_PRODUCTO.ELECTRONICA]: 'Electrónica',
+  [CATEGORIAS_PRODUCTO.LIBROS]: 'Libros',
+  [CATEGORIAS_PRODUCTO.JUGUETES]: 'Juguetes',
+  [CATEGORIAS_PRODUCTO.DEPORTES]: 'Deportes',
+  [CATEGORIAS_PRODUCTO.SALUD]: 'Salud',
+  [CATEGORIAS_PRODUCTO.BELLEZA]: 'Belleza',
+  [CATEGORIAS_PRODUCTO.MASCOTAS]: 'Mascotas',
+  [CATEGORIAS_PRODUCTO.JARDIN]: 'Jardín',
+  [CATEGORIAS_PRODUCTO.HERRAMIENTAS]: 'Herramientas',
+  [CATEGORIAS_PRODUCTO.VEHICULOS]: 'Vehículos',
+  [CATEGORIAS_PRODUCTO.INMUEBLES]: 'Inmuebles',
+  [CATEGORIAS_PRODUCTO.SERVICIOS]: 'Servicios',
+  [CATEGORIAS_PRODUCTO.OTROS]: 'Otros'
+}
+
 // Tipos de contacto para productos
 export const TIPOS_CONTACTO = {
   WHATSAPP: 'whatsapp',
@@ -151,7 +180,7 @@ export const PRODUCTO_SCHEMA = {
   descripcion: '',             // Descripción detallada
   categoria: '',               // Categoría del producto
   subcategoria: '',            // Subcategoría opcional
-  
+
   // Precios y stock
   precio: 0,                   // Precio principal
   tipoPrecio: TIPOS_PRECIO.FIJO, // Tipo de precio
@@ -160,16 +189,16 @@ export const PRODUCTO_SCHEMA = {
   gestionStock: GESTION_STOCK.ILIMITADO, // Tipo de gestión de stock
   stock: null,                 // Cantidad en stock
   stockMinimo: 0,              // Stock mínimo para alertas
-  
+
   // Imágenes
   imagenes: [],                // Array de URLs de imágenes (máximo 3)
   imagenPrincipal: '',         // URL de la imagen principal
-  
+
   // Estado y configuración
   estado: ESTADOS_PRODUCTO.DISPONIBLE, // Estado actual
   condicion: CONDICION_PRODUCTO.NUEVO, // Condición del producto
   tipoDestacado: TIPOS_DESTACADO.NORMAL, // Tipo de destacado
-  
+
   // Características del producto
   peso: null,                  // Peso del producto
   unidadPeso: UNIDADES_MEDIDA.GRAMOS, // Unidad de peso
@@ -179,16 +208,16 @@ export const PRODUCTO_SCHEMA = {
     alto: null,
     unidad: UNIDADES_MEDIDA.CENTIMETROS
   },
-  
+
   // Etiquetas y categorización
   etiquetas: [],               // Array de etiquetas especiales
   palabrasClave: [],           // Palabras clave para búsqueda
   origen: ORIGEN_PRODUCTO.PROPIO, // Origen del producto
-  
+
   // Variaciones del producto
   tieneVariaciones: false,     // Si tiene variaciones
   variaciones: [],             // Array de variaciones
-  
+
   // Descuentos y promociones
   tieneDescuento: false,       // Si tiene descuento activo
   descuento: {                 // Configuración del descuento
@@ -197,7 +226,7 @@ export const PRODUCTO_SCHEMA = {
     fechaInicio: null,         // Fecha inicio promoción
     fechaFin: null             // Fecha fin promoción
   },
-  
+
   // Contacto (se auto-completa desde storeData)
   contacto: {
     whatsapp: '',              // Auto desde storeData.whatsapp
@@ -205,7 +234,7 @@ export const PRODUCTO_SCHEMA = {
     email: '',                 // Auto desde storeData.email
     mensaje: ''                // Mensaje predefinido para WhatsApp
   },
-  
+
   // Configuración de entrega
   entrega: {
     retiroLocal: false,        // Se puede retirar en local
@@ -215,7 +244,7 @@ export const PRODUCTO_SCHEMA = {
     costoDelivery: 0,          // Costo del delivery
     tiempoPreparacion: '',     // Tiempo de preparación
   },
-  
+
   // Valoraciones y reseñas
   valoraciones: {
     promedio: 0,               // Promedio de valoraciones (0-5)
@@ -228,7 +257,7 @@ export const PRODUCTO_SCHEMA = {
       1: 0
     }
   },
-  
+
   // Estadísticas de interacción
   interacciones: {
     vistas: 0,                 // Total de vistas
@@ -236,7 +265,7 @@ export const PRODUCTO_SCHEMA = {
     compartidas: 0,            // Total de veces compartido
     comentarios: 0             // Total de comentarios
   },
-  
+
   // Información de la tienda (para cards)
   tiendaInfo: {
     nombre: '',                // Auto desde storeData.businessName
@@ -245,7 +274,7 @@ export const PRODUCTO_SCHEMA = {
     verificada: false,         // Si la tienda está verificada
     ubicacion: ''              // Auto desde storeData.address
   },
-  
+
   // Metadatos del producto
   fechaCreacion: null,         // Timestamp de creación
   fechaActualizacion: null,    // Timestamp última actualización
@@ -253,14 +282,14 @@ export const PRODUCTO_SCHEMA = {
   fechaUltimaVista: null,      // Timestamp última vista
   totalVentas: 0,              // Contador de ventas
   totalVistas: 0,              // Contador de vistas (mantenido por compatibilidad)
-  
+
   // SEO y búsqueda
   slug: '',                    // URL amigable
   metaDescripcion: '',         // Meta descripción para SEO
-  
+
   // Control de calidad
   reportes: 0,                 // Número de reportes del producto
-  
+
   // Campos adicionales personalizables
   camposPersonalizados: {}     // Campos extra definidos por la tienda
 }
@@ -302,13 +331,13 @@ export const calcularPromedioValoraciones = (comentarios) => {
 export const calcularDistribucionValoraciones = (comentarios) => {
   const distribucion = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
   if (!comentarios || comentarios.length === 0) return distribucion;
-  
+
   comentarios.forEach(c => {
     if (c.valoracion >= 1 && c.valoracion <= 5) {
       distribucion[c.valoracion]++;
     }
   });
-  
+
   return distribucion;
 }
 
@@ -335,44 +364,44 @@ export const autoCompletarDatosProducto = (productData, storeData) => {
 // Utilidades para validación
 export const validarProducto = (producto) => {
   const errores = [];
-  
+
   if (!producto.titulo || producto.titulo.trim().length < 3) {
     errores.push('El título debe tener al menos 3 caracteres');
   }
-  
+
   if (!producto.descripcion || producto.descripcion.trim().length < 10) {
     errores.push('La descripción debe tener al menos 10 caracteres');
   }
-  
+
   if (!producto.categoria) {
     errores.push('Debe seleccionar una categoría');
   }
-  
+
   if (producto.tipoPrecio === TIPOS_PRECIO.FIJO && (!producto.precio || producto.precio <= 0)) {
     errores.push('El precio debe ser mayor a 0');
   }
-  
+
   if (producto.gestionStock === GESTION_STOCK.LIMITADO && (!producto.stock || producto.stock < 0)) {
     errores.push('El stock debe ser 0 o mayor');
   }
-  
+
   if (!producto.imagenes || producto.imagenes.length === 0) {
     errores.push('Debe agregar al menos una imagen');
   }
-  
+
   return errores;
 }
 
 // Utilidades para formateo
 export const formatearPrecio = (precio, moneda = 'ARS') => {
   if (typeof precio !== 'number') return 'Precio a consultar';
-  
+
   const formatters = {
     ARS: new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' }),
     USD: new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }),
     EUR: new Intl.NumberFormat('de-DE', { style: 'currency', currency: 'EUR' })
   };
-  
+
   return formatters[moneda]?.format(precio) || `${precio} ${moneda}`;
 }
 
@@ -383,7 +412,7 @@ export const obtenerEstadoBadge = (estado) => {
     [ESTADOS_PRODUCTO.PAUSADO]: { color: 'yellow', texto: 'Pausado' },
     [ESTADOS_PRODUCTO.INACTIVO]: { color: 'gray', texto: 'Inactivo' }
   };
-  
+
   return badges[estado] || { color: 'gray', texto: 'Desconocido' };
 }
 
@@ -402,7 +431,7 @@ export const generarSlug = (titulo) => {
 export const renderEstrellas = (valoracion, tamaño = 'sm') => {
   const estrellas = [];
   const valoracionRedondeada = Math.round(valoracion * 2) / 2; // Redondear a 0.5
-  
+
   for (let i = 1; i <= 5; i++) {
     if (i <= valoracionRedondeada) {
       estrellas.push('full');
@@ -412,6 +441,6 @@ export const renderEstrellas = (valoracion, tamaño = 'sm') => {
       estrellas.push('empty');
     }
   }
-  
+
   return estrellas;
 }

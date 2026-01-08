@@ -395,6 +395,12 @@ export const CATEGORIAS_SERVICIOS = {
   }
 };
 
+// Labels para las categorías (para compatibilidad)
+export const CATEGORIAS_SERVICIOS_LABELS = Object.values(CATEGORIAS_SERVICIOS).reduce((acc, cat) => {
+  acc[cat.id] = cat.nombre;
+  return acc;
+}, {});
+
 export const DURACION_SERVICIO = {
   MINUTOS_30: '30_minutos',
   HORA_1: '1_hora',
@@ -455,10 +461,10 @@ export const getSubcategorias = (categoriaId) => {
 // Función para buscar categorías por texto
 export const buscarCategorias = (texto) => {
   const textoLower = texto.toLowerCase();
-  return Object.values(CATEGORIAS_SERVICIOS).filter(categoria => 
+  return Object.values(CATEGORIAS_SERVICIOS).filter(categoria =>
     categoria.nombre.toLowerCase().includes(textoLower) ||
     categoria.descripcion.toLowerCase().includes(textoLower) ||
-    Object.values(categoria.subcategorias).some(sub => 
+    Object.values(categoria.subcategorias).some(sub =>
       sub.toLowerCase().includes(textoLower)
     )
   );
@@ -478,12 +484,12 @@ export const formatearPrecioServicio = (precio, tipoPrecio = TIPOS_PRECIO_SERVIC
         return 'Precio a consultar';
     }
   }
-  
+
   const precioFormateado = `${moneda} ${parseFloat(precio).toLocaleString('es-AR', {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   })}`;
-  
+
   switch (tipoPrecio) {
     case TIPOS_PRECIO_SERVICIO.POR_HORA:
       return `${precioFormateado} / hora`;
@@ -540,7 +546,7 @@ export const formatearCategoria = (categoriaId) => {
 export const formatearSubcategoria = (categoriaId, subcategoriaId) => {
   const categoria = CATEGORIAS_SERVICIOS[categoriaId];
   if (!categoria || !categoria.subcategorias) return subcategoriaId;
-  
+
   return categoria.subcategorias[subcategoriaId] || subcategoriaId;
 };
 
@@ -573,7 +579,7 @@ export const formatearDuracion = (duracion, duracionPersonalizada = '') => {
 // Función para formatear días disponibles
 export const formatearDiasDisponibles = (dias = []) => {
   if (!Array.isArray(dias) || dias.length === 0) return 'No especificado';
-  
+
   const diasOrdenados = [
     DIAS_DISPONIBLES.LUNES,
     DIAS_DISPONIBLES.MARTES,
@@ -583,9 +589,9 @@ export const formatearDiasDisponibles = (dias = []) => {
     DIAS_DISPONIBLES.SABADO,
     DIAS_DISPONIBLES.DOMINGO
   ];
-  
+
   const diasFiltrados = diasOrdenados.filter(dia => dias.includes(dia));
-  
+
   if (diasFiltrados.length === 7) return 'Todos los días';
   if (diasFiltrados.length === 5 && !dias.includes(DIAS_DISPONIBLES.SABADO) && !dias.includes(DIAS_DISPONIBLES.DOMINGO)) {
     return 'Lunes a viernes';
@@ -593,7 +599,7 @@ export const formatearDiasDisponibles = (dias = []) => {
   if (diasFiltrados.length === 2 && dias.includes(DIAS_DISPONIBLES.SABADO) && dias.includes(DIAS_DISPONIBLES.DOMINGO)) {
     return 'Fines de semana';
   }
-  
+
   const nombresDias = {
     [DIAS_DISPONIBLES.LUNES]: 'Lun',
     [DIAS_DISPONIBLES.MARTES]: 'Mar',
@@ -603,23 +609,23 @@ export const formatearDiasDisponibles = (dias = []) => {
     [DIAS_DISPONIBLES.SABADO]: 'Sáb',
     [DIAS_DISPONIBLES.DOMINGO]: 'Dom'
   };
-  
+
   return diasFiltrados.map(dia => nombresDias[dia]).join(', ');
 };
 
 // Función para formatear horarios
 export const formatearHorarios = (horarios = [], horarioPersonalizado = '') => {
   if (!Array.isArray(horarios) || horarios.length === 0) return 'No especificado';
-  
+
   if (horarios.includes(HORARIOS_DISPONIBLES.TODO_EL_DIA)) return 'Todo el día';
   if (horarios.includes(HORARIOS_DISPONIBLES.PERSONALIZADO)) return horarioPersonalizado || 'Horario personalizado';
-  
+
   const nombresHorarios = {
     [HORARIOS_DISPONIBLES.MAÑANA]: 'Mañana',
     [HORARIOS_DISPONIBLES.TARDE]: 'Tarde',
     [HORARIOS_DISPONIBLES.NOCHE]: 'Noche'
   };
-  
+
   return horarios.map(horario => nombresHorarios[horario] || horario).join(', ');
 };
 
@@ -637,7 +643,7 @@ export const validarServicio = (servicio) => {
   if (servicio.titulo && servicio.titulo.length > 100) {
     errores.push('El título no puede exceder 100 caracteres');
   }
-  
+
   if (!servicio.descripcion || servicio.descripcion.trim().length === 0) {
     errores.push('La descripción es requerida');
   }
@@ -647,43 +653,43 @@ export const validarServicio = (servicio) => {
   if (servicio.descripcion && servicio.descripcion.length > 2000) {
     errores.push('La descripción no puede exceder 2000 caracteres');
   }
-  
+
   if (!servicio.categoria) {
     errores.push('La categoría es requerida');
   }
-  
+
   if (!servicio.modalidad) {
     errores.push('La modalidad es requerida');
   }
-  
+
   // Validar precio según tipo
-  if (servicio.tipoPrecio === TIPOS_PRECIO_SERVICIO.FIJO || 
-      servicio.tipoPrecio === TIPOS_PRECIO_SERVICIO.POR_HORA ||
-      servicio.tipoPrecio === TIPOS_PRECIO_SERVICIO.POR_DIA ||
-      servicio.tipoPrecio === TIPOS_PRECIO_SERVICIO.POR_SESION ||
-      servicio.tipoPrecio === TIPOS_PRECIO_SERVICIO.PAQUETE) {
+  if (servicio.tipoPrecio === TIPOS_PRECIO_SERVICIO.FIJO ||
+    servicio.tipoPrecio === TIPOS_PRECIO_SERVICIO.POR_HORA ||
+    servicio.tipoPrecio === TIPOS_PRECIO_SERVICIO.POR_DIA ||
+    servicio.tipoPrecio === TIPOS_PRECIO_SERVICIO.POR_SESION ||
+    servicio.tipoPrecio === TIPOS_PRECIO_SERVICIO.PAQUETE) {
     if (!servicio.precio || servicio.precio <= 0) {
       errores.push('El precio es requerido para este tipo de precio');
     }
   }
-  
+
   // Validar cupos si es limitado
   if (servicio.gestionCupos === GESTION_CUPOS.LIMITADO) {
     if (!servicio.cuposDisponibles || servicio.cuposDisponibles <= 0) {
       errores.push('Los cupos disponibles son requeridos para gestión limitada');
     }
   }
-  
+
   // Validar duración personalizada
   if (servicio.duracion === DURACION_SERVICIO.PERSONALIZADA && !servicio.duracionPersonalizada) {
     errores.push('Debe especificar la duración personalizada');
   }
-  
+
   // Validar horario personalizado
   if (servicio.horarios && servicio.horarios.includes(HORARIOS_DISPONIBLES.PERSONALIZADO) && !servicio.horarioPersonalizado) {
     errores.push('Debe especificar el horario personalizado');
   }
-  
+
   return errores;
 };
 
@@ -719,7 +725,7 @@ export const generarSlugServicio = (titulo, id) => {
     .replace(/[^a-z0-9\s]/g, '') // Solo letras, números y espacios
     .replace(/\s+/g, '-') // Espacios por guiones
     .substring(0, 50); // Máximo 50 caracteres
-  
+
   return `${slug}-${id.substring(0, 8)}`;
 };
 
@@ -727,7 +733,7 @@ export const generarSlugServicio = (titulo, id) => {
 export const verificarDisponibilidadCupos = (servicio) => {
   if (servicio.gestionCupos === GESTION_CUPOS.ILIMITADO) return true;
   if (servicio.gestionCupos === GESTION_CUPOS.UNICO) return servicio.estado === ESTADOS_SERVICIO.DISPONIBLE;
-  
+
   return servicio.cuposDisponibles > 0;
 };
 

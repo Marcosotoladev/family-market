@@ -1,10 +1,10 @@
 //app/productos/page.js
 
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Search, Filter, Grid, List, MapPin } from 'lucide-react'
-import { 
-  CATEGORIAS_PRODUCTO, 
+import {
+  CATEGORIAS_PRODUCTO,
   CATEGORIAS_PRODUCTO_LABELS,
   CONDICION_PRODUCTO
 } from '@/types/product'
@@ -12,16 +12,21 @@ import { collection, query, where, orderBy, getDocs, limit } from 'firebase/fire
 import { db } from '@/lib/firebase/config'
 import ProductCard from '@/components/tienda/productos/ProductCard'
 
-export default function ProductosPage() {
+import { useSearchParams } from 'next/navigation'
+
+function ProductosContent() {
+  const searchParams = useSearchParams()
+  const categoryParam = searchParams.get('categoria')
+
   const [productos, setProductos] = useState([])
   const [loading, setLoading] = useState(true)
   const [vistaGrid, setVistaGrid] = useState(true)
   const [mostrarFiltros, setMostrarFiltros] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  
+
   const [filtros, setFiltros] = useState({
     busqueda: '',
-    categoria: '',
+    categoria: categoryParam || '',
     condicion: '',
     precioMin: '',
     precioMax: '',
@@ -33,7 +38,7 @@ export default function ProductosPage() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
@@ -47,7 +52,7 @@ export default function ProductosPage() {
   const cargarProductos = async () => {
     try {
       setLoading(true)
-      
+
       // Query base - solo productos disponibles
       let productosQuery = query(
         collection(db, 'productos'),
@@ -76,7 +81,7 @@ export default function ProductosPage() {
     // Filtro de búsqueda
     if (filtros.busqueda) {
       const busquedaLower = filtros.busqueda.toLowerCase()
-      resultado = resultado.filter(p => 
+      resultado = resultado.filter(p =>
         (p.titulo && p.titulo.toLowerCase().includes(busquedaLower)) ||
         (p.nombre && p.nombre.toLowerCase().includes(busquedaLower)) ||
         (p.descripcion && p.descripcion.toLowerCase().includes(busquedaLower))
@@ -154,7 +159,7 @@ export default function ProductosPage() {
                 <Filter className="w-5 h-5" />
                 <span className="hidden sm:inline">Filtros</span>
               </button>
-              
+
               <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setVistaGrid(true)}
@@ -177,7 +182,7 @@ export default function ProductosPage() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar de filtros */}
-          <FiltersSidebar 
+          <FiltersSidebar
             filtros={filtros}
             setFiltros={setFiltros}
             mostrar={mostrarFiltros}
@@ -209,13 +214,13 @@ export default function ProductosPage() {
             ) : productosFiltrados.length === 0 ? (
               <EmptyState />
             ) : (
-              <div className={vistaGrid 
-                ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' 
+              <div className={vistaGrid
+                ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'
                 : 'flex flex-col gap-4'
               }>
                 {productosFiltrados.map(producto => (
-                  <ProductCard 
-                    key={producto.id} 
+                  <ProductCard
+                    key={producto.id}
                     product={producto}
                     variant={vistaGrid ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 'featured-compact' : 'grid') : 'list'}
                     showContactInfo={true}
@@ -321,8 +326,8 @@ function FiltersSidebar({ filtros, setFiltros, mostrar }) {
 // Loading skeleton
 function LoadingSkeleton({ vistaGrid }) {
   return (
-    <div className={vistaGrid 
-      ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' 
+    <div className={vistaGrid
+      ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'
       : 'flex flex-col gap-4'
     }>
       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
@@ -353,12 +358,20 @@ function EmptyState() {
       <p className="text-gray-600 dark:text-gray-400 mb-6">
         Intenta ajustar los filtros o buscar algo diferente
       </p>
-      <button 
+      <button
         onClick={() => window.location.reload()}
         className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
       >
         Ver todos los productos
       </button>
     </div>
+  )
+}
+
+export default function ProductosPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 dark:bg-gray-900"><LoadingSkeleton vistaGrid={true} /></div>}>
+      <ProductosContent />
+    </Suspense>
   )
 }

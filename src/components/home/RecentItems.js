@@ -10,6 +10,7 @@ import ServiceCard from '@/components/tienda/servicios/ServiceCard';
 import OfertaEmpleoCard from '@/components/tienda/empleos/OfertaEmpleoCard';
 import BusquedaEmpleoCard from '@/components/tienda/empleos/BusquedaEmpleoCard';
 import ServicioProfesionalCard from '@/components/tienda/empleos/ServicioProfesionalCard';
+import SectionEmptyState from './SectionEmptyState';
 
 export default function RecentItems() {
   const [recentItems, setRecentItems] = useState([]);
@@ -43,48 +44,52 @@ export default function RecentItems() {
       setLoading(true);
       setError(null);
 
-      // Calcular fecha de hace 36 horas
-      const hace36Horas = new Date();
-      hace36Horas.setHours(hace36Horas.getHours() - 36);
+      // Calcular fecha de hace 7 días para el filtrado en cliente
+      const hace7Dias = new Date();
+      hace7Dias.setDate(hace7Dias.getDate() - 7);
 
-      console.log('🕐 Buscando items desde:', hace36Horas.toISOString());
+      console.log('🕐 Cargando items recientes...');
 
-      // Consultar productos
+      // Consultar productos (sin filtro de fecha estricto en servidor por problemas de tipo String/Timestamp)
       const productosRef = collection(db, 'productos');
       const qProductos = query(
         productosRef,
-        where('fechaCreacion', '>', hace36Horas),
         where('estado', '==', 'disponible'),
         orderBy('fechaCreacion', 'desc'),
-        limit(5)
+        limit(8)
       );
 
       // Consultar servicios
       const serviciosRef = collection(db, 'servicios');
       const qServicios = query(
         serviciosRef,
-        where('fechaCreacion', '>', hace36Horas),
         where('estado', '==', 'activo'),
         orderBy('fechaCreacion', 'desc'),
-        limit(5)
+        limit(8)
       );
 
       // Consultar empleos
       const empleosRef = collection(db, 'empleos');
       const qEmpleos = query(
         empleosRef,
-        where('fechaCreacion', '>', hace36Horas),
         where('estado', '==', 'activo'),
         orderBy('fechaCreacion', 'desc'),
-        limit(5)
+        limit(8)
       );
 
-      // Ejecutar las 3 consultas en paralelo
+      // Ejecutar las 3 consultas
       const [productosSnap, serviciosSnap, empleosSnap] = await Promise.all([
         getDocs(qProductos),
         getDocs(qServicios),
         getDocs(qEmpleos)
       ]);
+
+      // Helper para parsear fechas
+      const parseFecha = (fecha) => {
+        if (!fecha) return new Date(0); // Fecha muy antigua si es null
+        if (fecha.toDate) return fecha.toDate(); // Es Timestamp de Firestore
+        return new Date(fecha); // Es String o Date de JS
+      };
 
       // Mapear productos
       const productos = productosSnap.docs.map(doc => ({
@@ -107,23 +112,28 @@ export default function RecentItems() {
         tipo: 'empleo'
       }));
 
-      // Combinar y ordenar todos los items por fecha
-      const todosLosItems = [...productos, ...servicios, ...empleos];
+      // Combinar
+      let todosLosItems = [...productos, ...servicios, ...empleos];
+
+      // Filtrar y Ordenar en Cliente
+      todosLosItems = todosLosItems.filter(item => {
+        const fechaItem = parseFecha(item.fechaCreacion);
+        // Filtrar items más viejos de 7 días
+        return fechaItem >= hace7Dias;
+      });
+
       todosLosItems.sort((a, b) => {
-        const fechaA = a.fechaCreacion?.toDate?.() || new Date(a.fechaCreacion);
-        const fechaB = b.fechaCreacion?.toDate?.() || new Date(b.fechaCreacion);
+        const fechaA = parseFecha(a.fechaCreacion);
+        const fechaB = parseFecha(b.fechaCreacion);
         return fechaB - fechaA; // Más reciente primero
       });
 
       // Tomar solo los primeros 15
       const items = todosLosItems.slice(0, 15);
 
-
-
       setRecentItems(items);
     } catch (error) {
       console.error('❌ Error cargando items recientes:', error);
-      setError('Error cargando contenido reciente');
       setRecentItems([]);
     } finally {
       setLoading(false);
@@ -148,7 +158,13 @@ export default function RecentItems() {
 
   // Verificar si un item tiene menos de 24 horas
   const isVeryNew = (item) => {
-    const fechaCreacion = item.fechaCreacion?.toDate?.() || new Date(item.fechaCreacion);
+    let fechaCreacion;
+    if (item.fechaCreacion?.toDate) {
+      fechaCreacion = item.fechaCreacion.toDate();
+    } else {
+      fechaCreacion = new Date(item.fechaCreacion);
+    }
+
     const hace24Horas = new Date();
     hace24Horas.setHours(hace24Horas.getHours() - 24);
     return fechaCreacion > hace24Horas;
@@ -270,9 +286,10 @@ export default function RecentItems() {
     );
   }
 
-  if (error || recentItems.length === 0) {
-    return null; // No mostrar nada si no hay items o hay error
-  }
+  // Eliminado return null para mostrar empty state si hay error
+  // if (error) return null;
+
+  const isEmpty = recentItems.length === 0;
 
   if (!isClient) {
     return (
@@ -299,158 +316,164 @@ export default function RecentItems() {
             Recién Publicado
           </h2>
           <div className="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-300 text-xs font-medium rounded-full">
-            Últimas 36h
+            Novedades
           </div>
         </div>
 
-        <div className="relative">
-          {!isMobile && maxIndex > 0 && (
-            <>
-              <button
-                onClick={goToPrevious}
-                disabled={currentIndex === 0 || isDragging || isTransitioning}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button
-                onClick={goToNext}
-                disabled={currentIndex === maxIndex || isDragging || isTransitioning}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            </>
-          )}
+        {isEmpty ? (
+          <SectionEmptyState
+            message="No hay publicaciones recientes."
+            subMessage="Las publicaciones nuevas aparecerán aquí."
+          />
+        ) : (
+          <div className="relative">
+            {!isMobile && maxIndex > 0 && (
+              <>
+                <button
+                  onClick={goToPrevious}
+                  disabled={currentIndex === 0 || isDragging || isTransitioning}
+                  className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={goToNext}
+                  disabled={currentIndex === maxIndex || isDragging || isTransitioning}
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
 
-          <div
-            ref={scrollContainerRef}
-            className={`overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            style={{ touchAction: 'pan-y' }}
-          >
             <div
-              className={`flex ${gapClass} will-change-transform`}
-              style={{
-                transform: `translateX(${translateX}%)`,
-                transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
-              }}
+              ref={scrollContainerRef}
+              className={`overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+              style={{ touchAction: 'pan-y' }}
             >
-              {recentItems.map((item) => {
-                const gapPx = isMobile ? 8 : isTablet ? 16 : 24;
-                const totalGapPx = gapPx * (itemsPerView - 1);
-                
-                return (
-                  <div
-                    key={`${item.tipo}-${item.id}`}
-                    className={`flex-shrink-0 transition-all duration-200 ${isDragging ? 'scale-[0.98]' : ''} relative`}
-                    style={{
-                      width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
-                    }}
-                  >
-                    {/* Badge NUEVO si tiene menos de 24h */}
-                    {isVeryNew(item) && (
-                      <div className="absolute top-2 right-2 z-30 bg-gradient-to-r from-yellow-400 to-amber-500 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg animate-pulse">
-                        <Zap className="w-3 h-3" />
-                        <span>NUEVO</span>
-                      </div>
-                    )}
+              <div
+                className={`flex ${gapClass} will-change-transform`}
+                style={{
+                  transform: `translateX(${translateX}%)`,
+                  transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+                }}
+              >
+                {recentItems.map((item) => {
+                  const gapPx = isMobile ? 8 : isTablet ? 16 : 24;
+                  const totalGapPx = gapPx * (itemsPerView - 1);
 
-                    {/* Renderizar card según tipo */}
-                    {item.tipo === 'producto' && (
-                      <ProductCard
-                        product={item}
-                        storeData={item.tiendaInfo}
-                        variant="featured-compact"
-                        showContactInfo={true}
-                        showStoreInfo={true}
-                        onClick={() => handleItemClick(item)}
-                      />
-                    )}
+                  return (
+                    <div
+                      key={`${item.tipo}-${item.id}`}
+                      className={`flex-shrink-0 transition-all duration-200 ${isDragging ? 'scale-[0.98]' : ''} relative`}
+                      style={{
+                        width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
+                      }}
+                    >
+                      {/* Badge NUEVO si tiene menos de 24h */}
+                      {isVeryNew(item) && (
+                        <div className="absolute top-2 right-2 z-30 bg-gradient-to-r from-yellow-400 to-amber-500 text-yellow-900 px-2 py-1 rounded-full text-xs font-bold flex items-center gap-1 shadow-lg animate-pulse">
+                          <Zap className="w-3 h-3" />
+                          <span>NUEVO</span>
+                        </div>
+                      )}
 
-                    {item.tipo === 'servicio' && (
-                      <ServiceCard
-                        service={item}
-                        storeData={item.tiendaInfo}
-                        variant="featured-compact"
-                        showContactInfo={true}
-                        showStoreInfo={true}
-                        onClick={() => handleItemClick(item)}
-                      />
-                    )}
-
-                    {item.tipo === 'empleo' && (() => {
-                      const tipoEmpleo = item.tipoPublicacion || item.tipo;
-                      
-                      // Busqueda de empleo
-                      if (tipoEmpleo === 'busqueda' || tipoEmpleo === 'busqueda_empleo') {
-                        return (
-                          <BusquedaEmpleoCard
-                            busqueda={item}
-                            storeData={item.tiendaInfo}
-                            variant="featured-compact"
-                            showContactInfo={true}
-                            showStoreInfo={true}
-                            onClick={() => handleItemClick(item)}
-                          />
-                        );
-                      }
-                      
-                      // Servicio profesional
-                      if (tipoEmpleo === 'servicio_profesional') {
-                        return (
-                          <ServicioProfesionalCard
-                            servicio={item}
-                            storeData={item.tiendaInfo}
-                            variant="featured-compact"
-                            showContactInfo={true}
-                            showStoreInfo={true}
-                            onClick={() => handleItemClick(item)}
-                          />
-                        );
-                      }
-                      
-                      // Oferta de empleo (por defecto)
-                      return (
-                        <OfertaEmpleoCard
-                          oferta={item}
+                      {/* Renderizar card según tipo */}
+                      {item.tipo === 'producto' && (
+                        <ProductCard
+                          product={item}
                           storeData={item.tiendaInfo}
                           variant="featured-compact"
                           showContactInfo={true}
                           showStoreInfo={true}
                           onClick={() => handleItemClick(item)}
                         />
-                      );
-                    })()}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                      )}
 
-          {maxIndex > 0 && (
-            <div className="flex justify-center gap-2 mt-6">
-              {Array.from({ length: maxIndex + 1 }, (_, i) => (
-                <button
-                  key={i}
-                  onClick={() => animateToIndex(i)}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                    Math.round(currentIndex) === i
+                      {item.tipo === 'servicio' && (
+                        <ServiceCard
+                          service={item}
+                          storeData={item.tiendaInfo}
+                          variant="featured-compact"
+                          showContactInfo={true}
+                          showStoreInfo={true}
+                          onClick={() => handleItemClick(item)}
+                        />
+                      )}
+
+                      {item.tipo === 'empleo' && (() => {
+                        const tipoEmpleo = item.tipoPublicacion || item.tipo;
+
+                        // Busqueda de empleo
+                        if (tipoEmpleo === 'busqueda' || tipoEmpleo === 'busqueda_empleo') {
+                          return (
+                            <BusquedaEmpleoCard
+                              busqueda={item}
+                              storeData={item.tiendaInfo}
+                              variant="featured-compact"
+                              showContactInfo={true}
+                              showStoreInfo={true}
+                              onClick={() => handleItemClick(item)}
+                            />
+                          );
+                        }
+
+                        // Servicio profesional
+                        if (tipoEmpleo === 'servicio_profesional') {
+                          return (
+                            <ServicioProfesionalCard
+                              servicio={item}
+                              storeData={item.tiendaInfo}
+                              variant="featured-compact"
+                              showContactInfo={true}
+                              showStoreInfo={true}
+                              onClick={() => handleItemClick(item)}
+                            />
+                          );
+                        }
+
+                        // Oferta de empleo (por defecto)
+                        return (
+                          <OfertaEmpleoCard
+                            oferta={item}
+                            storeData={item.tiendaInfo}
+                            variant="featured-compact"
+                            showContactInfo={true}
+                            showStoreInfo={true}
+                            onClick={() => handleItemClick(item)}
+                          />
+                        );
+                      })()}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {maxIndex > 0 && (
+              <div className="flex justify-center gap-2 mt-6">
+                {Array.from({ length: maxIndex + 1 }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => animateToIndex(i)}
+                    className={`w-3 h-3 rounded-full transition-all duration-200 ${Math.round(currentIndex) === i
                       ? 'bg-gradient-to-r from-emerald-500 to-cyan-500 scale-125 shadow-md'
                       : 'bg-gray-300 dark:bg-gray-600 hover:bg-emerald-300 dark:hover:bg-emerald-600'
-                  }`}
-                  disabled={isDragging || isTransitioning}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+                      }`}
+                    disabled={isDragging || isTransitioning}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

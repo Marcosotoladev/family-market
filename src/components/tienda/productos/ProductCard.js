@@ -2,10 +2,11 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-  Share2, 
-  MessageCircle, 
-  Phone, 
+import Image from 'next/image';
+import {
+  Share2,
+  MessageCircle,
+  Phone,
   Mail,
   ChevronLeft,
   ChevronRight,
@@ -19,20 +20,20 @@ import {
   ChevronUp,
   Crown
 } from 'lucide-react';
-import { 
-  formatearPrecio, 
+import {
+  formatearPrecio,
   TIPOS_PRECIO
 } from '../../../types/product';
-import { 
-  doc, 
-  updateDoc, 
+import {
+  doc,
+  updateDoc,
   increment
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import FavoriteButton from '@/components/ui/FavoriteButton';
 
-export default function ProductCard({ 
-  product, 
+export default function ProductCard({
+  product,
   storeData,
   variant = 'grid',
   showContactInfo = true,
@@ -58,7 +59,7 @@ export default function ProductCard({
   const handleWhatsAppContact = (e) => {
     e.stopPropagation();
     const phone = product.contacto?.whatsapp || storeData?.phone || '';
-    const message = product.contacto?.mensaje || 
+    const message = product.contacto?.mensaje ||
       `Hola! Me interesa tu producto: ${product.titulo || product.nombre}`;
     const url = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodeURIComponent(message)}`;
     window.open(url, '_blank');
@@ -81,7 +82,7 @@ export default function ProductCard({
   const handleShare = async (e) => {
     e.stopPropagation();
     const productUrl = `${window.location.origin}/tienda/${product.tiendaInfo?.slug || storeData?.storeSlug}/producto/${product.id}`;
-    
+
     if (navigator.share) {
       try {
         await navigator.share({
@@ -89,7 +90,7 @@ export default function ProductCard({
           text: product.descripcion,
           url: productUrl,
         });
-        
+
         const productRef = doc(db, 'productos', product.id);
         await updateDoc(productRef, {
           'interacciones.compartidas': increment(1)
@@ -117,7 +118,7 @@ export default function ProductCard({
   // Variante FEATURED COMPACT con desplegable
   if (variant === 'featured-compact') {
     return (
-      <div 
+      <div
         className="relative bg-white dark:bg-gray-800 rounded-lg shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border-2 border-orange-200 dark:border-orange-700"
       >
         <div className="absolute top-0 left-0 right-0 z-20">
@@ -129,16 +130,17 @@ export default function ProductCard({
           </div>
         </div>
 
-        <div 
+        <div
           className={`relative h-40 overflow-hidden mt-6 ${onClick ? 'cursor-pointer' : ''}`}
           onClick={onClick}
         >
           {images.length > 0 ? (
             <>
-              <img
+              <Image
                 src={images[currentImageIndex] || images[0]}
                 alt={product.titulo || product.nombre}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
               />
               {hasMultipleImages && (
                 <>
@@ -165,8 +167,8 @@ export default function ProductCard({
 
           {/* BOTONES DE ACCIÓN - Con nuevo FavoriteButton */}
           <div className="absolute top-2 right-2 flex flex-col space-y-1 z-10">
-            <FavoriteButton 
-              itemId={product.id} 
+            <FavoriteButton
+              itemId={product.id}
               itemType="product"
               size="sm"
             />
@@ -180,7 +182,7 @@ export default function ProductCard({
         </div>
 
         <div className="p-3">
-          <h3 
+          <h3
             className={`font-semibold text-sm text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight ${onClick ? 'cursor-pointer hover:text-orange-600 dark:hover:text-orange-400' : ''}`}
             onClick={onClick}
           >
@@ -222,10 +224,9 @@ export default function ProductCard({
             )}
           </button>
 
-          <div 
-            className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              showDetails ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
-            }`}
+          <div
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${showDetails ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+              }`}
           >
             <div className="space-y-2 pt-1">
               {product.descripcion && (
@@ -241,15 +242,14 @@ export default function ProductCard({
                   {[1, 2, 3, 4, 5].map((starNumber) => {
                     const rating = product.valoraciones?.promedio || 0;
                     const isFilled = starNumber <= Math.floor(rating);
-                    
+
                     return (
                       <Star
                         key={starNumber}
-                        className={`w-3 h-3 ${
-                          isFilled 
-                            ? 'text-yellow-400 fill-current' 
+                        className={`w-3 h-3 ${isFilled
+                            ? 'text-yellow-400 fill-current'
                             : 'text-gray-300 dark:text-gray-600'
-                        }`}
+                          }`}
                       />
                     );
                   })}
@@ -304,7 +304,7 @@ export default function ProductCard({
                       <span>WhatsApp</span>
                     </button>
                   )}
-                  
+
                   <div className="grid grid-cols-2 gap-1">
                     {(product.contacto?.telefono || storeData?.phone) && (
                       <button
@@ -315,7 +315,7 @@ export default function ProductCard({
                         <span>Llamar</span>
                       </button>
                     )}
-                    
+
                     {(product.contacto?.email || storeData?.email) && (
                       <button
                         onClick={handleEmailContact}
@@ -338,19 +338,20 @@ export default function ProductCard({
   // Variante Grid con desplegable
   if (variant === 'grid') {
     return (
-      <div 
+      <div
         className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-200 dark:border-gray-700"
       >
-        <div 
+        <div
           className={`relative h-64 overflow-hidden ${onClick ? 'cursor-pointer' : ''}`}
           onClick={onClick}
         >
           {images.length > 0 ? (
             <>
-              <img
+              <Image
                 src={images[currentImageIndex] || images[0]}
                 alt={product.titulo || product.nombre}
-                className="w-full h-full object-cover transition-transform duration-300"
+                fill
+                className="object-cover transition-transform duration-300"
               />
               {hasMultipleImages && (
                 <>
@@ -377,8 +378,8 @@ export default function ProductCard({
 
           {/* BOTONES DE ACCIÓN - Con nuevo FavoriteButton */}
           <div className="absolute top-3 right-3 flex flex-col space-y-2 z-10">
-            <FavoriteButton 
-              itemId={product.id} 
+            <FavoriteButton
+              itemId={product.id}
               itemType="product"
               size="md"
             />
@@ -392,7 +393,7 @@ export default function ProductCard({
         </div>
 
         <div className="p-5">
-          <h3 
+          <h3
             className={`font-bold text-lg text-gray-900 dark:text-white mb-3 line-clamp-2 leading-tight ${onClick ? 'cursor-pointer hover:text-orange-600 dark:hover:text-orange-400' : ''}`}
             onClick={onClick}
           >
@@ -434,10 +435,9 @@ export default function ProductCard({
             )}
           </button>
 
-          <div 
-            className={`overflow-hidden transition-all duration-300 ease-in-out ${
-              showDetails ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
-            }`}
+          <div
+            className={`overflow-hidden transition-all duration-300 ease-in-out ${showDetails ? 'max-h-[1000px] opacity-100' : 'max-h-0 opacity-0'
+              }`}
           >
             <div className="space-y-4 pt-2">
               {product.descripcion && (
@@ -461,15 +461,14 @@ export default function ProductCard({
                       {[1, 2, 3, 4, 5].map((starNumber) => {
                         const rating = product.valoraciones?.promedio || 0;
                         const isFilled = starNumber <= Math.floor(rating);
-                        
+
                         return (
                           <Star
                             key={starNumber}
-                            className={`w-4 h-4 ${
-                              isFilled 
-                                ? 'text-yellow-400 fill-current' 
+                            className={`w-4 h-4 ${isFilled
+                                ? 'text-yellow-400 fill-current'
                                 : 'text-gray-300 dark:text-gray-600'
-                            }`}
+                              }`}
                           />
                         );
                       })}
@@ -540,7 +539,7 @@ export default function ProductCard({
                         <span>Contactar por WhatsApp</span>
                       </button>
                     )}
-                    
+
                     <div className="grid grid-cols-2 gap-2">
                       {(product.contacto?.telefono || storeData?.phone) && (
                         <button
@@ -551,7 +550,7 @@ export default function ProductCard({
                           <span>Llamar</span>
                         </button>
                       )}
-                      
+
                       {(product.contacto?.email || storeData?.email) && (
                         <button
                           onClick={handleEmailContact}

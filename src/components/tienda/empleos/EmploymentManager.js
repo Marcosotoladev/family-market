@@ -2,14 +2,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
   doc,
   orderBy,
   serverTimestamp,
@@ -25,6 +25,8 @@ import OfertaEmpleoCard from './OfertaEmpleoCard';
 import BusquedaEmpleoCard from './BusquedaEmpleoCard';
 import FeaturedEmploymentButton from './FeaturedEmploymentButton';
 import { ArrowLeft, Briefcase, X, UserSearch } from 'lucide-react';
+import { deleteImage } from '@/lib/actions/cloudinary';
+import { extractPublicId } from '@/lib/helpers/cloudinaryHelpers';
 
 export default function EmploymentManager({ storeId, storeData }) {
   const { user } = useAuth();
@@ -52,7 +54,7 @@ export default function EmploymentManager({ storeId, storeData }) {
     } catch (error) {
       console.error('Error cargando datos de tienda:', error);
     }
-    
+
     return {
       nombre: 'Tienda Family Market',
       slug: '',
@@ -72,17 +74,17 @@ export default function EmploymentManager({ storeId, storeData }) {
       setIsLoading(true);
       const empleosRef = collection(db, 'empleos');
       const q = query(
-        empleosRef, 
+        empleosRef,
         where('usuarioId', '==', storeId),
         orderBy('fechaCreacion', 'desc')
       );
-      
+
       const querySnapshot = await getDocs(q);
       const publicacionesData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-      
+
       setPublicaciones(publicacionesData);
     } catch (error) {
       console.error('Error cargando publicaciones:', error);
@@ -122,10 +124,10 @@ export default function EmploymentManager({ storeId, storeData }) {
   const handleSavePublicacion = async (publicacionData) => {
     try {
       setIsSaving(true);
-      
+
       // ✅ CRÍTICO: Obtener y guardar tiendaInfo
       const tiendaInfo = await getTiendaInfo(storeId);
-      
+
       if (selectedPublicacion) {
         // Actualizar publicación existente
         const publicacionRef = doc(db, 'empleos', selectedPublicacion.id);
@@ -134,9 +136,9 @@ export default function EmploymentManager({ storeId, storeData }) {
           tiendaInfo,
           fechaActualizacion: serverTimestamp()
         });
-        
-        setPublicaciones(prev => prev.map(p => 
-          p.id === selectedPublicacion.id 
+
+        setPublicaciones(prev => prev.map(p =>
+          p.id === selectedPublicacion.id
             ? { ...p, ...publicacionData, tiendaInfo, fechaActualizacion: new Date().toISOString() }
             : p
         ));
@@ -164,9 +166,9 @@ export default function EmploymentManager({ storeId, storeData }) {
           featuredAmount: null,
           fechaDestacado: null
         };
-        
+
         const docRef = await addDoc(collection(db, 'empleos'), newPublicacion);
-        
+
         setPublicaciones(prev => [{
           id: docRef.id,
           ...newPublicacion,
@@ -174,7 +176,7 @@ export default function EmploymentManager({ storeId, storeData }) {
           fechaActualizacion: new Date().toISOString()
         }, ...prev]);
       }
-      
+
       setView('list');
       setSelectedPublicacion(null);
       setTipoPublicacion(null);
@@ -190,13 +192,28 @@ export default function EmploymentManager({ storeId, storeData }) {
     if (!confirm('¿Estás seguro de que quieres eliminar esta publicación?')) {
       return;
     }
-    
+
     try {
+      setIsLoading(true);
+
+      // 1. Obtener datos
+      const itemToDelete = publicaciones.find(p => p.id === publicacionId);
+
+      // 2. Verificar campo 'logo' (común en ofertas de empleo)
+      if (itemToDelete?.logo) {
+        const publicId = extractPublicId(itemToDelete.logo);
+        if (publicId) {
+          await deleteImage(publicId);
+        }
+      }
+
       await deleteDoc(doc(db, 'empleos', publicacionId));
       setPublicaciones(prev => prev.filter(p => p.id !== publicacionId));
     } catch (error) {
       console.error('Error eliminando publicación:', error);
       alert('Error al eliminar la publicación. Intenta nuevamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -204,14 +221,14 @@ export default function EmploymentManager({ storeId, storeData }) {
     try {
       const newStatus = publicacion.estado === 'activo' ? 'pausado' : 'activo';
       const publicacionRef = doc(db, 'empleos', publicacion.id);
-      
+
       await updateDoc(publicacionRef, {
         estado: newStatus,
         fechaActualizacion: serverTimestamp()
       });
-      
-      setPublicaciones(prev => prev.map(p => 
-        p.id === publicacion.id 
+
+      setPublicaciones(prev => prev.map(p =>
+        p.id === publicacion.id
           ? { ...p, estado: newStatus, fechaActualizacion: new Date().toISOString() }
           : p
       ));
@@ -235,7 +252,7 @@ export default function EmploymentManager({ storeId, storeData }) {
       featuredAmount: null,
       fechaDestacado: null
     };
-    
+
     setTipoPublicacion(publicacion.tipoPublicacion);
     setSelectedPublicacion(duplicatedPublicacion);
     setView('form');
@@ -348,7 +365,7 @@ export default function EmploymentManager({ storeId, storeData }) {
                 <ArrowLeft className="w-5 h-5 mr-2" />
                 Volver a la lista
               </button>
-              
+
               <div className="flex space-x-3">
                 <button
                   onClick={() => handleEditPublicacion(selectedPublicacion)}
@@ -376,7 +393,7 @@ export default function EmploymentManager({ storeId, storeData }) {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               Vista Previa de la Publicación
             </h2>
-            
+
             <div className="grid grid-cols-1 gap-8">
               {selectedPublicacion.tipoPublicacion === TIPOS_PUBLICACION.OFERTA_EMPLEO && (
                 <OfertaEmpleoCard
@@ -414,7 +431,7 @@ export default function EmploymentManager({ storeId, storeData }) {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
                   {selectedPublicacion.titulo}

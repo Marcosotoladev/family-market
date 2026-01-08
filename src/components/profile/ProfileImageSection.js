@@ -6,6 +6,8 @@ import { useRef } from 'react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { Camera, Upload, X, User } from 'lucide-react';
+import { deleteImage } from '@/lib/actions/cloudinary';
+import { extractPublicId } from '@/lib/helpers/cloudinaryHelpers';
 
 export default function ProfileImageSection({ profileImageState, setProfileImageState, showMessage }) {
   const { user, refreshUserData } = useAuth();
@@ -16,7 +18,7 @@ export default function ProfileImageSection({ profileImageState, setProfileImage
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_PRESET_PROFILE);
-    
+
     const response = await fetch(
       `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/image/upload`,
       {
@@ -24,11 +26,11 @@ export default function ProfileImageSection({ profileImageState, setProfileImage
         body: formData
       }
     );
-    
+
     if (!response.ok) {
       throw new Error('Error al subir la imagen');
     }
-    
+
     const data = await response.json();
     return data.secure_url;
   };
@@ -70,6 +72,14 @@ export default function ProfileImageSection({ profileImageState, setProfileImage
       // Subir a Cloudinary
       const imageUrl = await uploadToCloudinary(file);
 
+      // Eliminar imagen anterior si existe
+      if (user?.profileImage) {
+        const publicId = extractPublicId(user.profileImage);
+        if (publicId) {
+          await deleteImage(publicId);
+        }
+      }
+
       // Actualizar en Firestore
       await updateDoc(doc(db, 'users', user.uid), {
         profileImage: imageUrl,
@@ -105,6 +115,13 @@ export default function ProfileImageSection({ profileImageState, setProfileImage
   // Eliminar imagen
   const handleRemoveImage = async () => {
     try {
+      if (user?.profileImage) {
+        const publicId = extractPublicId(user.profileImage);
+        if (publicId) {
+          await deleteImage(publicId);
+        }
+      }
+
       await updateDoc(doc(db, 'users', user.uid), {
         profileImage: null,
         updatedAt: new Date()
@@ -153,7 +170,7 @@ export default function ProfileImageSection({ profileImageState, setProfileImage
 
         {/* NUEVO LAYOUT RESPONSIVE */}
         <div className="flex flex-col items-center space-y-6 md:flex-row md:items-start md:space-y-0 md:space-x-6">
-          
+
           {/* Preview de imagen - centrada en móvil */}
           <div className={`
             relative flex-shrink-0 w-32 h-32 rounded-full
@@ -187,7 +204,7 @@ export default function ProfileImageSection({ profileImageState, setProfileImage
 
           {/* Controles - centrados en móvil, alineados en desktop */}
           <div className="w-full md:flex-1 space-y-4">
-            
+
             {/* Botones - centrados en móvil */}
             <div className="flex flex-col sm:flex-row gap-3 justify-center md:justify-start">
               <button

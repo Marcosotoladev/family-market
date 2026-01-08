@@ -2,14 +2,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
   doc,
   orderBy,
   serverTimestamp,
@@ -23,6 +23,8 @@ import ServiceList from './ServiceList';
 import ServiceCard from './ServiceCard';
 import FeaturedServiceButton from './FeaturedServiceButton';
 import { Plus, ArrowLeft, Briefcase, X } from 'lucide-react';
+import { deleteImages } from '@/lib/actions/cloudinary';
+import { extractPublicId } from '@/lib/helpers/cloudinaryHelpers';
 
 export default function ServiceManager({ storeId, storeData }) {
   const { user } = useAuth();
@@ -49,7 +51,7 @@ export default function ServiceManager({ storeId, storeData }) {
     } catch (error) {
       console.error('Error cargando datos de tienda:', error);
     }
-    
+
     return {
       nombre: 'Tienda Family Market',
       slug: '',
@@ -69,17 +71,17 @@ export default function ServiceManager({ storeId, storeData }) {
       setIsLoading(true);
       const servicesRef = collection(db, 'servicios');
       const q = query(
-        servicesRef, 
+        servicesRef,
         where('usuarioId', '==', storeId),
         orderBy('fechaCreacion', 'desc')
       );
-      
+
       const querySnapshot = await getDocs(q);
       const servicesData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-      
+
       setServices(servicesData);
     } catch (error) {
       console.error('Error cargando servicios:', error);
@@ -117,13 +119,13 @@ export default function ServiceManager({ storeId, storeData }) {
   const handleSaveService = async (serviceData) => {
     try {
       setIsSaving(true);
-      
+
       // Auto-completar datos desde storeData
       const serviceDataCompleto = autoCompletarDatosServicio(serviceData, storeData);
-      
+
       // ✅ CRÍTICO: Obtener y guardar tiendaInfo
       const tiendaInfo = await getTiendaInfo(storeId);
-      
+
       if (selectedService) {
         // Actualizar servicio existente
         const serviceRef = doc(db, 'servicios', selectedService.id);
@@ -132,9 +134,9 @@ export default function ServiceManager({ storeId, storeData }) {
           tiendaInfo, // ✅ Guardar tiendaInfo
           fechaActualizacion: serverTimestamp()
         });
-        
-        setServices(prev => prev.map(s => 
-          s.id === selectedService.id 
+
+        setServices(prev => prev.map(s =>
+          s.id === selectedService.id
             ? { ...s, ...serviceDataCompleto, tiendaInfo, fechaActualizacion: new Date().toISOString() }
             : s
         ));
@@ -167,9 +169,9 @@ export default function ServiceManager({ storeId, storeData }) {
           fechaDestacado: null,
           slug: generarSlugServicio ? generarSlugServicio(serviceDataCompleto.titulo, Date.now().toString()) : serviceDataCompleto.titulo.toLowerCase().replace(/\s+/g, '-')
         };
-        
+
         const docRef = await addDoc(collection(db, 'servicios'), newService);
-        
+
         setServices(prev => [{
           id: docRef.id,
           ...newService,
@@ -177,7 +179,7 @@ export default function ServiceManager({ storeId, storeData }) {
           fechaActualizacion: new Date().toISOString()
         }, ...prev]);
       }
-      
+
       setView('list');
       setSelectedService(null);
     } catch (error) {
@@ -192,13 +194,33 @@ export default function ServiceManager({ storeId, storeData }) {
     if (!confirm('¿Estás seguro de que quieres eliminar este servicio?')) {
       return;
     }
-    
+
     try {
+      setIsLoading(true);
+
+      // 1. Obtener datos del servicio
+      const serviceToDelete = services.find(s => s.id === serviceId);
+
+      // Verificar si tiene imágenes (asumiendo que tiene array imagenes o logo?)
+      // Revisando ServiceForm.js (no lo he visto pero asumo estructura similar, o quizas solo imagenes)
+      // Si el servicio tiene campo 'imagenes', usamos ese.
+      if (serviceToDelete?.imagenes?.length > 0) {
+        const publicIds = serviceToDelete.imagenes
+          .map(url => extractPublicId(url))
+          .filter(id => id);
+
+        if (publicIds.length > 0) {
+          await deleteImages(publicIds);
+        }
+      }
+
       await deleteDoc(doc(db, 'servicios', serviceId));
       setServices(prev => prev.filter(s => s.id !== serviceId));
     } catch (error) {
       console.error('Error eliminando servicio:', error);
       alert('Error al eliminar el servicio. Intenta nuevamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -206,14 +228,14 @@ export default function ServiceManager({ storeId, storeData }) {
     try {
       const newStatus = service.estado === 'disponible' ? 'pausado' : 'disponible';
       const serviceRef = doc(db, 'servicios', service.id);
-      
+
       await updateDoc(serviceRef, {
         estado: newStatus,
         fechaActualizacion: serverTimestamp()
       });
-      
-      setServices(prev => prev.map(s => 
-        s.id === service.id 
+
+      setServices(prev => prev.map(s =>
+        s.id === service.id
           ? { ...s, estado: newStatus, fechaActualizacion: new Date().toISOString() }
           : s
       ));
@@ -238,7 +260,7 @@ export default function ServiceManager({ storeId, storeData }) {
       featuredAmount: null,
       fechaDestacado: null
     };
-    
+
     setSelectedService(duplicatedService);
     setView('form');
   };
@@ -278,7 +300,7 @@ export default function ServiceManager({ storeId, storeData }) {
                   Administra tu catálogo de servicios
                 </p>
               </div>
-              
+
               <button
                 onClick={handleCreateService}
                 className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
@@ -326,7 +348,7 @@ export default function ServiceManager({ storeId, storeData }) {
                 <ArrowLeft className="w-5 h-5 mr-2" />
                 Volver a la lista
               </button>
-              
+
               <div className="flex space-x-3">
                 <button
                   onClick={() => handleEditService(selectedService)}
@@ -354,7 +376,7 @@ export default function ServiceManager({ storeId, storeData }) {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               Vista Previa del Servicio
             </h2>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -367,7 +389,7 @@ export default function ServiceManager({ storeId, storeData }) {
                   showContactInfo={false}
                 />
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Vista Destacada Compacta
@@ -399,7 +421,7 @@ export default function ServiceManager({ storeId, storeData }) {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
                   {selectedService.titulo}

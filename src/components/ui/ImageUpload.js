@@ -1,6 +1,7 @@
 // src/components/ui/ImageUpload.js
 'use client'
 import { useState } from 'react'
+import Image from 'next/image'
 import { useCloudinaryUpload } from '@/lib/hooks/useCloudinary'
 
 export default function ImageUpload({ onUploadComplete, multiple = false }) {
@@ -9,7 +10,7 @@ export default function ImageUpload({ onUploadComplete, multiple = false }) {
 
   const handleFileChange = async (e) => {
     const files = Array.from(e.target.files)
-    
+
     // Crear previews
     const previews = files.map(file => ({
       file,
@@ -24,7 +25,7 @@ export default function ImageUpload({ onUploadComplete, multiple = false }) {
       } else {
         results = await uploadImage(files[0])
       }
-      
+
       onUploadComplete?.(results)
     } catch (err) {
       console.error('Upload error:', err)
@@ -48,27 +49,30 @@ export default function ImageUpload({ onUploadComplete, multiple = false }) {
                    dark:hover:file:bg-blue-900/30
                    disabled:opacity-50 disabled:cursor-not-allowed"
       />
-      
+
       {uploading && (
         <p className="text-blue-600 dark:text-blue-400">Subiendo imagen(es)...</p>
       )}
-      
+
       {error && (
         <p className="text-red-600 dark:text-red-400">Error: {error}</p>
       )}
-      
+
       {preview.length > 0 && (
         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           {preview.map((item, index) => (
-            <img
-              key={index}
-              src={item.preview}
-              alt={`Preview ${index}`}
-              className="w-full h-32 object-cover rounded-lg border border-gray-200 dark:border-gray-700"
-            />
+            <div key={index} className="relative w-full h-32">
+              <Image
+                src={item.preview}
+                alt={`Preview ${index}`}
+                fill
+                className="object-cover rounded-lg border border-gray-200 dark:border-gray-700"
+              />
+            </div>
           ))}
         </div>
       )}
     </div>
   )
 }
+```

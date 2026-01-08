@@ -9,6 +9,7 @@ import { TIPOS_PUBLICACION } from '@/types/employment';
 import OfertaEmpleoCard from '@/components/tienda/empleos/OfertaEmpleoCard';
 import BusquedaEmpleoCard from '@/components/tienda/empleos/BusquedaEmpleoCard';
 import ServicioProfesionalCard from '@/components/tienda/empleos/ServicioProfesionalCard';
+import SectionEmptyState from './SectionEmptyState';
 
 export default function FeaturedJobs() {
   const [featuredJobs, setFeaturedJobs] = useState([]);
@@ -196,9 +197,11 @@ export default function FeaturedJobs() {
     );
   }
 
-  if (error || featuredJobs.length === 0) {
-    return null;
-  }
+  // if (error) {
+  //   return null;
+  // }
+
+  const isEmpty = featuredJobs.length === 0;
 
   if (!isClient) {
     return (
@@ -225,123 +228,129 @@ export default function FeaturedJobs() {
           </h2>
         </div>
 
-        <div className="relative">
-          {!isMobile && maxIndex > 0 && (
-            <>
-              <button
-                onClick={goToPrevious}
-                disabled={currentIndex === 0 || isDragging || isTransitioning}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button
-                onClick={goToNext}
-                disabled={currentIndex === maxIndex || isDragging || isTransitioning}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            </>
-          )}
-
-          <div
-            ref={scrollContainerRef}
-            className={`overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            style={{ touchAction: 'pan-y' }}
-          >
-            <div
-              className={`flex ${gapClass} will-change-transform`}
-              style={{
-                transform: `translateX(${translateX}%)`,
-                transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
-              }}
-            >
-              {featuredJobs.map((job) => {
-                const gapPx = isMobile ? 12 : isTablet ? 16 : 24;
-                const totalGapPx = gapPx * (itemsPerView - 1);
-                
-                return (
-                  <div
-                    key={job.id}
-                    className={`flex-shrink-0 transition-all duration-200 ${isDragging ? 'scale-[0.98]' : ''}`}
-                    style={{
-                      width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
-                    }}
-                  >
-                    {(() => {
-                      const tipoEmpleo = job.tipoPublicacion || job.tipo;
-                      
-                      // Busqueda de empleo
-                      if (tipoEmpleo === 'busqueda' || tipoEmpleo === 'busqueda_empleo') {
-                        return (
-                          <BusquedaEmpleoCard
-                            busqueda={job}
-                            storeData={job.tiendaInfo}
-                            variant="featured-compact"
-                            showContactInfo={true}
-                            showStoreInfo={true}
-                            onClick={() => handleJobClick(job)}
-                          />
-                        );
-                      }
-                      
-                      // Servicio profesional
-                      if (tipoEmpleo === 'servicio_profesional') {
-                        return (
-                          <ServicioProfesionalCard
-                            servicio={job}
-                            storeData={job.tiendaInfo}
-                            variant="featured-compact"
-                            showContactInfo={true}
-                            showStoreInfo={true}
-                            onClick={() => handleJobClick(job)}
-                          />
-                        );
-                      }
-                      
-                      // Oferta de empleo (por defecto)
-                      return (
-                        <OfertaEmpleoCard
-                          oferta={job}
-                          storeData={job.tiendaInfo}
-                          variant="featured-compact"
-                          showContactInfo={true}
-                          showStoreInfo={true}
-                          onClick={() => handleJobClick(job)}
-                        />
-                      );
-                    })()}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {maxIndex > 0 && (
-            <div className="flex justify-center gap-2 mt-6">
-              {Array.from({ length: maxIndex + 1 }, (_, i) => (
+        {isEmpty ? (
+          <SectionEmptyState
+            message="Aún no hay empleos destacados."
+            subMessage="¡Destaca un empleo para obtener más postulantes!"
+          />
+        ) : (
+          <div className="relative">
+            {!isMobile && maxIndex > 0 && (
+              <>
                 <button
-                  key={i}
-                  onClick={() => animateToIndex(i)}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                    Math.round(currentIndex) === i
+                  onClick={goToPrevious}
+                  disabled={currentIndex === 0 || isDragging || isTransitioning}
+                  className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={goToNext}
+                  disabled={currentIndex === maxIndex || isDragging || isTransitioning}
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+
+            <div
+              ref={scrollContainerRef}
+              className={`overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+              style={{ touchAction: 'pan-y' }}
+            >
+              <div
+                className={`flex ${gapClass} will-change-transform`}
+                style={{
+                  transform: `translateX(${translateX}%)`,
+                  transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+                }}
+              >
+                {featuredJobs.map((job) => {
+                  const gapPx = isMobile ? 12 : isTablet ? 16 : 24;
+                  const totalGapPx = gapPx * (itemsPerView - 1);
+
+                  return (
+                    <div
+                      key={job.id}
+                      className={`flex-shrink-0 transition-all duration-200 ${isDragging ? 'scale-[0.98]' : ''}`}
+                      style={{
+                        width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
+                      }}
+                    >
+                      {(() => {
+                        const tipoEmpleo = job.tipoPublicacion || job.tipo;
+
+                        // Busqueda de empleo
+                        if (tipoEmpleo === 'busqueda' || tipoEmpleo === 'busqueda_empleo') {
+                          return (
+                            <BusquedaEmpleoCard
+                              busqueda={job}
+                              storeData={job.tiendaInfo}
+                              variant="featured-compact"
+                              showContactInfo={true}
+                              showStoreInfo={true}
+                              onClick={() => handleJobClick(job)}
+                            />
+                          );
+                        }
+
+                        // Servicio profesional
+                        if (tipoEmpleo === 'servicio_profesional') {
+                          return (
+                            <ServicioProfesionalCard
+                              servicio={job}
+                              storeData={job.tiendaInfo}
+                              variant="featured-compact"
+                              showContactInfo={true}
+                              showStoreInfo={true}
+                              onClick={() => handleJobClick(job)}
+                            />
+                          );
+                        }
+
+                        // Oferta de empleo (por defecto)
+                        return (
+                          <OfertaEmpleoCard
+                            oferta={job}
+                            storeData={job.tiendaInfo}
+                            variant="featured-compact"
+                            showContactInfo={true}
+                            showStoreInfo={true}
+                            onClick={() => handleJobClick(job)}
+                          />
+                        );
+                      })()}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {maxIndex > 0 && (
+              <div className="flex justify-center gap-2 mt-6">
+                {Array.from({ length: maxIndex + 1 }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => animateToIndex(i)}
+                    className={`w-3 h-3 rounded-full transition-all duration-200 ${Math.round(currentIndex) === i
                       ? 'bg-gradient-to-r from-blue-500 to-purple-600 scale-125 shadow-md'
                       : 'bg-gray-300 dark:bg-gray-600 hover:bg-blue-300 dark:hover:bg-blue-600'
-                  }`}
-                  disabled={isDragging || isTransitioning}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+                      }`}
+                    disabled={isDragging || isTransitioning}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

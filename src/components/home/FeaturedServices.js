@@ -6,6 +6,7 @@ import { Crown, Star, TrendingUp, ChevronLeft, ChevronRight } from 'lucide-react
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import ServiceCard from '../tienda/servicios/ServiceCard';
+import SectionEmptyState from './SectionEmptyState';
 
 export default function FeaturedServices() {
   const [windowWidth, setWindowWidth] = useState(0);
@@ -198,9 +199,11 @@ export default function FeaturedServices() {
     );
   }
 
-  if (error || featuredServices.length === 0) {
-    return null;
-  }
+  // if (error) {
+  //   return null; 
+  // }
+
+  const isEmpty = featuredServices.length === 0;
 
   if (!isClient) {
     return (
@@ -227,88 +230,94 @@ export default function FeaturedServices() {
           </h2>
         </div>
 
-        <div className="relative">
-          {!isMobile && maxIndex > 0 && (
-            <>
-              <button
-                onClick={goToPrevious}
-                disabled={currentIndex === 0 || isDragging || isTransitioning}
-                className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-              >
-                <ChevronLeft className="w-6 h-6" />
-              </button>
-              <button
-                onClick={goToNext}
-                disabled={currentIndex === maxIndex || isDragging || isTransitioning}
-                className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
-              >
-                <ChevronRight className="w-6 h-6" />
-              </button>
-            </>
-          )}
-
-          <div
-            ref={scrollContainerRef}
-            className={`overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseLeave}
-            style={{ touchAction: 'pan-y' }}
-          >
-            <div
-              className={`flex ${gapClass} will-change-transform`}
-              style={{
-                transform: `translateX(${translateX}%)`,
-                transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
-              }}
-            >
-              {featuredServices.map((service) => {
-                const gapPx = isMobile ? 8 : isTablet ? 16 : 24;
-                const totalGapPx = gapPx * (itemsPerView - 1);
-                
-                return (
-                  <div
-                    key={service.id}
-                    className={`flex-shrink-0 transition-all duration-200 ${isDragging ? 'scale-[0.98]' : ''}`}
-                    style={{
-                      width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
-                    }}
-                  >
-                    <ServiceCard
-                      service={service}
-                      storeData={service.storeData}
-                      variant="featured-compact"
-                      showContactInfo={true}
-                      showStoreInfo={true}
-                      onClick={() => handleServiceClick(service)}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {maxIndex > 0 && (
-            <div className="flex justify-center gap-2 mt-6">
-              {Array.from({ length: maxIndex + 1 }, (_, i) => (
+        {isEmpty ? (
+          <SectionEmptyState
+            message="Aún no hay servicios destacados."
+            subMessage="¡Destaca tu servicio para que aparezca aquí!"
+          />
+        ) : (
+          <div className="relative">
+            {!isMobile && maxIndex > 0 && (
+              <>
                 <button
-                  key={i}
-                  onClick={() => animateToIndex(i)}
-                  className={`w-3 h-3 rounded-full transition-all duration-200 ${
-                    Math.round(currentIndex) === i
+                  onClick={goToPrevious}
+                  disabled={currentIndex === 0 || isDragging || isTransitioning}
+                  className="absolute left-0 top-1/2 transform -translate-y-1/2 -translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+                >
+                  <ChevronLeft className="w-6 h-6" />
+                </button>
+                <button
+                  onClick={goToNext}
+                  disabled={currentIndex === maxIndex || isDragging || isTransitioning}
+                  className="absolute right-0 top-1/2 transform -translate-y-1/2 translate-x-4 z-10 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 p-3 rounded-full shadow-lg hover:shadow-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed hover:scale-105"
+                >
+                  <ChevronRight className="w-6 h-6" />
+                </button>
+              </>
+            )}
+
+            <div
+              ref={scrollContainerRef}
+              className={`overflow-hidden ${isDragging ? 'cursor-grabbing' : 'cursor-grab'} select-none`}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+              style={{ touchAction: 'pan-y' }}
+            >
+              <div
+                className={`flex ${gapClass} will-change-transform`}
+                style={{
+                  transform: `translateX(${translateX}%)`,
+                  transition: (isTransitioning && !isDragging) ? 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)' : 'none',
+                }}
+              >
+                {featuredServices.map((service) => {
+                  const gapPx = isMobile ? 8 : isTablet ? 16 : 24;
+                  const totalGapPx = gapPx * (itemsPerView - 1);
+
+                  return (
+                    <div
+                      key={service.id}
+                      className={`flex-shrink-0 transition-all duration-200 ${isDragging ? 'scale-[0.98]' : ''}`}
+                      style={{
+                        width: `calc(${100 / itemsPerView}% - ${totalGapPx / itemsPerView}px)`,
+                      }}
+                    >
+                      <ServiceCard
+                        service={service}
+                        storeData={service.storeData}
+                        variant="featured-compact"
+                        showContactInfo={true}
+                        showStoreInfo={true}
+                        onClick={() => handleServiceClick(service)}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {maxIndex > 0 && (
+              <div className="flex justify-center gap-2 mt-6">
+                {Array.from({ length: maxIndex + 1 }, (_, i) => (
+                  <button
+                    key={i}
+                    onClick={() => animateToIndex(i)}
+                    className={`w-3 h-3 rounded-full transition-all duration-200 ${Math.round(currentIndex) === i
                       ? 'bg-gradient-to-r from-blue-500 to-purple-600 scale-125 shadow-md'
                       : 'bg-gray-300 dark:bg-gray-600 hover:bg-blue-300 dark:hover:bg-blue-600'
-                  }`}
-                  disabled={isDragging || isTransitioning}
-                />
-              ))}
-            </div>
-          )}
-        </div>
+                      }`}
+                    disabled={isDragging || isTransitioning}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </section>
   );

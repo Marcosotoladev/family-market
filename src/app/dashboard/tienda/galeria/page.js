@@ -5,10 +5,10 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 import DashboardTopNavigation from '@/components/layout/DashboardTopNavigation';
-import { 
-  Image as ImageIcon, 
-  Plus, 
-  Trash2, 
+import {
+  Image as ImageIcon,
+  Plus,
+  Trash2,
   Edit2,
   ChevronLeft,
   Calendar,
@@ -31,11 +31,13 @@ import {
   startAfter
 } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { deleteImage } from '@/lib/actions/cloudinary';
+import { extractPublicId } from '@/lib/helpers/cloudinaryHelpers';
 
 export default function GaleriaManagementPage() {
   const { user, userData, isAuthenticated, loading: authLoading } = useAuth();
   const router = useRouter();
-  
+
   const [images, setImages] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -44,9 +46,9 @@ export default function GaleriaManagementPage() {
   const [loadingMore, setLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [lastVisible, setLastVisible] = useState(null);
-  
+
   const IMAGES_PER_PAGE = 20; // Número de imágenes por página
-  
+
   // Form data
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
@@ -182,6 +184,14 @@ export default function GaleriaManagementPage() {
 
         const data = await response.json();
         imageUrl = data.secure_url;
+
+        // Si estamos editando y subimos una nueva imagen, borrar la anterior
+        if (editingImage && editingImage.imageUrl) {
+          const oldPublicId = extractPublicId(editingImage.imageUrl);
+          if (oldPublicId) {
+            await deleteImage(oldPublicId);
+          }
+        }
       }
 
       if (editingImage) {
@@ -206,7 +216,7 @@ export default function GaleriaManagementPage() {
       // Recargar imágenes
       await loadImages();
       handleCloseModal();
-      
+
     } catch (error) {
       console.error('Error guardando imagen:', error);
       alert('Error al guardar la imagen. Inténtalo de nuevo.');
@@ -228,16 +238,20 @@ export default function GaleriaManagementPage() {
     }
 
     try {
+      // Eliminar de Cloudinary primero
+      if (image.imageUrl) {
+        const publicId = extractPublicId(image.imageUrl);
+        if (publicId) {
+          await deleteImage(publicId);
+        }
+      }
+
       // Eliminar de Firestore
       await deleteDoc(doc(db, 'galeria', image.id));
 
-      // Nota: Con Cloudinary, las imágenes quedan almacenadas
-      // Si quieres eliminarlas también de Cloudinary, necesitarías usar su API
-      // Pero generalmente no es necesario por el espacio ilimitado
-
       // Actualizar lista
       setImages(prev => prev.filter(img => img.id !== image.id));
-      
+
     } catch (error) {
       console.error('Error eliminando imagen:', error);
       alert('Error al eliminar la imagen');
@@ -280,7 +294,7 @@ export default function GaleriaManagementPage() {
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <DashboardTopNavigation />
-      
+
       {/* Header */}
       <div className="bg-gradient-to-r from-indigo-500 to-purple-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
@@ -297,7 +311,7 @@ export default function GaleriaManagementPage() {
               <div className="w-16 h-16 sm:w-20 sm:h-20 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center flex-shrink-0 border-2 border-white/30">
                 <ImageIcon className="w-8 h-8 sm:w-10 sm:h-10 text-white" />
               </div>
-              
+
               <div className="min-w-0 flex-1">
                 <h1 className="text-xl sm:text-2xl font-bold text-white">
                   Galería de Imágenes
@@ -352,12 +366,12 @@ export default function GaleriaManagementPage() {
                     className="w-full h-full object-cover"
                   />
                 </div>
-                
+
                 <div className="p-4">
                   <h3 className="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2">
                     {image.titulo}
                   </h3>
-                  
+
                   <div className="flex items-center text-xs text-gray-500 dark:text-gray-400 mb-4">
                     <Calendar className="w-3.5 h-3.5 mr-1" />
                     <span>{formatDate(image.fechaCreacion)}</span>
@@ -371,7 +385,7 @@ export default function GaleriaManagementPage() {
                       <Edit2 className="w-4 h-4" />
                       <span>Editar</span>
                     </button>
-                    
+
                     <button
                       onClick={() => handleDelete(image)}
                       className="flex items-center justify-center bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 px-3 py-2 rounded-lg hover:bg-red-200 dark:hover:bg-red-900/50 transition-colors"
@@ -431,7 +445,7 @@ export default function GaleriaManagementPage() {
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                   Imagen {editingImage && '(opcional - deja vacío para mantener la actual)'}
                 </label>
-                
+
                 {imagePreview ? (
                   <div className="relative">
                     <img

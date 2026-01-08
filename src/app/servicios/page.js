@@ -1,8 +1,8 @@
 //app/servicios/page.js
 'use client'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Search, Filter, Grid, List } from 'lucide-react'
-import { 
+import {
   CATEGORIAS_SERVICIOS,
   CATEGORIAS_SERVICIOS_LABELS
 } from '@/types/services'
@@ -10,16 +10,21 @@ import { collection, query, where, orderBy, getDocs, limit } from 'firebase/fire
 import { db } from '@/lib/firebase/config'
 import ServiceCard from '@/components/tienda/servicios/ServiceCard'
 
-export default function ServiciosPage() {
+import { useSearchParams } from 'next/navigation'
+
+function ServiciosContent() {
+  const searchParams = useSearchParams()
+  const categoryParam = searchParams.get('categoria')
+
   const [servicios, setServicios] = useState([])
   const [loading, setLoading] = useState(true)
   const [vistaGrid, setVistaGrid] = useState(true)
   const [mostrarFiltros, setMostrarFiltros] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  
+
   const [filtros, setFiltros] = useState({
     busqueda: '',
-    categoria: '',
+    categoria: categoryParam || '',
     precioMin: '',
     precioMax: '',
     ordenar: 'recientes'
@@ -30,7 +35,7 @@ export default function ServiciosPage() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
@@ -44,7 +49,7 @@ export default function ServiciosPage() {
   const cargarServicios = async () => {
     try {
       setLoading(true)
-      
+
       // Intentar query simple primero - sin filtros de estado
       let serviciosQuery = query(
         collection(db, 'servicios'),
@@ -54,7 +59,7 @@ export default function ServiciosPage() {
 
       const snapshot = await getDocs(serviciosQuery)
       console.log('📊 Servicios encontrados:', snapshot.size)
-      
+
       const serviciosData = snapshot.docs.map(doc => {
         const data = doc.data()
         console.log('🔍 Servicio:', doc.id, data)
@@ -65,9 +70,9 @@ export default function ServiciosPage() {
       })
 
       // Filtrar manualmente por activo/disponible
-      const serviciosActivos = serviciosData.filter(s => 
-        s.activo === true || 
-        s.estado === 'activo' || 
+      const serviciosActivos = serviciosData.filter(s =>
+        s.activo === true ||
+        s.estado === 'activo' ||
         s.estado === 'disponible' ||
         s.disponible === true
       )
@@ -88,7 +93,7 @@ export default function ServiciosPage() {
     // Filtro de búsqueda
     if (filtros.busqueda) {
       const busquedaLower = filtros.busqueda.toLowerCase()
-      resultado = resultado.filter(s => 
+      resultado = resultado.filter(s =>
         (s.titulo && s.titulo.toLowerCase().includes(busquedaLower)) ||
         (s.nombre && s.nombre.toLowerCase().includes(busquedaLower)) ||
         (s.descripcion && s.descripcion.toLowerCase().includes(busquedaLower))
@@ -164,7 +169,7 @@ export default function ServiciosPage() {
                 <Filter className="w-5 h-5" />
                 <span className="hidden sm:inline">Filtros</span>
               </button>
-              
+
               <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setVistaGrid(true)}
@@ -187,7 +192,7 @@ export default function ServiciosPage() {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar de filtros */}
-          <FiltersSidebar 
+          <FiltersSidebar
             filtros={filtros}
             setFiltros={setFiltros}
             mostrar={mostrarFiltros}
@@ -220,13 +225,13 @@ export default function ServiciosPage() {
             ) : serviciosFiltrados.length === 0 ? (
               <EmptyState />
             ) : (
-              <div className={vistaGrid 
-                ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' 
+              <div className={vistaGrid
+                ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'
                 : 'flex flex-col gap-4'
               }>
                 {serviciosFiltrados.map(servicio => (
-                  <ServiceCard 
-                    key={servicio.id} 
+                  <ServiceCard
+                    key={servicio.id}
                     service={servicio}
                     storeData={null}
                     variant={vistaGrid ? (isMobile ? 'featured-compact' : 'grid') : 'list'}
@@ -264,7 +269,7 @@ function FiltersSidebar({ filtros, setFiltros, mostrar }) {
         >
           <option value="">Todas las categorías</option>
           {Object.entries(CATEGORIAS_SERVICIOS_LABELS || {}).map(([key, label]) => (
-            <option key={key} value={CATEGORIAS_SERVICIOS?.[key] || key}>
+            <option key={key} value={CATEGORIAS_SERVICIOS?.[key]?.id || key}>
               {label}
             </option>
           ))}
@@ -314,8 +319,8 @@ function FiltersSidebar({ filtros, setFiltros, mostrar }) {
 // Loading skeleton
 function LoadingSkeleton({ vistaGrid }) {
   return (
-    <div className={vistaGrid 
-      ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' 
+    <div className={vistaGrid
+      ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'
       : 'flex flex-col gap-4'
     }>
       {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(i => (
@@ -346,12 +351,20 @@ function EmptyState() {
       <p className="text-gray-600 dark:text-gray-400 mb-6">
         Intenta ajustar los filtros o buscar algo diferente
       </p>
-      <button 
+      <button
         onClick={() => window.location.reload()}
         className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
       >
         Ver todos los servicios
       </button>
     </div>
+  )
+}
+
+export default function ServiciosPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 dark:bg-gray-900"><LoadingSkeleton vistaGrid={true} /></div>}>
+      <ServiciosContent />
+    </Suspense>
   )
 }

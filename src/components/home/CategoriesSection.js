@@ -2,16 +2,17 @@
 
 'use client'
 import React, { useState } from 'react';
-import { 
+import {
   // Productos
-  Smartphone, Car, Home, Shirt, Sofa, PawPrint, UtensilsCrossed, Palette, 
+  Smartphone, Car, Home, Shirt, Sofa, PawPrint, UtensilsCrossed, Palette,
   Dumbbell, BookOpen, Baby, Heart, Music, Building2, Package,
   // Servicios
-  UserCheck, Wrench, Sparkles, GraduationCap, Truck, PartyPopper, 
+  UserCheck, Wrench, Sparkles, GraduationCap, Truck, PartyPopper,
   Settings, Shield, DollarSign, Stethoscope, CircleHelp,
   // Empleos
-  Briefcase, Code, TrendingUp, Hammer, ChefHat, Users, 
-  Activity, Navigation, HardHat, ShoppingCart, Camera, ShieldCheck, Zap
+  Briefcase, Code, TrendingUp, Hammer, ChefHat, Users,
+  Activity, MapPin, HardHat, ShoppingCart, Camera, ShieldCheck, Zap,
+  Leaf, Scale
 } from 'lucide-react';
 import { CATEGORIAS_PRODUCTOS, CATEGORIAS_SERVICIOS, CATEGORIAS_EMPLEO } from '../../types';
 
@@ -38,17 +39,26 @@ const productIconMap = {
 
 // Mapeo de iconos para servicios
 const serviceIconMap = {
-  'profesionales': UserCheck,
-  'hogar_mantenimiento': Wrench,
-  'belleza_bienestar': Sparkles,
-  'educacion_clases': GraduationCap,
-  'transporte_logistica': Truck,
-  'eventos_celebraciones': PartyPopper,
-  'servicios_tecnicos': Settings,
-  'cuidado_asistencia': Shield,
+  'belleza_y_bienestar': Sparkles,
+  'salud_y_medicina': Stethoscope,
+  'educacion_y_capacitacion': GraduationCap,
+  'tecnologia_e_informatica': Code,
+  'hogar_y_mantenimiento': Wrench,
   'automotriz': Car,
-  'financieros': DollarSign,
-  'salud': Stethoscope,
+  'eventos_y_celebraciones': PartyPopper,
+  'deportes_y_fitness': Dumbbell,
+  'mascotas': PawPrint,
+  'consultoria_y_negocios': Briefcase,
+  'marketing_y_publicidad': TrendingUp,
+  'diseño_y_creatividad': Palette,
+  'fotografia_y_video': Camera,
+  'musica_y_entretenimiento': Music,
+  'gastronomia': ChefHat,
+  'jardineria_y_paisajismo': Leaf,
+  'limpieza': Home,
+  'transporte_y_logistica': Truck,
+  'servicios_legales': Scale,
+  'servicios_financieros': DollarSign,
   'otros': CircleHelp
 };
 
@@ -56,17 +66,20 @@ const serviceIconMap = {
 const employmentIconMap = {
   'administracion': Briefcase,
   'tecnologia': Code,
-  'marketing_ventas': TrendingUp,
-  'servicios_oficios': Hammer,
-  'gastronomia': ChefHat,
+  'marketing': TrendingUp,
+  'ventas': ShoppingCart,
+  'salud': Activity,
+  'belleza': Sparkles,
   'educacion': Users,
-  'salud_bienestar': Activity,
-  'transporte_logistica': Navigation,
+  'gastronomia': ChefHat,
   'construccion': HardHat,
-  'retail_comercio': ShoppingCart,
-  'entretenimiento': Camera,
+  'hogar': Home,
+  'transporte': MapPin,
+  'eventos': Camera,
+  'automotriz': Car,
+  'legal': Scale,
   'seguridad': ShieldCheck,
-  'deportes_fitness': Zap,
+  'mascotas': PawPrint,
   'otro': Briefcase
 };
 
@@ -97,42 +110,57 @@ const categoryColors = {
   'servicios': 'from-blue-600 to-cyan-600',
   'trabajo': 'from-emerald-600 to-teal-600',
   'otros': 'from-gray-400 to-gray-600',
-  
+
   // Servicios
-  'profesionales': 'from-blue-600 to-indigo-700',
-  'hogar_mantenimiento': 'from-amber-600 to-orange-700',
-  'belleza_bienestar': 'from-pink-600 to-rose-700',
-  'educacion_clases': 'from-green-600 to-emerald-700',
-  'transporte_logistica': 'from-gray-600 to-slate-700',
-  'eventos_celebraciones': 'from-purple-600 to-violet-700',
-  'servicios_tecnicos': 'from-cyan-600 to-blue-700',
-  'cuidado_asistencia': 'from-teal-600 to-green-700',
+  // Servicios
+  'belleza_y_bienestar': 'from-pink-600 to-rose-700',
+  'salud_y_medicina': 'from-emerald-600 to-teal-700',
+  'educacion_y_capacitacion': 'from-green-600 to-emerald-700',
+  'tecnologia_e_informatica': 'from-blue-600 to-indigo-700',
+  'hogar_y_mantenimiento': 'from-amber-600 to-orange-700',
   'automotriz': 'from-red-600 to-orange-700',
-  'financieros': 'from-yellow-600 to-amber-700',
-  'salud': 'from-emerald-600 to-teal-700',
-  
+  'eventos_y_celebraciones': 'from-purple-600 to-violet-700',
+  'deportes_y_fitness': 'from-cyan-600 to-teal-700',
+  'mascotas': 'from-purple-500 to-violet-600',
+  'consultoria_y_negocios': 'from-slate-600 to-gray-700',
+  'marketing_y_publicidad': 'from-pink-500 to-rose-600',
+  'diseño_y_creatividad': 'from-indigo-500 to-purple-600',
+  'fotografia_y_video': 'from-gray-600 to-slate-700',
+  'musica_y_entretenimiento': 'from-violet-500 to-purple-600',
+  'gastronomia': 'from-orange-500 to-red-500',
+  'jardineria_y_paisajismo': 'from-green-500 to-emerald-600',
+  'limpieza': 'from-cyan-500 to-blue-600',
+  'transporte_y_logistica': 'from-gray-600 to-slate-700',
+  'servicios_legales': 'from-slate-700 to-gray-800',
+  'servicios_financieros': 'from-yellow-600 to-amber-700',
+  'otros': 'from-gray-400 to-gray-600',
+
   // Empleos
   'administracion': 'from-slate-600 to-gray-700',
   'tecnologia': 'from-blue-600 to-indigo-700',
-  'marketing_ventas': 'from-green-600 to-emerald-700',
-  'servicios_oficios': 'from-amber-600 to-orange-700',
-  'gastronomia': 'from-red-600 to-rose-700',
+  'marketing': 'from-pink-500 to-rose-600',
+  'ventas': 'from-green-600 to-emerald-700',
+  'salud': 'from-emerald-600 to-teal-700',
+  'belleza': 'from-pink-600 to-rose-700',
   'educacion': 'from-teal-600 to-cyan-700',
-  'transporte_logistica': 'from-gray-600 to-slate-700',
+  'gastronomia': 'from-red-600 to-rose-700',
   'construccion': 'from-orange-600 to-red-700',
-  'retail_comercio': 'from-purple-600 to-violet-700',
-  'entretenimiento': 'from-pink-600 to-rose-700',
+  'hogar': 'from-amber-600 to-orange-700',
+  'transporte': 'from-gray-600 to-slate-700',
+  'eventos': 'from-purple-600 to-violet-700',
+  'automotriz': 'from-red-600 to-orange-700',
+  'legal': 'from-slate-700 to-gray-800',
   'seguridad': 'from-indigo-600 to-blue-700',
-  'deportes_fitness': 'from-cyan-600 to-teal-700',
+  'mascotas': 'from-purple-500 to-violet-600',
   'otro': 'from-gray-500 to-slate-600'
 };
 
-const CategoriesSection = ({ 
+const CategoriesSection = ({
   categoryType = 'all', // 'all', 'productos', 'servicios', 'empleos'
-  onCategoryClick, 
-  maxCategories = 12, 
+  onCategoryClick,
+  maxCategories = 12,
   counts = {},
-  showToggle = true 
+  showToggle = true
 }) => {
   const [activeTab, setActiveTab] = useState(categoryType === 'all' ? 'productos' : categoryType);
 
@@ -204,16 +232,15 @@ const CategoriesSection = ({
                   {tabConfig.map((tab) => {
                     const TabIcon = tab.icon;
                     const isActive = activeTab === tab.id;
-                    
+
                     return (
                       <button
                         key={tab.id}
                         onClick={() => setActiveTab(tab.id)}
-                        className={`flex flex-col sm:flex-row items-center justify-center flex-1 px-2 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm transition-all duration-200 ${
-                          isActive
-                            ? `bg-gradient-to-r ${mainCategoryColors[tab.id]} text-white shadow-lg`
-                            : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
-                        }`}
+                        className={`flex flex-col sm:flex-row items-center justify-center flex-1 px-2 sm:px-4 py-2 sm:py-3 rounded-lg sm:rounded-xl font-medium text-xs sm:text-sm transition-all duration-200 ${isActive
+                          ? `bg-gradient-to-r ${mainCategoryColors[tab.id]} text-white shadow-lg`
+                          : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800'
+                          }`}
                       >
                         <TabIcon className="w-5 h-5 sm:w-5 sm:h-5 sm:mr-2" />
                         <span className="text-xs sm:text-sm mt-1 sm:mt-0">{tab.name}</span>
@@ -229,30 +256,30 @@ const CategoriesSection = ({
           <div className="grid grid-cols-3 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
             {categories.map((category) => {
               const IconComponent = category.icon;
-              
+
               return (
-                <div 
+                <div
                   key={category.id}
                   onClick={() => handleCategoryClick(category)}
                   className="group bg-white dark:bg-gray-900 p-3 sm:p-6 lg:p-8 rounded-2xl shadow-lg dark:shadow-gray-900/20 hover:shadow-2xl dark:hover:shadow-gray-900/40 transition-all duration-300 cursor-pointer text-center hover:-translate-y-2 border border-gray-100 dark:border-gray-700 hover:border-primary-200 dark:hover:border-primary-600 relative overflow-hidden"
                 >
                   {/* Background gradient effect */}
                   <div className={`absolute inset-0 bg-gradient-to-br ${category.color} opacity-0 group-hover:opacity-10 dark:group-hover:opacity-15 transition-opacity duration-300`}></div>
-                  
+
                   <div className="relative z-10">
                     {/* Icon container */}
                     <div className={`w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 mx-auto mb-3 sm:mb-4 lg:mb-6 bg-gradient-to-br ${category.color} rounded-2xl flex items-center justify-center group-hover:scale-110 group-hover:rotate-3 transition-all duration-300 shadow-lg`}>
-                      <IconComponent 
-                        className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white" 
+                      <IconComponent
+                        className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-white"
                         strokeWidth={1.5}
                       />
                     </div>
-                    
+
                     {/* Category name */}
                     <h3 className="font-bold text-gray-800 dark:text-gray-100 mb-2 group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors text-sm sm:text-base lg:text-lg leading-tight">
                       {category.name}
                     </h3>
-                    
+
                     {/* Statistics */}
                     <div className="space-y-2">
                       {/* Count */}
@@ -263,7 +290,7 @@ const CategoriesSection = ({
                           </span>
                         </div>
                       )}
-                      
+
                       {/* Subcategories count */}
                       {category.subcategories > 0 && (
                         <div className="inline-flex items-center justify-center px-2 py-1 bg-primary-50 dark:bg-primary-900/50 rounded-full ml-2">
@@ -274,7 +301,7 @@ const CategoriesSection = ({
                       )}
                     </div>
                   </div>
-                  
+
                   {/* Interaction indicator */}
                   <div className="absolute top-3 right-3 w-2 h-2 bg-primary-400 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                 </div>
@@ -284,7 +311,7 @@ const CategoriesSection = ({
 
           {/* Show all categories link */}
           <div className="text-center mt-12">
-            <button 
+            <button
               onClick={() => onCategoryClick && onCategoryClick({ showAll: true, type: categoryType === 'all' ? activeTab : categoryType })}
               className="inline-flex items-center px-6 py-3 bg-primary-600 hover:bg-primary-700 dark:bg-primary-700 dark:hover:bg-primary-800 text-white font-medium rounded-lg transition-colors duration-200 shadow-lg hover:shadow-xl dark:shadow-gray-900/20"
             >

@@ -1,7 +1,7 @@
 //app/empleos/page.js
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { Search, Filter, Grid, List, Briefcase } from 'lucide-react'
 import { CATEGORIAS_EMPLEO, TIPOS_EMPLEO } from '@/types/employment'
 import { collection, query, orderBy, getDocs, limit } from 'firebase/firestore'
@@ -10,16 +10,21 @@ import OfertaEmpleoCard from '@/components/tienda/empleos/OfertaEmpleoCard'
 import BusquedaEmpleoCard from '@/components/tienda/empleos/BusquedaEmpleoCard'
 import ServicioProfesionalCard from '@/components/tienda/empleos/ServicioProfesionalCard'
 
-export default function EmpleosPage() {
+import { useSearchParams } from 'next/navigation'
+
+function EmpleosContent() {
+  const searchParams = useSearchParams()
+  const categoryParam = searchParams.get('categoria')
+
   const [empleos, setEmpleos] = useState([])
   const [loading, setLoading] = useState(true)
   const [vistaGrid, setVistaGrid] = useState(true)
   const [mostrarFiltros, setMostrarFiltros] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
-  
+
   const [filtros, setFiltros] = useState({
     busqueda: '',
-    categoria: '',
+    categoria: categoryParam || '',
     tipoEmpleo: '',
     tipoPublicacion: 'todos',
     ordenar: 'recientes'
@@ -30,7 +35,7 @@ export default function EmpleosPage() {
     const checkMobile = () => {
       setIsMobile(window.innerWidth < 768)
     }
-    
+
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
@@ -44,7 +49,7 @@ export default function EmpleosPage() {
   const cargarEmpleos = async () => {
     try {
       setLoading(true)
-      
+
       const empleosQuery = query(
         collection(db, 'empleos'),
         orderBy('fechaCreacion', 'desc'),
@@ -53,7 +58,7 @@ export default function EmpleosPage() {
 
       const snapshot = await getDocs(empleosQuery)
       console.log('📊 Empleos encontrados:', snapshot.size)
-      
+
       const empleosData = snapshot.docs.map(doc => {
         const data = doc.data()
         console.log('🔍 Empleo:', doc.id, data)
@@ -65,8 +70,8 @@ export default function EmpleosPage() {
       })
 
       // Filtrar por activo
-      let empleosFiltrados = empleosData.filter(e => 
-        e.activo === true || 
+      let empleosFiltrados = empleosData.filter(e =>
+        e.activo === true ||
         e.estado === 'activo' ||
         !e.hasOwnProperty('activo')
       )
@@ -102,7 +107,7 @@ export default function EmpleosPage() {
 
     if (filtros.busqueda) {
       const busquedaLower = filtros.busqueda.toLowerCase()
-      resultado = resultado.filter(e => 
+      resultado = resultado.filter(e =>
         (e.titulo && e.titulo.toLowerCase().includes(busquedaLower)) ||
         (e.puesto && e.puesto.toLowerCase().includes(busquedaLower)) ||
         (e.descripcion && e.descripcion.toLowerCase().includes(busquedaLower)) ||
@@ -186,7 +191,7 @@ export default function EmpleosPage() {
                 <Filter className="w-5 h-5" />
                 <span className="hidden sm:inline">Filtros</span>
               </button>
-              
+
               <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg overflow-hidden">
                 <button
                   onClick={() => setVistaGrid(true)}
@@ -214,11 +219,10 @@ export default function EmpleosPage() {
               <button
                 key={tab.value}
                 onClick={() => setFiltros({ ...filtros, tipoPublicacion: tab.value })}
-                className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${
-                  filtros.tipoPublicacion === tab.value
-                    ? 'bg-orange-500 text-white'
-                    : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
-                }`}
+                className={`px-4 py-2 rounded-lg whitespace-nowrap transition-colors ${filtros.tipoPublicacion === tab.value
+                  ? 'bg-orange-500 text-white'
+                  : 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-600'
+                  }`}
               >
                 {tab.label}
               </button>
@@ -252,8 +256,8 @@ export default function EmpleosPage() {
             ) : empleosFiltrados.length === 0 ? (
               <EmptyState />
             ) : (
-              <div className={vistaGrid 
-                ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4' 
+              <div className={vistaGrid
+                ? 'grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'
                 : 'flex flex-col gap-4'
               }>
                 {empleosFiltrados.map(empleo => renderEmpleoCard(empleo))}
@@ -354,12 +358,20 @@ function EmptyState() {
       <p className="text-gray-600 dark:text-gray-400 mb-6">
         Intenta ajustar los filtros o buscar algo diferente
       </p>
-      <button 
+      <button
         onClick={() => window.location.reload()}
         className="px-6 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors"
       >
         Ver todas las publicaciones
       </button>
     </div>
+  )
+}
+
+export default function EmpleosPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 dark:bg-gray-900"><LoadingSkeleton vistaGrid={true} /></div>}>
+      <EmpleosContent />
+    </Suspense>
   )
 }

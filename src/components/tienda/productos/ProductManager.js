@@ -2,14 +2,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  collection, 
-  query, 
-  where, 
-  getDocs, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  deleteDoc,
   doc,
   orderBy,
   serverTimestamp,
@@ -24,6 +24,8 @@ import ProductList from './ProductList';
 import ProductCard from './ProductCard';
 import FeaturedProductButton from './FeaturedProductButton';
 import { Plus, ArrowLeft, Package, X } from 'lucide-react';
+import { deleteImages } from '@/lib/actions/cloudinary';
+import { extractPublicId } from '@/lib/helpers/cloudinaryHelpers';
 
 export default function ProductManager({ storeId, storeData }) {
   const { user } = useAuth();
@@ -50,7 +52,7 @@ export default function ProductManager({ storeId, storeData }) {
     } catch (error) {
       console.error('Error cargando datos de tienda:', error);
     }
-    
+
     return {
       nombre: 'Tienda Family Market',
       slug: '',
@@ -70,17 +72,17 @@ export default function ProductManager({ storeId, storeData }) {
       setIsLoading(true);
       const productsRef = collection(db, 'productos');
       const q = query(
-        productsRef, 
+        productsRef,
         where('usuarioId', '==', storeId),
         orderBy('fechaCreacion', 'desc')
       );
-      
+
       const querySnapshot = await getDocs(q);
       const productsData = querySnapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
-      
+
       setProducts(productsData);
     } catch (error) {
       console.error('Error cargando productos:', error);
@@ -118,13 +120,13 @@ export default function ProductManager({ storeId, storeData }) {
   const handleSaveProduct = async (productData) => {
     try {
       setIsSaving(true);
-      
+
       // Auto-completar datos desde storeData
       const productDataCompleto = autoCompletarDatosProducto(productData, storeData);
-      
+
       // ✅ CRÍTICO: Obtener y guardar tiendaInfo
       const tiendaInfo = await getTiendaInfo(storeId);
-      
+
       if (selectedProduct) {
         // Actualizar producto existente
         const productRef = doc(db, 'productos', selectedProduct.id);
@@ -133,9 +135,9 @@ export default function ProductManager({ storeId, storeData }) {
           tiendaInfo, // ✅ Guardar tiendaInfo
           fechaActualizacion: serverTimestamp()
         });
-        
-        setProducts(prev => prev.map(p => 
-          p.id === selectedProduct.id 
+
+        setProducts(prev => prev.map(p =>
+          p.id === selectedProduct.id
             ? { ...p, ...productDataCompleto, tiendaInfo, fechaActualizacion: new Date().toISOString() }
             : p
         ));
@@ -168,9 +170,9 @@ export default function ProductManager({ storeId, storeData }) {
           fechaDestacado: null,
           slug: generarSlugProducto ? generarSlugProducto(productDataCompleto.titulo, Date.now().toString()) : productDataCompleto.titulo.toLowerCase().replace(/\s+/g, '-')
         };
-        
+
         const docRef = await addDoc(collection(db, 'productos'), newProduct);
-        
+
         setProducts(prev => [{
           id: docRef.id,
           ...newProduct,
@@ -178,7 +180,7 @@ export default function ProductManager({ storeId, storeData }) {
           fechaActualizacion: new Date().toISOString()
         }, ...prev]);
       }
-      
+
       setView('list');
       setSelectedProduct(null);
     } catch (error) {
@@ -193,13 +195,38 @@ export default function ProductManager({ storeId, storeData }) {
     if (!confirm('¿Estás seguro de que quieres eliminar este producto?')) {
       return;
     }
-    
+
     try {
+      setIsLoading(true);
+
+      // 1. Obtener datos del producto para las imágenes
+      const productToDelete = products.find(p => p.id === productId);
+
+      if (productToDelete?.imagenes?.length > 0) {
+        // 2. Extraer IDs públicos
+        const publicIds = productToDelete.imagenes
+          .map(url => extractPublicId(url))
+          .filter(id => id); // Filtrar nulos
+
+        if (publicIds.length > 0) {
+          console.log('Eliminando imágenes de Cloudinary:', publicIds);
+          // 3. Eliminar de Cloudinary (no bloqueamos si falla, pero logueamos)
+          const result = await deleteImages(publicIds);
+          if (!result.success) {
+            console.error('Error al eliminar imágenes de Cloudinary:', result.error);
+            // Podríamos decidir detener la eliminación aquí si es crítico
+          }
+        }
+      }
+
+      // 4. Eliminar de Firestore
       await deleteDoc(doc(db, 'productos', productId));
       setProducts(prev => prev.filter(p => p.id !== productId));
     } catch (error) {
       console.error('Error eliminando producto:', error);
       alert('Error al eliminar el producto. Intenta nuevamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -207,14 +234,14 @@ export default function ProductManager({ storeId, storeData }) {
     try {
       const newStatus = product.estado === 'disponible' ? 'pausado' : 'disponible';
       const productRef = doc(db, 'productos', product.id);
-      
+
       await updateDoc(productRef, {
         estado: newStatus,
         fechaActualizacion: serverTimestamp()
       });
-      
-      setProducts(prev => prev.map(p => 
-        p.id === product.id 
+
+      setProducts(prev => prev.map(p =>
+        p.id === product.id
           ? { ...p, estado: newStatus, fechaActualizacion: new Date().toISOString() }
           : p
       ));
@@ -239,7 +266,7 @@ export default function ProductManager({ storeId, storeData }) {
       featuredAmount: null,
       fechaDestacado: null
     };
-    
+
     setSelectedProduct(duplicatedProduct);
     setView('form');
   };
@@ -279,7 +306,7 @@ export default function ProductManager({ storeId, storeData }) {
                   Administra tu catálogo de productos
                 </p>
               </div>
-              
+
               <button
                 onClick={handleCreateProduct}
                 className="inline-flex items-center px-6 py-3 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors font-medium"
@@ -327,7 +354,7 @@ export default function ProductManager({ storeId, storeData }) {
                 <ArrowLeft className="w-5 h-5 mr-2" />
                 Volver a la lista
               </button>
-              
+
               <div className="flex space-x-3">
                 <button
                   onClick={() => handleEditProduct(selectedProduct)}
@@ -355,7 +382,7 @@ export default function ProductManager({ storeId, storeData }) {
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-6">
               Vista Previa del Producto
             </h2>
-            
+
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
@@ -368,7 +395,7 @@ export default function ProductManager({ storeId, storeData }) {
                   showContactInfo={false}
                 />
               </div>
-              
+
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                   Vista Destacada
@@ -400,7 +427,7 @@ export default function ProductManager({ storeId, storeData }) {
                   <X className="w-6 h-6" />
                 </button>
               </div>
-              
+
               <div className="mb-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
                 <h3 className="font-medium text-blue-900 dark:text-blue-100 mb-1">
                   {selectedProduct.titulo || selectedProduct.nombre}
