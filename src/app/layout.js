@@ -11,12 +11,15 @@ import Header from '../components/layout/Header'
 import DesktopNavigation from '../components/layout/DesktopNavigation'
 import MobileNavigation from '../components/layout/MobileNavigation'
 import Footer from '@/components/layout/Footer'
+import InstallPrompt from '@/components/pwa/InstallPrompt'
+import NotificationPrompt from '@/components/pwa/NotificationPrompt'
+import TokenRefresher from '@/components/pwa/TokenRefresher'
 
 const inter = Inter({ subsets: ['latin'] })
 
 export default function RootLayout({ children }) {
   const pathname = usePathname()
-  
+
   // Verificar si estamos en una ruta de tienda
   const isStorePage = pathname?.startsWith('/tienda/')
 
@@ -34,13 +37,20 @@ export default function RootLayout({ children }) {
         <meta name="msapplication-TileColor" content="#000000" />
         <meta name="msapplication-tap-highlight" content="no" />
         <meta name="screen-orientation" content="any" />
-        
+
         {/* Apple Touch Icons */}
         <link rel="apple-touch-icon" href="/icon-192.png" />
         <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
         <link rel="apple-touch-icon" sizes="512x512" href="/icon-512.png" />
         <link rel="manifest" href="/manifest.json" />
         <link rel="icon" href="/favicon.ico" />
+
+        {/* Open Graph / Social Media */}
+        <meta property="og:type" content="website" />
+        <meta property="og:site_name" content="Family Market" />
+        <meta property="og:title" content="Family Market - Tienda Local" />
+        <meta property="og:description" content="Tu mercado local online para productos y servicios de confianza." />
+        <meta property="og:image" content="/icon-512.png" />
       </head>
       <body className={`${inter.className} ${isStorePage ? 'antialiased' : 'overflow-x-hidden'}`}>
         <ThemeProvider attribute="class" defaultTheme={isStorePage ? "light" : "system"} enableSystem={!isStorePage}>
@@ -53,15 +63,15 @@ export default function RootLayout({ children }) {
               <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors">
                 {/* Header */}
                 <Header />
-                
+
                 {/* Navegación Desktop */}
                 <DesktopNavigation />
-              
+
                 {/* Contenido principal */}
                 <main className="pb-20 lg:pb-8">
                   {children}
                 </main>
-                
+
                 {/* Navegación Mobile - Funciona tanto para páginas normales como dashboard */}
                 <MobileNavigation />
 
@@ -71,8 +81,7 @@ export default function RootLayout({ children }) {
             )}
           </AuthProvider>
         </ThemeProvider>
-        
-        {/* Script actualizado para registrar ambos Service Workers */}
+
         <script dangerouslySetInnerHTML={{
           __html: `
             if ('serviceWorker' in navigator) {
@@ -93,6 +102,9 @@ export default function RootLayout({ children }) {
             }
           `
         }} />
+        <InstallPrompt />
+        <NotificationPrompt />
+        <TokenRefresher />
       </body>
     </html>
   )

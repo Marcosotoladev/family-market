@@ -1,6 +1,9 @@
 // src/components/tienda/productos/ProductList.js
 'use client';
 
+import ProductCardSkeleton from './ProductCardSkeleton';
+import Image from 'next/image';
+
 import { useState } from 'react';
 import {
   Search,
@@ -100,10 +103,19 @@ export default function ProductList({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-orange-200 border-t-orange-600 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600 dark:text-gray-400">Cargando productos...</p>
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map(i => (
+            <div key={i} className="bg-white dark:bg-gray-800 p-4 rounded-lg border border-gray-200 dark:border-gray-700 h-24 animate-pulse bg-gray-100 dark:bg-gray-800"></div>
+          ))}
+        </div>
+
+        {/* Products Grid Skeleton */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <ProductCardSkeleton key={i} />
+          ))}
         </div>
       </div>
     );
@@ -403,10 +415,11 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, o
       {/* Imagen */}
       <div className="relative h-48 bg-gray-100 dark:bg-gray-700">
         {product.imagenes && product.imagenes.length > 0 ? (
-          <img
+          <Image
             src={product.imagenes[0]}
             alt={product.titulo || product.nombre}
-            className="w-full h-full object-cover"
+            fill
+            className="object-cover"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">
@@ -417,9 +430,9 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, o
         {/* Badge de estado */}
         <div className="absolute top-2 left-2">
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${estadoBadge.color === 'green' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-              estadoBadge.color === 'red' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-                estadoBadge.color === 'yellow' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                  'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+            estadoBadge.color === 'red' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+              estadoBadge.color === 'yellow' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
             }`}>
             {estadoBadge.texto}
           </span>
@@ -508,8 +521,8 @@ function ProductCard({ product, onEdit, onDelete, onToggleStatus, onDuplicate, o
             <button
               onClick={() => onFeature && onFeature(product)}
               className={`px-3 py-2 text-sm rounded transition-colors flex items-center justify-center gap-1 ${isFeatureActive()
-                  ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
-                  : 'border border-yellow-500 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
+                ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
+                : 'border border-yellow-500 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
                 }`}
               title={isFeatureActive() ? 'Ya destacado' : 'Destacar producto'}
             >
@@ -557,10 +570,11 @@ function ProductTableRow({ product, onEdit, onDelete, onToggleStatus, onDuplicat
         <div className="flex items-center">
           <div className="flex-shrink-0 h-12 w-12 relative">
             {product.imagenes && product.imagenes.length > 0 ? (
-              <img
+              <Image
                 src={product.imagenes[0]}
                 alt={product.titulo || product.nombre}
-                className="h-12 w-12 rounded-lg object-cover"
+                fill
+                className="rounded-lg object-cover"
               />
             ) : (
               <div className="h-12 w-12 rounded-lg bg-gray-200 dark:bg-gray-600 flex items-center justify-center">
@@ -598,9 +612,9 @@ function ProductTableRow({ product, onEdit, onDelete, onToggleStatus, onDuplicat
       </td>
       <td className="px-6 py-4 whitespace-nowrap">
         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${estadoBadge.color === 'green' ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' :
-            estadoBadge.color === 'red' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
-              estadoBadge.color === 'yellow' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
-                'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+          estadoBadge.color === 'red' ? 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200' :
+            estadoBadge.color === 'yellow' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200' :
+              'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
           }`}>
           {estadoBadge.texto}
         </span>
@@ -634,8 +648,8 @@ function ProductTableRow({ product, onEdit, onDelete, onToggleStatus, onDuplicat
           <button
             onClick={() => onFeature && onFeature(product)}
             className={`${isFeatureActive()
-                ? 'text-yellow-500'
-                : 'text-yellow-600 dark:text-yellow-400'
+              ? 'text-yellow-500'
+              : 'text-yellow-600 dark:text-yellow-400'
               } hover:text-yellow-700 dark:hover:text-yellow-300`}
             title={isFeatureActive() ? 'Ya destacado' : 'Destacar producto'}
           >

@@ -7,6 +7,7 @@ import { useRouter } from 'next/navigation';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { User, Mail, Home, Building2, Bell, BellOff, Calendar, Shield, Globe, Smartphone } from 'lucide-react';
+import Skeleton from '@/components/ui/Skeleton';
 
 export default function UserProfilePage() {
   const { isAuthenticated, userData, user, loading, signOut } = useAuth();
@@ -26,7 +27,7 @@ export default function UserProfilePage() {
     if ('Notification' in window) {
       setNotificationPermission(Notification.permission);
     }
-    
+
     // Intentar obtener el token si ya tiene permisos
     if (Notification.permission === 'granted') {
       getNotificationToken();
@@ -39,11 +40,11 @@ export default function UserProfilePage() {
         // Importar Firebase Messaging
         const { getMessaging, getToken } = await import('firebase/messaging');
         const messaging = getMessaging();
-        
+
         const token = await getToken(messaging, {
           vapidKey: process.env.NEXT_PUBLIC_FIREBASE_VAPID_KEY
         });
-        
+
         if (token) {
           setNotificationToken(token);
           // Actualizar el token en la base de datos
@@ -67,14 +68,14 @@ export default function UserProfilePage() {
     }
 
     setUpdatingNotifications(true);
-    
+
     try {
       const permission = await Notification.requestPermission();
       setNotificationPermission(permission);
-      
+
       if (permission === 'granted') {
         await getNotificationToken();
-        
+
         // Actualizar preferencia en base de datos
         if (user?.uid) {
           await updateDoc(doc(db, 'users', user.uid), {
@@ -82,7 +83,7 @@ export default function UserProfilePage() {
             notificationPermissionGrantedAt: new Date()
           });
         }
-        
+
         alert('¡Notificaciones habilitadas! Ahora recibirás notificaciones push.');
       } else {
         alert('Permisos de notificación denegados');
@@ -97,7 +98,7 @@ export default function UserProfilePage() {
 
   const disableNotifications = async () => {
     setUpdatingNotifications(true);
-    
+
     try {
       if (user?.uid) {
         await updateDoc(doc(db, 'users', user.uid), {
@@ -105,7 +106,7 @@ export default function UserProfilePage() {
           notificationToken: null,
           notificationDisabledAt: new Date()
         });
-        
+
         setNotificationToken(null);
         alert('Notificaciones deshabilitadas correctamente');
       }
@@ -119,8 +120,30 @@ export default function UserProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary-600"></div>
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Header Skeleton */}
+          <div className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 mb-6 flex items-center">
+            <Skeleton className="w-20 h-20 rounded-full" />
+            <div className="ml-6 space-y-3 flex-1">
+              <Skeleton className="h-8 w-1/3" />
+              <Skeleton className="h-4 w-1/4" />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="bg-white dark:bg-gray-800 shadow rounded-lg p-6 space-y-4">
+                <Skeleton className="h-6 w-1/2 mb-4" />
+                <div className="space-y-3">
+                  <Skeleton className="h-4 w-full" />
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-4 w-5/6" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     );
   }
@@ -203,7 +226,7 @@ export default function UserProfilePage() {
                   <p className="text-gray-900 dark:text-white">{userData?.email}</p>
                 </div>
               </div>
-              
+
               <div className="flex items-center">
                 <User className="w-4 h-4 text-gray-400 mr-3" />
                 <div>
@@ -250,7 +273,7 @@ export default function UserProfilePage() {
                 <div>
                   <p className="text-sm text-gray-500 dark:text-gray-400">URL de la Tienda</p>
                   {userData?.storeUrl ? (
-                    <a 
+                    <a
                       href={`https://familymarket.com${userData.storeUrl}`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -286,11 +309,10 @@ export default function UserProfilePage() {
                   <p className="text-sm text-gray-500 dark:text-gray-400">Estado de Permisos</p>
                   <p className="text-gray-900 dark:text-white capitalize">{notificationPermission}</p>
                 </div>
-                <span className={`px-2 py-1 text-xs rounded-full ${
-                  notificationPermission === 'granted' 
-                    ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
-                }`}>
+                <span className={`px-2 py-1 text-xs rounded-full ${notificationPermission === 'granted'
+                  ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                  : 'bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-400'
+                  }`}>
                   {notificationPermission === 'granted' ? 'Habilitado' : 'Deshabilitado'}
                 </span>
               </div>
@@ -378,13 +400,15 @@ export default function UserProfilePage() {
           </h2>
           <div className="bg-gray-100 dark:bg-gray-700 rounded-lg p-4 overflow-auto">
             <pre className="text-xs text-gray-800 dark:text-gray-200">
-              {JSON.stringify({ userData, firebaseUser: {
-                uid: user?.uid,
-                email: user?.email,
-                displayName: user?.displayName,
-                emailVerified: user?.emailVerified,
-                photoURL: user?.photoURL
-              }}, null, 2)}
+              {JSON.stringify({
+                userData, firebaseUser: {
+                  uid: user?.uid,
+                  email: user?.email,
+                  displayName: user?.displayName,
+                  emailVerified: user?.emailVerified,
+                  photoURL: user?.photoURL
+                }
+              }, null, 2)}
             </pre>
           </div>
         </div>
